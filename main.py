@@ -92,9 +92,6 @@ class GuardiaoBot:
             # Configura eventos
             self.setup_events()
             
-            # Configura slash commands
-            self.setup_slash_commands()
-            
             logger.info("Bot Discord configurado com sucesso")
             
         except Exception as e:
@@ -133,55 +130,96 @@ class GuardiaoBot:
                 name=f"{len(self.bot.guilds)} servidores | Sistema Guardião BETA"
             )
             await self.bot.change_presence(activity=activity)
-    
-    def setup_slash_commands(self):
-        """Configura slash commands"""
-        
-        @self.bot.slash_command(name="cadastro", description="Cadastre-se no Sistema Guardião BETA")
-        async def cadastro(ctx: discord.ApplicationContext):
-            """Comando de cadastro via slash command"""
-            # Redireciona para o cog
-            cog = self.bot.get_cog("CadastroCog")
-            if cog:
-                await cog.cadastro(ctx)
-        
-        @self.bot.slash_command(name="stats", description="Veja suas estatísticas no Sistema Guardião BETA")
-        async def stats(ctx: discord.ApplicationContext):
-            """Comando de stats via slash command"""
-            # Redireciona para o cog
-            cog = self.bot.get_cog("StatsCog")
-            if cog:
-                await cog.stats(ctx)
-        
-        @self.bot.slash_command(name="formguardiao", description="Torne-se um Guardião do Sistema Guardião BETA")
-        async def formguardiao(ctx: discord.ApplicationContext):
-            """Comando de formguardiao via slash command"""
-            # Redireciona para o cog
-            cog = self.bot.get_cog("GuardiaoCog")
-            if cog:
-                await cog.formguardiao(ctx)
-        
-        @self.bot.slash_command(name="turno", description="Entre ou saia de serviço como Guardião")
-        async def turno(ctx: discord.ApplicationContext):
-            """Comando de turno via slash command"""
-            # Redireciona para o cog
-            cog = self.bot.get_cog("GuardiaoCog")
-            if cog:
-                await cog.turno(ctx)
-        
-        @self.bot.slash_command(name="report", description="Denuncie um usuário por violação das regras")
-        async def report(ctx: discord.ApplicationContext, usuario: discord.Member, motivo: str):
-            """Comando de report via slash command"""
-            # Redireciona para o cog
-            cog = self.bot.get_cog("ModeracaoCog")
-            if cog:
-                await cog.report(ctx, usuario, motivo)
             
             # Inicializa banco de dados
             await self.initialize_database()
             
             # Inicia background tasks
             self.start_background_tasks()
+        
+        @self.bot.event
+        async def on_message(message):
+            """Evento quando uma mensagem é enviada"""
+            if message.author.bot:
+                return
+            
+            # Processa comandos
+            await self.bot.process_commands(message)
+            
+            # Se a mensagem não for um comando, mostra ajuda em DMs
+            if not message.content.startswith(self.bot.command_prefix):
+                # Verifica se é DM
+                if isinstance(message.channel, discord.DMChannel):
+                    # Envia embed de ajuda
+                    embed = discord.Embed(
+                        title="🛡️ Sistema Guardião BETA",
+                        description="Bem-vindo ao Sistema Guardião BETA!",
+                        color=0x00ff00
+                    )
+                    embed.add_field(
+                        name="📋 Comandos Disponíveis:",
+                        value=(
+                            f"`{self.bot.command_prefix}cadastro` - Cadastre-se no sistema\n"
+                            f"`{self.bot.command_prefix}stats` - Veja suas estatísticas\n"
+                            f"`{self.bot.command_prefix}formguardiao` - Torne-se um Guardião\n"
+                            f"`{self.bot.command_prefix}turno` - Entre/saia de serviço\n"
+                            f"`{self.bot.command_prefix}report <@usuario> <motivo>` - Denuncie um usuário"
+                        ),
+                        inline=False
+                    )
+                    embed.add_field(
+                        name="💡 Dica:",
+                        value="Use os comandos em servidores onde o bot está presente para funcionalidades completas!",
+                        inline=False
+                    )
+                    embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
+                    
+                    try:
+                        await message.channel.send(embed=embed)
+                    except:
+                        pass  # Ignora erros de DM
+        
+        @self.bot.event
+        async def on_guild_join(guild):
+            """Evento quando o bot entra em um servidor"""
+            logger.info(f'Bot adicionado ao servidor: {guild.name} (ID: {guild.id})')
+            
+            # Envia mensagem de boas-vindas
+            try:
+                # Procura por um canal de texto
+                channel = None
+                for ch in guild.text_channels:
+                    if ch.permissions_for(guild.me).send_messages:
+                        channel = ch
+                        break
+                
+                if channel:
+                    embed = discord.Embed(
+                        title="🛡️ Sistema Guardião BETA",
+                        description="Obrigado por adicionar o Sistema Guardião BETA ao seu servidor!",
+                        color=0x00ff00
+                    )
+                    embed.add_field(
+                        name="📋 Comandos Disponíveis:",
+                        value=(
+                            f"`{self.bot.command_prefix}cadastro` - Cadastre-se no sistema\n"
+                            f"`{self.bot.command_prefix}stats` - Veja suas estatísticas\n"
+                            f"`{self.bot.command_prefix}formguardiao` - Torne-se um Guardião\n"
+                            f"`{self.bot.command_prefix}turno` - Entre/saia de serviço\n"
+                            f"`{self.bot.command_prefix}report <@usuario> <motivo>` - Denuncie um usuário"
+                        ),
+                        inline=False
+                    )
+                    embed.add_field(
+                        name="💡 Dica:",
+                        value="Use os comandos em DM para cadastro e estatísticas pessoais!",
+                        inline=False
+                    )
+                    embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
+                    
+                    await channel.send(embed=embed)
+            except Exception as e:
+                logger.error(f"Erro ao enviar mensagem de boas-vindas: {e}")
         
         @self.bot.event
         async def on_guild_join(guild):
