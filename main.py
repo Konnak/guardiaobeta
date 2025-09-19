@@ -19,7 +19,15 @@ from discord.ext import commands
 from flask import Flask
 
 # Sistema Guardião BETA
-from config import *
+from config import (
+    DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_TOKEN,
+    POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT,
+    WEB_PORT, FLASK_SECRET_KEY, BOT_PREFIX,
+    GUARDIAO_MIN_ACCOUNT_AGE_MONTHS, TURN_POINTS_PER_HOUR,
+    MAX_GUARDIANS_PER_REPORT, REQUIRED_VOTES_FOR_DECISION,
+    VOTE_TIMEOUT_MINUTES, DISPENSE_COOLDOWN_MINUTES,
+    INACTIVE_PENALTY_HOURS, PROVA_COOLDOWN_HOURS, PUNISHMENT_RULES
+)
 from database.connection import db_manager
 from web.auth import setup_auth
 from web.routes import setup_routes

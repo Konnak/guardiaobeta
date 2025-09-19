@@ -28,6 +28,9 @@ DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST
 WEB_PORT = int(os.getenv('WEB_PORT', '8080'))
 FLASK_SECRET_KEY = os.getenv('FLASK_SECRET_KEY')
 
+# Configurações do Bot
+BOT_PREFIX = os.getenv('BOT_PREFIX', '!')
+
 # Configurações do Sistema
 GUARDIAO_MIN_ACCOUNT_AGE_MONTHS = 3
 TURN_POINTS_PER_HOUR = 1
