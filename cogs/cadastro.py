@@ -10,7 +10,7 @@ import re
 import asyncio
 import logging
 from datetime import datetime
-from database.connection import db_manager, create_user, get_user_by_discord_id
+from database.connection import db_manager, create_user, get_user_by_discord_id_sync
 from config import DISCORD_CLIENT_ID
 
 # Configuração de logging
@@ -69,7 +69,7 @@ class CadastroModal(ui.Modal, title="Cadastro no Sistema Guardião BETA"):
                 return
             
             # Verifica se o usuário já existe
-            existing_user = get_user_by_discord_id(interaction.user.id)
+            existing_user = get_user_by_discord_id_sync(interaction.user.id)
             if existing_user:
                 embed = discord.Embed(
                     title="⚠️ Usuário Já Cadastrado",

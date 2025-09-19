@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 import logging
 from datetime import datetime
-from database.connection import db_manager, get_user_by_discord_id
+from database.connection import db_manager, get_user_by_discord_id_sync
 from utils.experience_system import (
     get_experience_rank, 
     get_rank_emoji, 
@@ -45,7 +45,7 @@ class StatsCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(ctx.author.id)
             
             if not user_data:
                 embed = discord.Embed(

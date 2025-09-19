@@ -9,7 +9,7 @@ from discord import ui
 import logging
 import asyncio
 from datetime import datetime, timedelta
-from database.connection import db_manager, get_user_by_discord_id
+from database.connection import db_manager, get_user_by_discord_id_sync
 from config import GUARDIAO_MIN_ACCOUNT_AGE_MONTHS, TURN_POINTS_PER_HOUR, PROVA_COOLDOWN_HOURS
 
 # Configuração de logging
@@ -424,7 +424,7 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica se o usuário está cadastrado
-            user_data = get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(ctx.author.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
@@ -534,7 +534,7 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(ctx.author.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",

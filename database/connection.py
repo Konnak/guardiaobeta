@@ -75,6 +75,44 @@ class DatabaseManager:
             await self.pool.close()
             logger.info("Pool de conexões fechado.")
     
+    # Versões síncronas das funções para uso em Flask
+    def execute_query_sync(self, query: str, *args) -> List[Dict[str, Any]]:
+        """Versão síncrona de execute_query para uso em Flask"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self.execute_query(query, *args))
+        except RuntimeError:
+            # Se não há loop ativo, cria um novo
+            return asyncio.run(self.execute_query(query, *args))
+    
+    def execute_one_sync(self, query: str, *args) -> Optional[Dict[str, Any]]:
+        """Versão síncrona de execute_one para uso em Flask"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self.execute_one(query, *args))
+        except RuntimeError:
+            return asyncio.run(self.execute_one(query, *args))
+    
+    def execute_scalar_sync(self, query: str, *args) -> Any:
+        """Versão síncrona de execute_scalar para uso em Flask"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self.execute_scalar(query, *args))
+        except RuntimeError:
+            return asyncio.run(self.execute_scalar(query, *args))
+    
+    def execute_command_sync(self, command: str, *args) -> str:
+        """Versão síncrona de execute_command para uso em Flask"""
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self.execute_command(command, *args))
+        except RuntimeError:
+            return asyncio.run(self.execute_command(command, *args))
+    
     @asynccontextmanager
     async def get_connection(self):
         """
@@ -196,9 +234,18 @@ def db_operation(func):
 
 # Exemplo de uso das funções utilitárias
 async def get_user_by_discord_id(discord_id: int) -> Optional[Dict[str, Any]]:
-    """Busca um usuário pelo ID do Discord"""
+    """Busca um usuário pelo ID do Discord (versão assíncrona)"""
     query = "SELECT * FROM usuarios WHERE id_discord = $1"
     return await db_manager.execute_one(query, discord_id)
+
+def get_user_by_discord_id_sync(discord_id: int) -> Optional[Dict[str, Any]]:
+    """Busca um usuário pelo ID do Discord (versão síncrona)"""
+    query = "SELECT * FROM usuarios WHERE id_discord = $1"
+    try:
+        return db_manager.execute_one_sync(query, discord_id)
+    except Exception as e:
+        logger.error(f"Erro ao buscar usuário por Discord ID: {e}")
+        return None
 
 
 async def create_user(user_data: Dict[str, Any]) -> bool:
