@@ -390,12 +390,11 @@ class GuardiaoCog(commands.Cog):
         self.bot = bot
         self.points_loop.start()
     
-    @commands.slash_command(
+    @commands.command(
         name="formguardiao",
         description="Torne-se um Guardião do Sistema Guardião BETA"
     )
-    @commands.dm_only()
-    async def formguardiao(self, ctx: discord.ApplicationContext):
+    async def formguardiao(self, ctx: commands.Context):
         """
         Comando para se tornar um Guardião
         
@@ -421,7 +420,7 @@ class GuardiaoCog(commands.Cog):
                           f"**Dias necessários:** {GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30} dias",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica se o usuário está cadastrado
@@ -432,7 +431,7 @@ class GuardiaoCog(commands.Cog):
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica se já é Guardião ou superior
@@ -449,7 +448,7 @@ class GuardiaoCog(commands.Cog):
                           "• `/report` - Denunciar usuários",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica cooldown da prova
@@ -473,7 +472,7 @@ class GuardiaoCog(commands.Cog):
                     value=user_data['cooldown_prova'].strftime('%d/%m/%Y às %H:%M'),
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Inicia o treinamento
@@ -517,14 +516,13 @@ class GuardiaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
     
-    @commands.slash_command(
+    @commands.command(
         name="turno",
         description="Entre ou saia de serviço como Guardião"
     )
-    @commands.dm_only()
-    async def turno(self, ctx: discord.ApplicationContext):
+    async def turno(self, ctx: commands.Context):
         """
         Comando para entrar/sair de serviço
         
@@ -543,7 +541,7 @@ class GuardiaoCog(commands.Cog):
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica se é Guardião ou superior
@@ -558,7 +556,7 @@ class GuardiaoCog(commands.Cog):
                     value="Use o comando `/formguardiao` para iniciar o treinamento.",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica se está em cooldown
@@ -576,7 +574,7 @@ class GuardiaoCog(commands.Cog):
                     value=f"**{minutes} minutos**",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             if user_data['em_servico']:
@@ -593,7 +591,7 @@ class GuardiaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
     
     async def _enter_service(self, ctx: discord.ApplicationContext, user_data: dict):
         """Entra em serviço"""
@@ -626,7 +624,7 @@ class GuardiaoCog(commands.Cog):
                 inline=False
             )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro ao entrar em serviço para usuário {ctx.author.id}: {e}")
@@ -676,7 +674,7 @@ class GuardiaoCog(commands.Cog):
                     color=0xff6600
                 )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro ao sair de serviço para usuário {ctx.author.id}: {e}")
@@ -715,7 +713,7 @@ class GuardiaoCog(commands.Cog):
                 description="Este comando só pode ser usado em mensagens privadas (DM)!",
                 color=0xffa500
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
         else:
             logger.error(f"Erro não tratado no comando formguardiao: {error}")
     
@@ -728,7 +726,7 @@ class GuardiaoCog(commands.Cog):
                 description="Este comando só pode ser usado em mensagens privadas (DM)!",
                 color=0xffa500
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
         else:
             logger.error(f"Erro não tratado no comando turno: {error}")
 

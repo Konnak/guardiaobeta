@@ -510,35 +510,40 @@ class ModeracaoCog(commands.Cog):
         self.distribution_loop.start()
         self.inactivity_check.start()
     
-    @commands.slash_command(
+    @commands.command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
-    async def report(
-        self, 
-        ctx: discord.ApplicationContext, 
-        usuario: discord.Member = discord.SlashOption(description="Usuário a ser denunciado"),
-        motivo: str = discord.SlashOption(description="Motivo da denúncia")
-    ):
+    async def report(self, ctx: commands.Context, usuario: discord.Member = None, *, motivo: str = None):
         """
         Comando para denunciar usuários
         
         Cria uma denúncia e inicia o processo de moderação comunitária
         """
         try:
+            # Verifica argumentos
+            if not usuario or not motivo:
+                embed = discord.Embed(
+                    title="❌ Uso Incorreto",
+                    description="Use: `!report @usuario motivo da denúncia`",
+                    color=0xff0000
+                )
+                await ctx.send(embed=embed)
+                return
+            
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
                 await db_manager.initialize_pool()
             
             # Verifica se o usuário está cadastrado
-            user_data = await get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id(ctx.author.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
-                    description="Você precisa se cadastrar primeiro usando `/cadastro`!",
+                    description="Você precisa se cadastrar primeiro usando `!cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Verifica se não está denunciando a si mesmo
@@ -548,7 +553,7 @@ class ModeracaoCog(commands.Cog):
                     description="Você não pode denunciar a si mesmo.",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Gera hash único para a denúncia
@@ -618,7 +623,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -627,7 +632,7 @@ class ModeracaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
     
     async def _capture_messages(self, ctx: discord.ApplicationContext, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""

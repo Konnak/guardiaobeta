@@ -9,7 +9,7 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 # Discord Bot
 import discord
@@ -75,7 +75,7 @@ class GuardiaoBot:
         self.bot = bot
         self.web_app = app
         self.db_manager = db_manager
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self.stats = {
             'total_commands': 0,
             'total_reports': 0,
@@ -260,7 +260,7 @@ class GuardiaoBot:
                     'status': 'online' if self.bot.is_ready() else 'offline',
                     'guilds': len(self.bot.guilds),
                     'users': len(self.bot.users),
-                    'uptime': str(datetime.utcnow() - self.start_time),
+                    'uptime': str(datetime.now(timezone.utc) - self.start_time),
                     'stats': self.stats
                 }
             
@@ -339,7 +339,7 @@ class GuardiaoBot:
             logger.info("Encerrando Sistema Guardião BETA...")
             
             # Fecha conexões do banco
-            await self.db_manager.close()
+            await self.db_manager.close_pool()
             
             # Fecha sessão HTTP (se existir)
             pass

@@ -25,12 +25,11 @@ class StatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.slash_command(
+    @commands.command(
         name="stats",
         description="Exibe suas estatísticas no Sistema Guardião BETA"
     )
-    @commands.dm_only()
-    async def stats(self, ctx: discord.ApplicationContext):
+    async def stats(self, ctx: commands.Context):
         """
         Comando de estatísticas - Apenas em DM
         
@@ -54,7 +53,7 @@ class StatsCog(commands.Cog):
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await ctx.send(embed=embed)
                 return
             
             # Busca estatísticas adicionais
@@ -129,7 +128,7 @@ class StatsCog(commands.Cog):
                 icon_url=self.bot.user.display_avatar.url
             )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando stats para usuário {ctx.author.id}: {e}")
@@ -138,7 +137,7 @@ class StatsCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
     
     async def _get_user_stats(self, user_id: int) -> dict:
         """Busca estatísticas adicionais do usuário"""
@@ -232,7 +231,7 @@ class StatsCog(commands.Cog):
                       "2. Use o comando `/stats`",
                 inline=False
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
         else:
             logger.error(f"Erro não tratado no comando stats: {error}")
             embed = discord.Embed(
@@ -240,7 +239,7 @@ class StatsCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
 
 
 def setup(bot):

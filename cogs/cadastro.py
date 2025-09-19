@@ -199,12 +199,11 @@ class CadastroCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.slash_command(
+    @commands.command(
         name="cadastro",
         description="Cadastre-se no Sistema Guardião BETA"
     )
-    @commands.dm_only()
-    async def cadastro(self, ctx: discord.ApplicationContext):
+    async def cadastro(self, ctx: commands.Context):
         """
         Comando de cadastro - Apenas em DM
         
@@ -227,7 +226,7 @@ class CadastroCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
     
     @cadastro.error
     async def cadastro_error(self, ctx: discord.ApplicationContext, error):
@@ -245,7 +244,7 @@ class CadastroCog(commands.Cog):
                       "3. Preencha o formulário",
                 inline=False
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
         else:
             logger.error(f"Erro não tratado no comando cadastro: {error}")
             embed = discord.Embed(
@@ -253,7 +252,7 @@ class CadastroCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await ctx.send(embed=embed)
 
 
 def setup(bot):
