@@ -79,39 +79,109 @@ class DatabaseManager:
     def execute_query_sync(self, query: str, *args) -> List[Dict[str, Any]]:
         """Versão síncrona de execute_query para uso em Flask"""
         import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.execute_query(query, *args))
-        except RuntimeError:
-            # Se não há loop ativo, cria um novo
-            return asyncio.run(self.execute_query(query, *args))
+        import threading
+        
+        def run_in_thread():
+            try:
+                # Cria um novo loop para esta thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(self.execute_query(query, *args))
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return []
+        
+        # Se já estamos em uma thread, executa diretamente
+        if threading.current_thread() != threading.main_thread():
+            return run_in_thread()
+        
+        # Se estamos na thread principal, cria uma nova thread
+        result = [None]
+        thread = threading.Thread(target=lambda: result.__setitem__(0, run_in_thread()))
+        thread.start()
+        thread.join()
+        return result[0]
     
     def execute_one_sync(self, query: str, *args) -> Optional[Dict[str, Any]]:
         """Versão síncrona de execute_one para uso em Flask"""
         import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.execute_one(query, *args))
-        except RuntimeError:
-            return asyncio.run(self.execute_one(query, *args))
+        import threading
+        
+        def run_in_thread():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(self.execute_one(query, *args))
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return None
+        
+        if threading.current_thread() != threading.main_thread():
+            return run_in_thread()
+        
+        result = [None]
+        thread = threading.Thread(target=lambda: result.__setitem__(0, run_in_thread()))
+        thread.start()
+        thread.join()
+        return result[0]
     
     def execute_scalar_sync(self, query: str, *args) -> Any:
         """Versão síncrona de execute_scalar para uso em Flask"""
         import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.execute_scalar(query, *args))
-        except RuntimeError:
-            return asyncio.run(self.execute_scalar(query, *args))
+        import threading
+        
+        def run_in_thread():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(self.execute_scalar(query, *args))
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return None
+        
+        if threading.current_thread() != threading.main_thread():
+            return run_in_thread()
+        
+        result = [None]
+        thread = threading.Thread(target=lambda: result.__setitem__(0, run_in_thread()))
+        thread.start()
+        thread.join()
+        return result[0]
     
     def execute_command_sync(self, command: str, *args) -> str:
         """Versão síncrona de execute_command para uso em Flask"""
         import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.execute_command(command, *args))
-        except RuntimeError:
-            return asyncio.run(self.execute_command(command, *args))
+        import threading
+        
+        def run_in_thread():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(self.execute_command(command, *args))
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return "ERROR"
+        
+        if threading.current_thread() != threading.main_thread():
+            return run_in_thread()
+        
+        result = [None]
+        thread = threading.Thread(target=lambda: result.__setitem__(0, run_in_thread()))
+        thread.start()
+        thread.join()
+        return result[0]
     
     @asynccontextmanager
     async def get_connection(self):

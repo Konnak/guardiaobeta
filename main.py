@@ -61,7 +61,7 @@ bot = commands.Bot(
 )
 
 # Criação da aplicação web
-app = Flask(__name__)
+app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 app.config['SECRET_KEY'] = FLASK_SECRET_KEY or 'guardiao-beta-secret-key'
 
 # Variável global para compartilhar o bot com a web app
