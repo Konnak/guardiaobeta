@@ -1,0 +1,14 @@
+# Pasta de Imagens - Sistema Guardião BETA
+
+Esta pasta contém todas as imagens estáticas do sistema web.
+
+## Arquivos esperados:
+- logo.png (logo do sistema)
+- hero-illustration.svg (ilustração da página inicial)
+- benefits-illustration.svg (ilustração da seção de benefícios)
+- default-avatar.png (avatar padrão para usuários sem avatar)
+
+## Como adicionar imagens:
+1. Adicione os arquivos nesta pasta
+2. Referencie-os nos templates usando: {{ url_for('static', filename='img/nome-do-arquivo.png') }}
+3. Para imagens do sistema, use o logo.png fornecido pelo usuário

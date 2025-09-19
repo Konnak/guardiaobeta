@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Premium - Sistema Guardião BETA{% endblock %}
+
+{% block main_class %}premium-page{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="bi bi-star-fill"></i> Sistema Guardião BETA Premium
+                </h1>
+                <p class="lead mb-4">
+                    Leve a moderação do seu servidor para o próximo nível com recursos exclusivos
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Comparison -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold">Comparação de Recursos</h2>
+                <p class="lead text-muted">Veja a diferença entre os planos</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Free Plan -->
+            <div class="col-md-4">
+                <div class="card h-100 border-2">
+                    <div class="card-header text-center bg-light">
+                        <h3 class="card-title">Gratuito</h3>
+                        <div class="price">
+                            <span class="display-4 fw-bold">R$ 0</span>
+                            <span class="text-muted">/mês</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Moderação comunitária básica
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Até 5 Guardiões simultâneos
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Sistema de votação padrão
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Punições automáticas
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Suporte via Discord
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-x-circle text-muted"></i>
+                                Prioridade na análise
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-x-circle text-muted"></i>
+                                Configurações personalizadas
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-x-circle text-muted"></i>
+                                Canal de log personalizado
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-x-circle text-muted"></i>
+                                Estatísticas avançadas
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <a href="{{ bot_invite_url }}" class="btn btn-outline-primary w-100" target="_blank">
+                            Usar Gratuitamente
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Premium Plan -->
+            <div class="col-md-4">
+                <div class="card h-100 border-2 border-warning position-relative">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                            <i class="bi bi-star-fill"></i> Recomendado
+                        </span>
+                    </div>
+                    <div class="card-header text-center bg-warning text-dark">
+                        <h3 class="card-title">Premium</h3>
+                        <div class="price">
+                            <span class="display-4 fw-bold">R$ 5</span>
+                            <span class="text-muted">/mês</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <strong>Todos os recursos gratuitos</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Prioridade máxima na análise</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Configurações personalizadas</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Canal de log personalizado</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Estatísticas avançadas</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Durações de punição customizáveis</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Suporte prioritário</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-warning"></i>
+                                <strong>Relatórios detalhados</strong>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <button class="btn btn-warning w-100" onclick="purchasePremium()">
+                            <i class="bi bi-cart-plus"></i> Assinar Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enterprise Plan -->
+            <div class="col-md-4">
+                <div class="card h-100 border-2">
+                    <div class="card-header text-center bg-dark text-white">
+                        <h3 class="card-title">Enterprise</h3>
+                        <div class="price">
+                            <span class="display-4 fw-bold">R$ 20</span>
+                            <span class="text-muted">/mês</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <strong>Todos os recursos Premium</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>Múltiplos servidores</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>API personalizada</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>Suporte 24/7</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>Integrações customizadas</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>Treinamento personalizado</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-dark"></i>
+                                <strong>SLA garantido</strong>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <button class="btn btn-dark w-100" onclick="contactEnterprise()">
+                            <i class="bi bi-telephone"></i> Contatar Vendas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Premium Features Details -->
+<section class="premium-features py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold">Recursos Premium</h2>
+                <p class="lead text-muted">Descubra todos os benefícios do plano Premium</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
+                    <div class="d-flex align-items-start">
+                        <div class="feature-icon me-3">
+                            <i class="bi bi-lightning-charge text-warning" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4>Prioridade Máxima</h4>
+                            <p class="text-muted">
+                                Suas denúncias são analisadas com prioridade máxima pelos Guardiões, 
+                                garantindo resposta mais rápida.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
+                    <div class="d-flex align-items-start">
+                        <div class="feature-icon me-3">
+                            <i class="bi bi-gear text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4>Configurações Personalizadas</h4>
+                            <p class="text-muted">
+                                Personalize durações de punições, configure canais de log 
+                                e ajuste o sistema às suas necessidades.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
+                    <div class="d-flex align-items-start">
+                        <div class="feature-icon me-3">
+                            <i class="bi bi-graph-up text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4>Estatísticas Avançadas</h4>
+                            <p class="text-muted">
+                                Acesse relatórios detalhados, gráficos de atividade 
+                                e análises de tendências do seu servidor.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
+                    <div class="d-flex align-items-start">
+                        <div class="feature-icon me-3">
+                            <i class="bi bi-headset text-info" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <div>
+                            <h4>Suporte Prioritário</h4>
+                            <p class="text-muted">
+                                Receba suporte prioritário com tempo de resposta reduzido 
+                                e acesso direto à equipe de desenvolvimento.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Payment Section -->
+<section class="payment-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-header bg-warning text-dark text-center">
+                        <h3 class="mb-0">
+                            <i class="bi bi-cart-check"></i> Assinar Premium
+                        </h3>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Resumo da Assinatura</h5>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <strong>Plano:</strong> Premium
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Valor:</strong> R$ 5,00/mês
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Cobrança:</strong> Mensal
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Cancele quando quiser</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Métodos de Pagamento</h5>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-success" onclick="payWithMercadoPago()">
+                                        <i class="bi bi-credit-card"></i> Mercado Pago
+                                    </button>
+                                    <button class="btn btn-outline-primary" onclick="payWithPix()">
+                                        <i class="bi bi-qr-code"></i> PIX
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="payWithPayPal()">
+                                        <i class="bi bi-paypal"></i> PayPal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="text-center">
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-shield-check"></i>
+                                Pagamento 100% seguro • Cancele quando quiser • Suporte 24/7
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold">Perguntas Frequentes</h2>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Como funciona o cancelamento?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Você pode cancelar sua assinatura a qualquer momento. O acesso aos recursos Premium 
+                                será mantido até o final do período pago.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Posso mudar de plano depois?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
+                                As alterações serão aplicadas no próximo ciclo de cobrança.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                O que acontece se eu não pagar?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Seu servidor voltará automaticamente para o plano gratuito. 
+                                Não há multas ou taxas por atraso no pagamento.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Os recursos Premium são instantâneos?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Sim! Assim que o pagamento for confirmado, todos os recursos Premium 
+                                estarão disponíveis imediatamente no seu servidor.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section bg-primary text-white py-5">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-4">
+                    Pronto para experimentar o Premium?
+                </h2>
+                <p class="lead mb-4">
+                    Comece hoje mesmo e veja a diferença que o Premium pode fazer no seu servidor.
+                </p>
+                <button class="btn btn-light btn-lg" onclick="purchasePremium()">
+                    <i class="bi bi-star-fill"></i> Assinar Premium Agora
+                </button>
+                <p class="mt-3 mb-0">
+                    <small>Teste por 7 dias • Cancele quando quiser</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Purchase functions
+function purchasePremium() {
+    // In a real implementation, this would redirect to payment processor
+    alert('Sistema de pagamento em desenvolvimento. Entre em contato através do Discord para assinar o Premium.');
+}
+
+function payWithMercadoPago() {
+    alert('Pagamento via Mercado Pago em desenvolvimento.');
+}
+
+function payWithPix() {
+    alert('Pagamento via PIX em desenvolvimento.');
+}
+
+function payWithPayPal() {
+    alert('Pagamento via PayPal em desenvolvimento.');
+}
+
+function contactEnterprise() {
+    alert('Para planos Enterprise, entre em contato através do Discord ou email.');
+}
+</script>
+{% endblock %}

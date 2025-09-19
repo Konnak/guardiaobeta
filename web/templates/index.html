@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Sistema Guardião BETA - Moderação Comunitária{% endblock %}
+
+{% block main_class %}home-page{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Sistema Guardião BETA
+                </h1>
+                <p class="lead mb-4">
+                    Moderação comunitária inteligente e anônima para seu servidor Discord. 
+                    Deixe a comunidade se autorregular com transparência e justiça.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{{ bot_invite_url }}" class="btn btn-light btn-lg" target="_blank">
+                        <i class="bi bi-plus-circle"></i> Adicionar ao Servidor
+                    </a>
+                    {% if not session.user %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-discord"></i> Login com Discord
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <img src="{{ url_for('static', filename='img/hero-illustration.svg') }}" 
+                         alt="Sistema Guardião BETA" class="img-fluid" style="max-height: 400px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold">Como Funciona</h2>
+                <p class="lead text-muted">Sistema de moderação baseado na comunidade</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card h-100 p-4 border rounded-3 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-flag text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4>1. Denúncia</h4>
+                    <p class="text-muted">
+                        Usuários denunciam violações usando o comando <code>/report</code>. 
+                        O sistema captura automaticamente as evidências.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card h-100 p-4 border rounded-3 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4>2. Análise Comunitária</h4>
+                    <p class="text-muted">
+                        Guardiões treinados analisam a denúncia de forma anônima e imparcial, 
+                        votando no resultado apropriado.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card h-100 p-4 border rounded-3 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-shield-check text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4>3. Punição Automática</h4>
+                    <p class="text-muted">
+                        Baseado nos votos dos Guardiões, o sistema aplica automaticamente 
+                        a punição adequada no Discord.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section bg-light py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12 mb-4">
+                <h2 class="display-5 fw-bold">Estatísticas</h2>
+                <p class="lead text-muted">Números que mostram nossa eficiência</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card text-center">
+                    <div class="stat-number text-primary">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="counter" data-target="{{ stats.total_usuarios }}">0</span>
+                    </div>
+                    <h5>Usuários Cadastrados</h5>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card text-center">
+                    <div class="stat-number text-success">
+                        <i class="bi bi-shield-check"></i>
+                        <span class="counter" data-target="{{ stats.total_guardioes }}">0</span>
+                    </div>
+                    <h5>Guardiões Ativos</h5>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card text-center">
+                    <div class="stat-number text-warning">
+                        <i class="bi bi-flag-fill"></i>
+                        <span class="counter" data-target="{{ stats.total_denuncias }}">0</span>
+                    </div>
+                    <h5>Denúncias Processadas</h5>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card text-center">
+                    <div class="stat-number text-info">
+                        <i class="bi bi-server"></i>
+                        <span class="counter" data-target="{{ stats.total_servidores }}">0</span>
+                    </div>
+                    <h5>Servidores Protegidos</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="benefits-section py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <h2 class="display-5 fw-bold mb-4">Por que escolher o Guardião BETA?</h2>
+                
+                <div class="benefit-item mb-4">
+                    <div class="d-flex">
+                        <div class="benefit-icon me-3">
+                            <i class="bi bi-eye-slash text-primary"></i>
+                        </div>
+                        <div>
+                            <h5>Moderação Anônima</h5>
+                            <p class="text-muted">
+                                Identidades dos Guardiões são protegidas, evitando vinganças e 
+                                garantindo imparcialidade nas decisões.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="benefit-item mb-4">
+                    <div class="d-flex">
+                        <div class="benefit-icon me-3">
+                            <i class="bi bi-graph-up text-success"></i>
+                        </div>
+                        <div>
+                            <h5>Eficiência Comprovada</h5>
+                            <p class="text-muted">
+                                Sistema automatizado que processa denúncias em minutos, 
+                                muito mais rápido que moderação manual.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="benefit-item mb-4">
+                    <div class="d-flex">
+                        <div class="benefit-icon me-3">
+                            <i class="bi bi-award text-warning"></i>
+                        </div>
+                        <div>
+                            <h5>Sistema de Experiência</h5>
+                            <p class="text-muted">
+                                Guardiões ganham experiência e sobem de rank conforme 
+                                participam da moderação, criando engajamento.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="benefit-item mb-4">
+                    <div class="d-flex">
+                        <div class="benefit-icon me-3">
+                            <i class="bi bi-shield-check text-info"></i>
+                        </div>
+                        <div>
+                            <h5>Transparência Total</h5>
+                            <p class="text-muted">
+                                Todas as decisões são baseadas em votos da comunidade, 
+                                com sistema de apelação para casos especiais.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="benefits-visual">
+                    <img src="{{ url_for('static', filename='img/benefits-illustration.svg') }}" 
+                         alt="Benefícios do Sistema" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section bg-primary text-white py-5">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-4">
+                    Pronto para proteger seu servidor?
+                </h2>
+                <p class="lead mb-4">
+                    Adicione o Guardião BETA ao seu servidor Discord e tenha moderação 
+                    comunitária profissional em minutos.
+                </p>
+                <a href="{{ bot_invite_url }}" class="btn btn-light btn-lg" target="_blank">
+                    <i class="bi bi-plus-circle"></i> Adicionar ao Servidor
+                </a>
+                <p class="mt-3 mb-0">
+                    <small>Grátis para sempre • Sem configuração complexa</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How to Start Section -->
+<section class="how-to-start py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold">Como Começar</h2>
+                <p class="lead text-muted">Três passos simples para ter moderação comunitária</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step-card text-center">
+                    <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <span class="fw-bold">1</span>
+                    </div>
+                    <h4>Adicione o Bot</h4>
+                    <p class="text-muted">
+                        Clique em "Adicionar ao Servidor" e autorize as permissões necessárias.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="step-card text-center">
+                    <div class="step-number bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <span class="fw-bold">2</span>
+                    </div>
+                    <h4>Configure Guardiões</h4>
+                    <p class="text-muted">
+                        Usuários se candidatam a Guardiões através do comando <code>/formguardiao</code>.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="step-card text-center">
+                    <div class="step-number bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <span class="fw-bold">3</span>
+                    </div>
+                    <h4>Comece a Moderar</h4>
+                    <p class="text-muted">
+                        Use <code>/report</code> para denunciar violações e deixe os Guardiões cuidarem do resto.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Counter animation
+document.addEventListener('DOMContentLoaded', function() {
+    const counters = document.querySelectorAll('.counter');
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        let current = 0;
+        const increment = target / 100;
+        
+        const updateCounter = () => {
+            if (current < target) {
+                current += increment;
+                counter.textContent = Math.ceil(current);
+                setTimeout(updateCounter, 20);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        updateCounter();
+    });
+});
+</script>
+{% endblock %}

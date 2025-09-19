@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema Guardião BETA{% endblock %}
+
+{% block main_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center">
+                <img src="{{ avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="64" height="64">
+                <div>
+                    <h1 class="h3 mb-0">Olá, {{ user.username }}!</h1>
+                    <p class="text-muted mb-0">Bem-vindo ao seu dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not cadastrado %}
+        <!-- Not Registered Alert -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Cadastro Necessário
+                    </h4>
+                    <p>
+                        Você ainda não está cadastrado no Sistema Guardião BETA. 
+                        Para usar todas as funcionalidades, complete seu cadastro no Discord.
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Como se cadastrar:</strong><br>
+                        1. Abra uma conversa privada com o bot Guardião BETA<br>
+                        2. Use o comando <code>/cadastro</code><br>
+                        3. Preencha o formulário com seus dados
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- User Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="bi bi-shield-check" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ db_user.categoria }}</h3>
+                        <p class="card-text text-muted">Sua Categoria</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="bi bi-star-fill" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ db_user.experiencia }}</h3>
+                        <p class="card-text text-muted">Pontos de Experiência</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-trophy" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ db_user.pontos }}</h3>
+                        <p class="card-text text-muted">Pontos de Serviço</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-info mb-2">
+                            <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ ultima_atividade }}</h3>
+                        <p class="card-text text-muted">Última Atividade</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Experience Rank -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-award"></i> Seu Rank de Experiência
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <span style="font-size: 3rem;">{{ emoji }}</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h4 class="mb-1">{{ rank }}</h4>
+                                <p class="text-muted mb-0">{{ experience_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="bi bi-flag" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.denuncias_atendidas }}</h3>
+                        <p class="card-text text-muted">Denúncias Atendidas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.total_votos }}</h3>
+                        <p class="card-text text-muted">Total de Votos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-send" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.denuncias_feitas }}</h3>
+                        <p class="card-text text-muted">Denúncias Feitas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status and Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person-check"></i> Status Atual
+                        </h5>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                {% if db_user.em_servico %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="bi bi-circle-fill"></i> Em Serviço
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">
+                                        <i class="bi bi-circle"></i> Fora de Serviço
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if db_user.categoria in ['Guardião', 'Moderador', 'Administrador'] %}
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-primary" onclick="toggleService()">
+                                    <i class="bi bi-power"></i> 
+                                    {{ 'Sair de Serviço' if db_user.em_servico else 'Entrar em Serviço' }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">
+                                Para entrar em serviço, você precisa ser um Guardião. 
+                                Use o comando <code>/formguardiao</code> no Discord.
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-info-circle"></i> Informações Pessoais
+                        </h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>Nome:</strong> {{ db_user.nome_completo }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Idade:</strong> {{ db_user.idade }} anos
+                            </li>
+                            <li class="mb-2">
+                                <strong>Email:</strong> {{ db_user.email }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Telefone:</strong> {{ db_user.telefone }}
+                            </li>
+                            <li class="mb-0">
+                                <strong>Membro desde:</strong> 
+                                {{ db_user.data_criacao_registro.strftime('%d/%m/%Y') }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up"></i> Atividade dos Últimos 30 Dias
+                        </h5>
+                        <canvas id="activityChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightning"></i> Ações Rápidas
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <a href="{{ url_for('servers') }}" class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-server"></i><br>
+                                    <small>Meus Servidores</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('premium') }}" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-star"></i><br>
+                                    <small>Assinar Premium</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="#" class="btn btn-outline-info w-100" onclick="refreshStats()">
+                                    <i class="bi bi-arrow-clockwise"></i><br>
+                                    <small>Atualizar Stats</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="#" class="btn btn-outline-secondary w-100" onclick="showHelp()">
+                                    <i class="bi bi-question-circle"></i><br>
+                                    <small>Ajuda</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Service Toggle Modal -->
+<div class="modal fade" id="serviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alterar Status de Serviço</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja alterar seu status de serviço?</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Lembrete:</strong> Guardiões em serviço recebem denúncias para análise.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmServiceToggle()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Activity Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('activityChart');
+    if (ctx) {
+        // Fetch user stats
+        fetch('/api/user/stats')
+            .then(response => response.json())
+            .then(data => {
+                const activityData = data.activity || [];
+                
+                // Prepare chart data
+                const labels = [];
+                const votes = [];
+                
+                // Generate last 30 days
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                    
+                    // Find votes for this date
+                    const dayVotes = activityData.find(item => 
+                        new Date(item.data).toDateString() === date.toDateString()
+                    );
+                    votes.push(dayVotes ? dayVotes.votos : 0);
+                }
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Votos por Dia',
+                            data: votes,
+                            borderColor: 'rgb(13, 110, 253)',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar estatísticas:', error);
+            });
+    }
+});
+
+// Service toggle functions
+function toggleService() {
+    const modal = new bootstrap.Modal(document.getElementById('serviceModal'));
+    modal.show();
+}
+
+function confirmServiceToggle() {
+    // This would make an API call to toggle service status
+    // For now, just show a message
+    alert('Funcionalidade em desenvolvimento. Use o comando /turno no Discord.');
+    bootstrap.Modal.getInstance(document.getElementById('serviceModal')).hide();
+}
+
+// Other functions
+function refreshStats() {
+    location.reload();
+}
+
+function showHelp() {
+    alert('Ajuda em desenvolvimento. Entre em contato através do Discord.');
+}
+</script>
+{% endblock %}

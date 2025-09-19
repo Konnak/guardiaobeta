@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Servidores - Sistema Guardião BETA{% endblock %}
+
+{% block main_class %}servers-page{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 mb-0">Meus Servidores</h1>
+                    <p class="text-muted mb-0">Gerencie seus servidores Discord com Guardião BETA</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('premium') }}" class="btn btn-warning">
+                        <i class="bi bi-star"></i> Upgrade para Premium
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Servers Grid -->
+    <div class="row g-4">
+        {% for server_info in servers %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white d-flex align-items-center">
+                        <img src="{{ server_info.icon_url }}" alt="Ícone do Servidor" class="rounded me-3" width="40" height="40">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{{ server_info.guild.name }}</h6>
+                            <small class="text-muted">
+                                {% if server_info.is_premium %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-star-fill"></i> Premium
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Gratuito</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="text-primary">
+                                        <i class="bi bi-flag-fill" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <small class="text-muted">Denúncias</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="text-success">
+                                        <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <small class="text-muted">Protegido</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if server_info.is_premium %}
+                            <div class="alert alert-warning alert-sm mb-3">
+                                <small>
+                                    <i class="bi bi-info-circle"></i>
+                                    Premium até {{ server_info.premium_data.data_fim.strftime('%d/%m/%Y') }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('server_panel', server_id=server_info.guild.id) }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-gear"></i> Gerenciar
+                            </a>
+                            {% if not server_info.is_premium %}
+                                <a href="{{ url_for('premium') }}" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-star"></i> Upgrade
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-server" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h3 class="mt-3">Nenhum servidor encontrado</h3>
+                    <p class="text-muted">
+                        Você precisa ser administrador de um servidor Discord para gerenciá-lo aqui.
+                    </p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Adicionar Bot ao Servidor
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Help Section -->
+    {% if servers %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-question-circle"></i> Precisa de Ajuda?
+                        </h5>
+                        <p class="card-text">
+                            Se você não vê seus servidores aqui, certifique-se de que:
+                        </p>
+                        <ul class="mb-0">
+                            <li>Você é administrador do servidor</li>
+                            <li>O bot Guardião BETA está no servidor</li>
+                            <li>Você fez login com a conta correta do Discord</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Add any server-specific JavaScript here
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh server stats if needed
+    console.log('Servers page loaded');
+});
+</script>
+{% endblock %}
