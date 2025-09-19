@@ -109,7 +109,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                self.bot.load_extension(cog)
+                await self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
