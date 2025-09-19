@@ -198,11 +198,11 @@ class CadastroCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="cadastro",
         description="Cadastre-se no Sistema Guardião BETA"
     )
-    async def cadastro(self, ctx: discord.ApplicationContext):
+    async def cadastro(self, ctx):
         """
         Comando de cadastro - Apenas em DM
         
@@ -228,7 +228,7 @@ class CadastroCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
     
     @cadastro.error
-    async def cadastro_error(self, ctx: discord.ApplicationContext, error):
+    async def cadastro_error(self, ctx, error):
         """Tratamento de erros do comando cadastro"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -254,6 +254,6 @@ class CadastroCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
 
 
-async def setup(bot):
+def setup(bot):
     """Função para carregar o cog"""
-    await bot.add_cog(CadastroCog(bot))
+    bot.add_cog(CadastroCog(bot))

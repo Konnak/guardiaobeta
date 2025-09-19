@@ -53,9 +53,9 @@ intents.dm_messages = True
 intents.members = True
 
 # Criação do bot com py-cord (suporte nativo a slash commands)
-bot = discord.Bot(
-    intents=intents,
+bot = commands.Bot(
     command_prefix=BOT_PREFIX,
+    intents=intents,
     help_command=None,
     case_insensitive=True
 )
@@ -109,7 +109,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                await self.bot.load_extension(cog)
+                self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
