@@ -52,10 +52,12 @@ intents.guild_messages = True
 intents.dm_messages = True
 intents.members = True
 
-# Criação do bot com suporte a slash commands
-bot = discord.Bot(
+# Criação do bot
+bot = commands.Bot(
+    command_prefix=BOT_PREFIX,
     intents=intents,
-    help_command=None
+    help_command=None,
+    case_insensitive=True
 )
 
 # Criação da aplicação web
@@ -90,6 +92,9 @@ class GuardiaoBot:
             # Configura eventos
             self.setup_events()
             
+            # Configura slash commands
+            self.setup_slash_commands()
+            
             logger.info("Bot Discord configurado com sucesso")
             
         except Exception as e:
@@ -107,7 +112,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                self.bot.load_extension(cog)
+                await self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
@@ -128,6 +133,49 @@ class GuardiaoBot:
                 name=f"{len(self.bot.guilds)} servidores | Sistema Guardião BETA"
             )
             await self.bot.change_presence(activity=activity)
+    
+    def setup_slash_commands(self):
+        """Configura slash commands"""
+        
+        @self.bot.slash_command(name="cadastro", description="Cadastre-se no Sistema Guardião BETA")
+        async def cadastro(ctx: discord.ApplicationContext):
+            """Comando de cadastro via slash command"""
+            # Redireciona para o cog
+            cog = self.bot.get_cog("CadastroCog")
+            if cog:
+                await cog.cadastro(ctx)
+        
+        @self.bot.slash_command(name="stats", description="Veja suas estatísticas no Sistema Guardião BETA")
+        async def stats(ctx: discord.ApplicationContext):
+            """Comando de stats via slash command"""
+            # Redireciona para o cog
+            cog = self.bot.get_cog("StatsCog")
+            if cog:
+                await cog.stats(ctx)
+        
+        @self.bot.slash_command(name="formguardiao", description="Torne-se um Guardião do Sistema Guardião BETA")
+        async def formguardiao(ctx: discord.ApplicationContext):
+            """Comando de formguardiao via slash command"""
+            # Redireciona para o cog
+            cog = self.bot.get_cog("GuardiaoCog")
+            if cog:
+                await cog.formguardiao(ctx)
+        
+        @self.bot.slash_command(name="turno", description="Entre ou saia de serviço como Guardião")
+        async def turno(ctx: discord.ApplicationContext):
+            """Comando de turno via slash command"""
+            # Redireciona para o cog
+            cog = self.bot.get_cog("GuardiaoCog")
+            if cog:
+                await cog.turno(ctx)
+        
+        @self.bot.slash_command(name="report", description="Denuncie um usuário por violação das regras")
+        async def report(ctx: discord.ApplicationContext, usuario: discord.Member, motivo: str):
+            """Comando de report via slash command"""
+            # Redireciona para o cog
+            cog = self.bot.get_cog("ModeracaoCog")
+            if cog:
+                await cog.report(ctx, usuario, motivo)
             
             # Inicializa banco de dados
             await self.initialize_database()
