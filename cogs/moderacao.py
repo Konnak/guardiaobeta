@@ -634,7 +634,7 @@ class ModeracaoCog(commands.Cog):
             )
             await ctx.send(embed=embed)
     
-    async def _capture_messages(self, ctx: discord.ApplicationContext, target_user: discord.Member, denuncia_id: int):
+    async def _capture_messages(self, ctx: commands.Context, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""
         try:
             messages_captured = 0

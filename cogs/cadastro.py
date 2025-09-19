@@ -229,7 +229,7 @@ class CadastroCog(commands.Cog):
             await ctx.send(embed=embed)
     
     @cadastro.error
-    async def cadastro_error(self, ctx: discord.ApplicationContext, error):
+    async def cadastro_error(self, ctx: commands.Context, error):
         """Tratamento de erros do comando cadastro"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(

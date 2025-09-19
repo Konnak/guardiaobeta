@@ -593,7 +593,7 @@ class GuardiaoCog(commands.Cog):
             )
             await ctx.send(embed=embed)
     
-    async def _enter_service(self, ctx: discord.ApplicationContext, user_data: dict):
+    async def _enter_service(self, ctx: commands.Context, user_data: dict):
         """Entra em serviço"""
         try:
             now = datetime.utcnow()
@@ -630,7 +630,7 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro ao entrar em serviço para usuário {ctx.author.id}: {e}")
             raise
     
-    async def _exit_service(self, ctx: discord.ApplicationContext, user_data: dict):
+    async def _exit_service(self, ctx: commands.Context, user_data: dict):
         """Sai de serviço"""
         try:
             now = datetime.utcnow()
@@ -705,7 +705,7 @@ class GuardiaoCog(commands.Cog):
         await self.bot.wait_until_ready()
     
     @formguardiao.error
-    async def formguardiao_error(self, ctx: discord.ApplicationContext, error):
+    async def formguardiao_error(self, ctx: commands.Context, error):
         """Tratamento de erros do comando formguardiao"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -718,7 +718,7 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro não tratado no comando formguardiao: {error}")
     
     @turno.error
-    async def turno_error(self, ctx: discord.ApplicationContext, error):
+    async def turno_error(self, ctx: commands.Context, error):
         """Tratamento de erros do comando turno"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
