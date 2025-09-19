@@ -1,0 +1,14 @@
+# Discord Bot
+py-cord
+
+# Database
+asyncpg
+SQLAlchemy
+alembic
+
+# Web Framework
+Flask
+requests
+
+# Utilities
+python-dotenv
