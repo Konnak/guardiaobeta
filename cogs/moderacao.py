@@ -510,11 +510,11 @@ class ModeracaoCog(commands.Cog):
         self.distribution_loop.start()
         self.inactivity_check.start()
     
-    @commands.command(
+    @discord.slash_command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
-    async def report(self, ctx: commands.Context, usuario: discord.Member = None, *, motivo: str = None):
+    async def report(self, ctx: discord.ApplicationContext, usuario: discord.Member = None, motivo: str = None):
         """
         Comando para denunciar usuários
         
@@ -528,7 +528,7 @@ class ModeracaoCog(commands.Cog):
                     description="Use: `!report @usuario motivo da denúncia`",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed, ephemeral=True)
                 return
             
             # Verifica se o banco de dados está disponível
@@ -543,7 +543,7 @@ class ModeracaoCog(commands.Cog):
                     description="Você precisa se cadastrar primeiro usando `!cadastro`!",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed, ephemeral=True)
                 return
             
             # Verifica se não está denunciando a si mesmo
@@ -553,7 +553,7 @@ class ModeracaoCog(commands.Cog):
                     description="Você não pode denunciar a si mesmo.",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed, ephemeral=True)
                 return
             
             # Gera hash único para a denúncia
@@ -623,7 +623,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await ctx.send(embed=embed)
+            await ctx.respond(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -632,7 +632,7 @@ class ModeracaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.send(embed=embed)
+            await ctx.respond(embed=embed, ephemeral=True)
     
     async def _capture_messages(self, ctx: commands.Context, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""
@@ -780,6 +780,6 @@ class ModeracaoCog(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-async def setup(bot):
+def setup(bot):
     """Função para carregar o cog"""
-    await bot.add_cog(ModeracaoCog(bot))
+    bot.add_cog(ModeracaoCog(bot))

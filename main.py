@@ -52,12 +52,10 @@ intents.guild_messages = True
 intents.dm_messages = True
 intents.members = True
 
-# Criação do bot
-bot = commands.Bot(
-    command_prefix=BOT_PREFIX,
+# Criação do bot com suporte a slash commands
+bot = discord.Bot(
     intents=intents,
-    help_command=None,
-    case_insensitive=True
+    help_command=None
 )
 
 # Criação da aplicação web
@@ -109,7 +107,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                await self.bot.load_extension(cog)
+                self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
