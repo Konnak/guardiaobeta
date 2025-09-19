@@ -367,7 +367,7 @@ class TrainingView(ui.View):
         """Atualiza a categoria do usuário para Guardião"""
         try:
             query = "UPDATE usuarios SET categoria = 'Guardião' WHERE id_discord = $1"
-            await db_manager.execute_command(query, user_id)
+            db_manager.execute_command(query, user_id)
             logger.info(f"Usuário {user_id} promovido a Guardião")
         except Exception as e:
             logger.error(f"Erro ao promover usuário {user_id} a Guardião: {e}")
@@ -377,7 +377,7 @@ class TrainingView(ui.View):
         try:
             cooldown_time = datetime.utcnow() + timedelta(hours=PROVA_COOLDOWN_HOURS)
             query = "UPDATE usuarios SET cooldown_prova = $1 WHERE id_discord = $2"
-            await db_manager.execute_command(query, cooldown_time, user_id)
+            db_manager.execute_command(query, cooldown_time, user_id)
             logger.info(f"Cooldown de prova definido para usuário {user_id}")
         except Exception as e:
             logger.error(f"Erro ao definir cooldown de prova para usuário {user_id}: {e}")
@@ -403,7 +403,7 @@ class GuardiaoCog(commands.Cog):
         try:
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
-                await db_manager.initialize_pool()
+                db_manager.initialize_pool()
             
             # Verifica a idade da conta (mínimo 3 meses)
             account_age = datetime.utcnow() - ctx.author.created_at
@@ -424,7 +424,7 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica se o usuário está cadastrado
-            user_data = await get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id(ctx.author.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
@@ -531,10 +531,10 @@ class GuardiaoCog(commands.Cog):
         try:
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
-                await db_manager.initialize_pool()
+                db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = await get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id(ctx.author.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
@@ -602,7 +602,7 @@ class GuardiaoCog(commands.Cog):
                 SET em_servico = TRUE, ultimo_turno_inicio = $1 
                 WHERE id_discord = $2
             """
-            await db_manager.execute_command(query, now, ctx.author.id)
+            db_manager.execute_command(query, now, ctx.author.id)
             
             embed = discord.Embed(
                 title="🟢 Você Entrou em Serviço!",
@@ -649,7 +649,7 @@ class GuardiaoCog(commands.Cog):
                         pontos = pontos + $1 
                     WHERE id_discord = $2
                 """
-                await db_manager.execute_command(query, pontos_ganhos, ctx.author.id)
+                db_manager.execute_command(query, pontos_ganhos, ctx.author.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -666,7 +666,7 @@ class GuardiaoCog(commands.Cog):
             else:
                 # Sai de serviço sem calcular pontos
                 query = "UPDATE usuarios SET em_servico = FALSE, ultimo_turno_inicio = NULL WHERE id_discord = $1"
-                await db_manager.execute_command(query, ctx.author.id)
+                db_manager.execute_command(query, ctx.author.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -692,7 +692,7 @@ class GuardiaoCog(commands.Cog):
                 SET pontos = pontos + $1 
                 WHERE em_servico = TRUE AND categoria IN ('Guardião', 'Moderador', 'Administrador')
             """
-            await db_manager.execute_command(query, TURN_POINTS_PER_HOUR)
+            db_manager.execute_command(query, TURN_POINTS_PER_HOUR)
             
             logger.info(f"Pontos adicionados para Guardiões em serviço: +{TURN_POINTS_PER_HOUR}")
             
@@ -731,6 +731,6 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro não tratado no comando turno: {error}")
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(GuardiaoCog(bot))
+    await bot.add_cog(GuardiaoCog(bot))

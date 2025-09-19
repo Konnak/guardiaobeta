@@ -69,7 +69,7 @@ class CadastroModal(ui.Modal, title="Cadastro no Sistema Guardião BETA"):
                 return
             
             # Verifica se o usuário já existe
-            existing_user = await get_user_by_discord_id(interaction.user.id)
+            existing_user = get_user_by_discord_id(interaction.user.id)
             if existing_user:
                 embed = discord.Embed(
                     title="⚠️ Usuário Já Cadastrado",
@@ -186,7 +186,7 @@ class CadastroModal(ui.Modal, title="Cadastro no Sistema Guardião BETA"):
         """Verifica se o email já existe no banco de dados"""
         try:
             query = "SELECT id_discord FROM usuarios WHERE email = $1"
-            result = await db_manager.execute_one(query, email.lower().strip())
+            result = db_manager.execute_one(query, email.lower().strip())
             return result is not None
         except Exception as e:
             logger.error(f"Erro ao verificar email existente: {e}")
@@ -213,7 +213,7 @@ class CadastroCog(commands.Cog):
         try:
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
-                await db_manager.initialize_pool()
+                db_manager.initialize_pool()
             
             # Cria e envia o modal
             modal = CadastroModal(self.bot)
@@ -255,6 +255,6 @@ class CadastroCog(commands.Cog):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(CadastroCog(bot))
+    await bot.add_cog(CadastroCog(bot))

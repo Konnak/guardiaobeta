@@ -42,10 +42,10 @@ class StatsCog(commands.Cog):
         try:
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
-                await db_manager.initialize_pool()
+                db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = await get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id(ctx.author.id)
             
             if not user_data:
                 embed = discord.Embed(
@@ -148,7 +148,7 @@ class StatsCog(commands.Cog):
                 FROM votos_guardioes 
                 WHERE id_guardiao = $1
             """
-            denuncias_atendidas = await db_manager.execute_scalar(denuncias_query, user_id)
+            denuncias_atendidas = db_manager.execute_scalar(denuncias_query, user_id)
             
             # Conta votos realizados
             votos_query = """
@@ -156,7 +156,7 @@ class StatsCog(commands.Cog):
                 FROM votos_guardioes 
                 WHERE id_guardiao = $1
             """
-            votos_realizados = await db_manager.execute_scalar(votos_query, user_id)
+            votos_realizados = db_manager.execute_scalar(votos_query, user_id)
             
             return {
                 'denuncias_atendidas': denuncias_atendidas or 0,
@@ -242,6 +242,6 @@ class StatsCog(commands.Cog):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(StatsCog(bot))
+    await bot.add_cog(StatsCog(bot))

@@ -47,7 +47,7 @@ class ReportView(ui.View):
                 SELECT COUNT(*) FROM votos_guardioes 
                 WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            count = await db_manager.execute_scalar(count_query, self.hash_denuncia)
+            count = db_manager.execute_scalar(count_query, self.hash_denuncia)
             
             if count >= REQUIRED_VOTES_FOR_DECISION:
                 embed = discord.Embed(
@@ -66,7 +66,7 @@ class ReportView(ui.View):
                 JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
                 WHERE d.hash_denuncia = $1
             """
-            denuncia = await db_manager.execute_one(denuncia_query, self.hash_denuncia)
+            denuncia = db_manager.execute_one(denuncia_query, self.hash_denuncia)
             
             if not denuncia:
                 await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
@@ -78,7 +78,7 @@ class ReportView(ui.View):
                 WHERE id_denuncia = $1 
                 ORDER BY timestamp_mensagem
             """
-            mensagens = await db_manager.execute_query(mensagens_query, denuncia['id'])
+            mensagens = db_manager.execute_query(mensagens_query, denuncia['id'])
             
             # Cria o embed com os detalhes da denúncia
             embed = discord.Embed(
@@ -130,7 +130,7 @@ class ReportView(ui.View):
             # Define o cooldown de dispensa
             cooldown_time = datetime.utcnow() + timedelta(minutes=DISPENSE_COOLDOWN_MINUTES)
             query = "UPDATE usuarios SET cooldown_dispensa = $1 WHERE id_discord = $2"
-            await db_manager.execute_command(query, cooldown_time, interaction.user.id)
+            db_manager.execute_command(query, cooldown_time, interaction.user.id)
             
             embed = discord.Embed(
                 title="❌ Ocorrência Dispensada",
@@ -178,7 +178,7 @@ class ReportView(ui.View):
                 SELECT id FROM votos_guardioes 
                 WHERE id_guardiao = $1 AND id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $2)
             """
-            vote_exists = await db_manager.execute_scalar(vote_check, user_id, hash_denuncia)
+            vote_exists = db_manager.execute_scalar(vote_check, user_id, hash_denuncia)
             
             if not vote_exists:
                 # Aplica penalidade por inatividade
@@ -197,7 +197,7 @@ class ReportView(ui.View):
                 SET pontos = pontos - 5, cooldown_inativo = $1 
                 WHERE id_discord = $2
             """
-            await db_manager.execute_command(query, penalty_time, user_id)
+            db_manager.execute_command(query, penalty_time, user_id)
             
             logger.info(f"Penalidade de inatividade aplicada ao usuário {user_id}")
             
@@ -233,7 +233,7 @@ class VoteView(ui.View):
                 SELECT id FROM votos_guardioes 
                 WHERE id_guardiao = $1 AND id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $2)
             """
-            existing_vote = await db_manager.execute_scalar(check_query, self.guardiao_id, self.hash_denuncia)
+            existing_vote = db_manager.execute_scalar(check_query, self.guardiao_id, self.hash_denuncia)
             
             if existing_vote:
                 await interaction.response.send_message("Você já votou nesta denúncia!", ephemeral=True)
@@ -244,7 +244,7 @@ class VoteView(ui.View):
                 INSERT INTO votos_guardioes (id_denuncia, id_guardiao, voto)
                 SELECT id, $1, $2 FROM denuncias WHERE hash_denuncia = $3
             """
-            await db_manager.execute_command(vote_query, self.guardiao_id, voto, self.hash_denuncia)
+            db_manager.execute_command(vote_query, self.guardiao_id, voto, self.hash_denuncia)
             
             # Confirma o voto
             embed = discord.Embed(
@@ -269,7 +269,7 @@ class VoteView(ui.View):
                 SELECT COUNT(*) FROM votos_guardioes 
                 WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            total_votes = await db_manager.execute_scalar(count_query, self.hash_denuncia)
+            total_votes = db_manager.execute_scalar(count_query, self.hash_denuncia)
             
             if total_votes >= REQUIRED_VOTES_FOR_DECISION:
                 await self._finalize_denuncia()
@@ -285,7 +285,7 @@ class VoteView(ui.View):
                 SELECT voto FROM votos_guardioes 
                 WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            votes = await db_manager.execute_query(votes_query, self.hash_denuncia)
+            votes = db_manager.execute_query(votes_query, self.hash_denuncia)
             
             # Conta os votos
             vote_counts = {"OK!": 0, "Intimidou": 0, "Grave": 0}
@@ -305,7 +305,7 @@ class VoteView(ui.View):
                 SET status = 'Finalizada', resultado_final = $1 
                 WHERE hash_denuncia = $2
             """
-            await db_manager.execute_command(update_query, result['type'], self.hash_denuncia)
+            db_manager.execute_command(update_query, result['type'], self.hash_denuncia)
             
             # Distribui experiência para os guardiões
             await self._distribute_experience()
@@ -370,7 +370,7 @@ class VoteView(ui.View):
                 SELECT id_servidor, id_denunciado FROM denuncias 
                 WHERE hash_denuncia = $1
             """
-            denuncia = await db_manager.execute_one(denuncia_query, self.hash_denuncia)
+            denuncia = db_manager.execute_one(denuncia_query, self.hash_denuncia)
             
             if not denuncia:
                 return
@@ -408,7 +408,7 @@ class VoteView(ui.View):
                 SELECT id_guardiao, voto FROM votos_guardioes 
                 WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            guardians = await db_manager.execute_query(guardians_query, self.hash_denuncia)
+            guardians = db_manager.execute_query(guardians_query, self.hash_denuncia)
             
             for guardian in guardians:
                 xp_reward = calculate_experience_reward(guardian['voto'])
@@ -419,7 +419,7 @@ class VoteView(ui.View):
                     SET experiencia = experiencia + $1 
                     WHERE id_discord = $2
                 """
-                await db_manager.execute_command(update_query, xp_reward, guardian['id_guardiao'])
+                db_manager.execute_command(update_query, xp_reward, guardian['id_guardiao'])
             
             logger.info(f"Experiência distribuída para {len(guardians)} guardiões")
             
@@ -434,7 +434,7 @@ class VoteView(ui.View):
                 SELECT id_denunciado FROM denuncias 
                 WHERE hash_denuncia = $1
             """
-            denuncia = await db_manager.execute_one(denuncia_query, self.hash_denuncia)
+            denuncia = db_manager.execute_one(denuncia_query, self.hash_denuncia)
             
             if not denuncia:
                 return
@@ -480,7 +480,7 @@ class AppealView(ui.View):
         try:
             # Altera o status da denúncia para "Apelada"
             query = "UPDATE denuncias SET status = 'Apelada' WHERE hash_denuncia = $1"
-            await db_manager.execute_command(query, self.hash_denuncia)
+            db_manager.execute_command(query, self.hash_denuncia)
             
             embed = discord.Embed(
                 title="⚖️ Apelação Registrada",
@@ -533,7 +533,7 @@ class ModeracaoCog(commands.Cog):
             
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
-                await db_manager.initialize_pool()
+                db_manager.initialize_pool()
             
             # Verifica se o usuário está cadastrado
             user_data = get_user_by_discord_id(ctx.author.id)
@@ -565,7 +565,7 @@ class ModeracaoCog(commands.Cog):
                 SELECT id_servidor FROM servidores_premium 
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
-            is_premium = await db_manager.execute_scalar(premium_query, ctx.guild.id) is not None
+            is_premium = db_manager.execute_scalar(premium_query, ctx.guild.id) is not None
             
             # Insere a denúncia no banco
             denuncia_query = """
@@ -575,7 +575,7 @@ class ModeracaoCog(commands.Cog):
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id
             """
-            denuncia_id = await db_manager.execute_scalar(
+            denuncia_id = db_manager.execute_scalar(
                 denuncia_query, hash_denuncia, ctx.guild.id, ctx.channel.id,
                 ctx.author.id, usuario.id, motivo, is_premium
             )
@@ -588,7 +588,7 @@ class ModeracaoCog(commands.Cog):
                 SELECT COUNT(*) FROM usuarios 
                 WHERE em_servico = TRUE AND categoria = 'Guardião'
             """
-            guardians_count = await db_manager.execute_scalar(guardians_query)
+            guardians_count = db_manager.execute_scalar(guardians_query)
             
             # Resposta de confirmação
             embed = discord.Embed(
@@ -652,7 +652,7 @@ class ModeracaoCog(commands.Cog):
                             id_denuncia, id_autor, conteudo, anexos_urls, timestamp_mensagem
                         ) VALUES ($1, $2, $3, $4, $5)
                     """
-                    await db_manager.execute_command(
+                    db_manager.execute_command(
                         mensagem_query, denuncia_id, message.author.id, 
                         message.content, ",".join(attachment_urls), message.created_at
                     )
@@ -681,7 +681,7 @@ class ModeracaoCog(commands.Cog):
                 ORDER BY e_premium DESC, data_criacao ASC
                 LIMIT 1
             """
-            denuncia = await db_manager.execute_one(denuncias_query)
+            denuncia = db_manager.execute_one(denuncias_query)
             
             if not denuncia:
                 return
@@ -700,14 +700,14 @@ class ModeracaoCog(commands.Cog):
                 ORDER BY RANDOM()
                 LIMIT $2
             """
-            guardians = await db_manager.execute_query(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
+            guardians = db_manager.execute_query(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
             
             if not guardians:
                 return
             
             # Muda o status para "Em Análise"
             update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
-            await db_manager.execute_command(update_query, denuncia['id'])
+            db_manager.execute_command(update_query, denuncia['id'])
             
             # Envia para cada guardião
             for guardian_data in guardians:
@@ -780,6 +780,6 @@ class ModeracaoCog(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(ModeracaoCog(bot))
+    await bot.add_cog(ModeracaoCog(bot))
