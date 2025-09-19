@@ -234,6 +234,12 @@ class GuardiaoBot:
         """Inicializa o banco de dados"""
         try:
             await self.db_manager.initialize_pool()
+            
+            # Cria as tabelas se não existirem
+            tables_created = await self.db_manager.create_tables()
+            if tables_created:
+                logger.info("Tabelas do banco de dados verificadas/criadas com sucesso")
+            
             logger.info("Banco de dados inicializado com sucesso")
         except Exception as e:
             logger.error(f"Erro ao inicializar banco de dados: {e}")

@@ -75,156 +75,157 @@ class DatabaseManager:
             await self.pool.close()
             logger.info("Pool de conexões fechado.")
     
+    async def create_tables(self):
+        """Cria todas as tabelas necessárias no banco de dados"""
+        try:
+            # Lê o arquivo SQL de inicialização
+            import os
+            sql_file = os.path.join(os.path.dirname(__file__), 'init_schema.sql')
+            
+            if not os.path.exists(sql_file):
+                logger.error(f"Arquivo SQL não encontrado: {sql_file}")
+                return False
+            
+            with open(sql_file, 'r', encoding='utf-8') as f:
+                sql_content = f.read()
+            
+            # Executa o SQL
+            async with self.get_connection() as conn:
+                await conn.execute(sql_content)
+            
+            logger.info("Tabelas criadas com sucesso!")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao criar tabelas: {e}")
+            return False
+    
+    def create_tables_sync(self):
+        """Versão síncrona para criar tabelas"""
+        import asyncio
+        import concurrent.futures
+        
+        def run_in_thread():
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                result = new_loop.run_until_complete(self.create_tables())
+                new_loop.close()
+                return result
+            except Exception as e:
+                logger.error(f"Erro na criação síncrona de tabelas: {e}")
+                return False
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result(timeout=60)
+    
     # Versões síncronas das funções para uso em Flask
     def execute_query_sync(self, query: str, *args) -> List[Dict[str, Any]]:
         """Versão síncrona de execute_query para uso em Flask"""
         import asyncio
-        import asyncpg
-        import os
+        import concurrent.futures
+        import threading
         
-        # Cria uma conexão direta para operações síncronas
-        try:
-            # Configurações do banco
-            db_config = {
-                'host': os.getenv('POSTGRES_HOST'),
-                'port': int(os.getenv('POSTGRES_PORT', 5432)),
-                'user': os.getenv('POSTGRES_USER'),
-                'password': os.getenv('POSTGRES_PASSWORD'),
-                'database': os.getenv('POSTGRES_DB')
-            }
-            
-            # Executa em um novo loop isolado
-            def run_query():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    async def execute():
-                        conn = await asyncpg.connect(**db_config)
-                        try:
-                            rows = await conn.fetch(query, *args)
-                            return [dict(row) for row in rows]
-                        finally:
-                            await conn.close()
-                    
-                    return loop.run_until_complete(execute())
-                finally:
-                    loop.close()
-            
-            return run_query()
-            
-        except Exception as e:
-            logger.error(f"Erro na execução síncrona: {e}")
-            return []
+        def run_in_thread():
+            try:
+                # Cria um novo loop em uma thread separada
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                
+                async def execute():
+                    async with self.get_connection() as conn:
+                        rows = await conn.fetch(query, *args)
+                        return [dict(row) for row in rows]
+                
+                result = new_loop.run_until_complete(execute())
+                new_loop.close()
+                return result
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return []
+        
+        # Executa em thread separada para evitar conflitos
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result(timeout=30)
     
     def execute_one_sync(self, query: str, *args) -> Optional[Dict[str, Any]]:
         """Versão síncrona de execute_one para uso em Flask"""
         import asyncio
-        import asyncpg
-        import os
+        import concurrent.futures
         
-        try:
-            db_config = {
-                'host': os.getenv('POSTGRES_HOST'),
-                'port': int(os.getenv('POSTGRES_PORT', 5432)),
-                'user': os.getenv('POSTGRES_USER'),
-                'password': os.getenv('POSTGRES_PASSWORD'),
-                'database': os.getenv('POSTGRES_DB')
-            }
-            
-            def run_query():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    async def execute():
-                        conn = await asyncpg.connect(**db_config)
-                        try:
-                            row = await conn.fetchrow(query, *args)
-                            return dict(row) if row else None
-                        finally:
-                            await conn.close()
-                    
-                    return loop.run_until_complete(execute())
-                finally:
-                    loop.close()
-            
-            return run_query()
-            
-        except Exception as e:
-            logger.error(f"Erro na execução síncrona: {e}")
-            return None
+        def run_in_thread():
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                
+                async def execute():
+                    async with self.get_connection() as conn:
+                        row = await conn.fetchrow(query, *args)
+                        return dict(row) if row else None
+                
+                result = new_loop.run_until_complete(execute())
+                new_loop.close()
+                return result
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return None
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result(timeout=30)
     
     def execute_scalar_sync(self, query: str, *args) -> Any:
         """Versão síncrona de execute_scalar para uso em Flask"""
         import asyncio
-        import asyncpg
-        import os
+        import concurrent.futures
         
-        try:
-            db_config = {
-                'host': os.getenv('POSTGRES_HOST'),
-                'port': int(os.getenv('POSTGRES_PORT', 5432)),
-                'user': os.getenv('POSTGRES_USER'),
-                'password': os.getenv('POSTGRES_PASSWORD'),
-                'database': os.getenv('POSTGRES_DB')
-            }
-            
-            def run_query():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    async def execute():
-                        conn = await asyncpg.connect(**db_config)
-                        try:
-                            return await conn.fetchval(query, *args)
-                        finally:
-                            await conn.close()
-                    
-                    return loop.run_until_complete(execute())
-                finally:
-                    loop.close()
-            
-            return run_query()
-            
-        except Exception as e:
-            logger.error(f"Erro na execução síncrona: {e}")
-            return None
+        def run_in_thread():
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                
+                async def execute():
+                    async with self.get_connection() as conn:
+                        return await conn.fetchval(query, *args)
+                
+                result = new_loop.run_until_complete(execute())
+                new_loop.close()
+                return result
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return None
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result(timeout=30)
     
     def execute_command_sync(self, command: str, *args) -> str:
         """Versão síncrona de execute_command para uso em Flask"""
         import asyncio
-        import asyncpg
-        import os
+        import concurrent.futures
         
-        try:
-            db_config = {
-                'host': os.getenv('POSTGRES_HOST'),
-                'port': int(os.getenv('POSTGRES_PORT', 5432)),
-                'user': os.getenv('POSTGRES_USER'),
-                'password': os.getenv('POSTGRES_PASSWORD'),
-                'database': os.getenv('POSTGRES_DB')
-            }
-            
-            def run_query():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    async def execute():
-                        conn = await asyncpg.connect(**db_config)
-                        try:
-                            await conn.execute(command, *args)
-                            return "OK"
-                        finally:
-                            await conn.close()
-                    
-                    return loop.run_until_complete(execute())
-                finally:
-                    loop.close()
-            
-            return run_query()
-            
-        except Exception as e:
-            logger.error(f"Erro na execução síncrona: {e}")
-            return "ERROR"
+        def run_in_thread():
+            try:
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                
+                async def execute():
+                    async with self.get_connection() as conn:
+                        await conn.execute(command, *args)
+                        return "OK"
+                
+                result = new_loop.run_until_complete(execute())
+                new_loop.close()
+                return result
+            except Exception as e:
+                logger.error(f"Erro na execução síncrona: {e}")
+                return "ERROR"
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_in_thread)
+            return future.result(timeout=30)
     
     @asynccontextmanager
     async def get_connection(self):
