@@ -20,9 +20,8 @@ logger = logging.getLogger(__name__)
 class CadastroModal(ui.Modal, title="Cadastro no Sistema Guardião BETA"):
     """Modal para cadastro de usuários no sistema"""
     
-    def __init__(self, bot):
+    def __init__(self):
         super().__init__()
-        self.bot = bot
     
     nome_completo = ui.TextInput(
         label="Nome Completo",
@@ -216,7 +215,7 @@ class CadastroCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Cria e envia o modal
-            modal = CadastroModal(self.bot)
+            modal = CadastroModal()
             await ctx.send_modal(modal)
             
         except Exception as e:
@@ -229,7 +228,7 @@ class CadastroCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
     
     @cadastro.error
-    async def cadastro_error(self, ctx: commands.Context, error):
+    async def cadastro_error(self, ctx: discord.ApplicationContext, error):
         """Tratamento de erros do comando cadastro"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -255,6 +254,6 @@ class CadastroCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(CadastroCog(bot))
+    await bot.add_cog(CadastroCog(bot))

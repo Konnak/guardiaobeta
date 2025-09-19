@@ -217,7 +217,7 @@ class StatsCog(commands.Cog):
         return "\n".join(cooldowns) if cooldowns else "Nenhum cooldown ativo"
     
     @stats.error
-    async def stats_error(self, ctx: commands.Context, error):
+    async def stats_error(self, ctx: discord.ApplicationContext, error):
         """Tratamento de erros do comando stats"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -242,6 +242,6 @@ class StatsCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(StatsCog(bot))
+    await bot.add_cog(StatsCog(bot))

@@ -780,6 +780,6 @@ class ModeracaoCog(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(ModeracaoCog(bot))
+    await bot.add_cog(ModeracaoCog(bot))

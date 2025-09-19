@@ -11,7 +11,7 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 
-# Discord Bot
+# Discord Bot - py-cord
 import discord
 from discord.ext import commands
 
@@ -54,7 +54,10 @@ intents.members = True
 
 # Criação do bot com py-cord (suporte nativo a slash commands)
 bot = discord.Bot(
-    intents=intents
+    intents=intents,
+    command_prefix=BOT_PREFIX,
+    help_command=None,
+    case_insensitive=True
 )
 
 # Criação da aplicação web
@@ -106,7 +109,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                self.bot.load_extension(cog)
+                await self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
@@ -213,45 +216,6 @@ class GuardiaoBot:
             except Exception as e:
                 logger.error(f"Erro ao enviar mensagem de boas-vindas: {e}")
         
-        @self.bot.event
-        async def on_guild_join(guild):
-            """Evento quando o bot entra em um servidor"""
-            logger.info(f'Bot adicionado ao servidor: {guild.name} (ID: {guild.id})')
-            
-            # Envia mensagem de boas-vindas
-            try:
-                # Procura por um canal de texto
-                channel = None
-                for ch in guild.text_channels:
-                    if ch.permissions_for(guild.me).send_messages:
-                        channel = ch
-                        break
-                
-                if channel:
-                    embed = discord.Embed(
-                        title="🛡️ Sistema Guardião BETA",
-                        description="Obrigado por me adicionar ao seu servidor!",
-                        color=0x00ff00
-                    )
-                    embed.add_field(
-                        name="📋 Primeiros Passos",
-                        value="1. Use `/cadastro` para se registrar\n"
-                              "2. Use `/formguardiao` para se tornar um Guardião\n"
-                              "3. Use `/report` para denunciar violações",
-                        inline=False
-                    )
-                    embed.add_field(
-                        name="🌐 Painel Web",
-                        value="Acesse nosso painel web para configurações avançadas:\n"
-                              "https://guardiaobeta.vercel.app",
-                        inline=False
-                    )
-                    embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
-                    
-                    await channel.send(embed=embed)
-                    
-            except Exception as e:
-                logger.error(f"Erro ao enviar mensagem de boas-vindas: {e}")
         
         @self.bot.event
         async def on_guild_remove(guild):
@@ -259,7 +223,7 @@ class GuardiaoBot:
             logger.info(f'Bot removido do servidor: {guild.name} (ID: {guild.id})')
         
         @self.bot.event
-        async def on_command_error(ctx, error):
+        async def on_application_command_error(ctx, error):
             """Tratamento de erros de comandos"""
             if isinstance(error, commands.CommandNotFound):
                 return  # Ignora comandos não encontrados
@@ -270,7 +234,7 @@ class GuardiaoBot:
                     description="Você não tem permissão para usar este comando.",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed, ephemeral=True)
+                await ctx.respond(embed=embed, ephemeral=True)
             
             elif isinstance(error, commands.MissingRequiredArgument):
                 embed = discord.Embed(
@@ -278,7 +242,7 @@ class GuardiaoBot:
                     description=f"Você precisa fornecer o argumento: `{error.param.name}`",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed, ephemeral=True)
+                await ctx.respond(embed=embed, ephemeral=True)
             
             elif isinstance(error, commands.BadArgument):
                 embed = discord.Embed(
@@ -286,7 +250,7 @@ class GuardiaoBot:
                     description="O argumento fornecido é inválido.",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed, ephemeral=True)
+                await ctx.respond(embed=embed, ephemeral=True)
             
             elif isinstance(error, commands.CommandOnCooldown):
                 embed = discord.Embed(
@@ -294,7 +258,7 @@ class GuardiaoBot:
                     description=f"Você pode usar este comando novamente em {error.retry_after:.1f} segundos.",
                     color=0xffa500
                 )
-                await ctx.send(embed=embed, ephemeral=True)
+                await ctx.respond(embed=embed, ephemeral=True)
             
             else:
                 # Erro não tratado
@@ -304,7 +268,7 @@ class GuardiaoBot:
                     description="Ocorreu um erro interno. Tente novamente mais tarde.",
                     color=0xff0000
                 )
-                await ctx.send(embed=embed, ephemeral=True)
+                await ctx.respond(embed=embed, ephemeral=True)
     
     async def initialize_database(self):
         """Inicializa o banco de dados"""
