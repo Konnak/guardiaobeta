@@ -52,12 +52,9 @@ intents.guild_messages = True
 intents.dm_messages = True
 intents.members = True
 
-# Criação do bot
-bot = commands.Bot(
-    command_prefix=BOT_PREFIX,
-    intents=intents,
-    help_command=None,
-    case_insensitive=True
+# Criação do bot com py-cord (suporte nativo a slash commands)
+bot = discord.Bot(
+    intents=intents
 )
 
 # Criação da aplicação web
@@ -109,7 +106,7 @@ class GuardiaoBot:
         
         for cog in cogs_to_load:
             try:
-                await self.bot.load_extension(cog)
+                self.bot.load_extension(cog)
                 logger.info(f"Cog {cog} carregado com sucesso")
             except Exception as e:
                 logger.error(f"Erro ao carregar cog {cog}: {e}")
@@ -143,41 +140,36 @@ class GuardiaoBot:
             if message.author.bot:
                 return
             
-            # Processa comandos
-            await self.bot.process_commands(message)
-            
-            # Se a mensagem não for um comando, mostra ajuda em DMs
-            if not message.content.startswith(self.bot.command_prefix):
-                # Verifica se é DM
-                if isinstance(message.channel, discord.DMChannel):
-                    # Envia embed de ajuda
-                    embed = discord.Embed(
-                        title="🛡️ Sistema Guardião BETA",
-                        description="Bem-vindo ao Sistema Guardião BETA!",
-                        color=0x00ff00
-                    )
-                    embed.add_field(
-                        name="📋 Comandos Disponíveis:",
-                        value=(
-                            f"`{self.bot.command_prefix}cadastro` - Cadastre-se no sistema\n"
-                            f"`{self.bot.command_prefix}stats` - Veja suas estatísticas\n"
-                            f"`{self.bot.command_prefix}formguardiao` - Torne-se um Guardião\n"
-                            f"`{self.bot.command_prefix}turno` - Entre/saia de serviço\n"
-                            f"`{self.bot.command_prefix}report <@usuario> <motivo>` - Denuncie um usuário"
-                        ),
-                        inline=False
-                    )
-                    embed.add_field(
-                        name="💡 Dica:",
-                        value="Use os comandos em servidores onde o bot está presente para funcionalidades completas!",
-                        inline=False
-                    )
-                    embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
-                    
-                    try:
-                        await message.channel.send(embed=embed)
-                    except:
-                        pass  # Ignora erros de DM
+            # Verifica se é DM e envia ajuda
+            if isinstance(message.channel, discord.DMChannel):
+                # Envia embed de ajuda
+                embed = discord.Embed(
+                    title="🛡️ Sistema Guardião BETA",
+                    description="Bem-vindo ao Sistema Guardião BETA!",
+                    color=0x00ff00
+                )
+                embed.add_field(
+                    name="📋 Slash Commands Disponíveis:",
+                    value=(
+                        "`/cadastro` - Cadastre-se no sistema\n"
+                        "`/stats` - Veja suas estatísticas\n"
+                        "`/formguardiao` - Torne-se um Guardião\n"
+                        "`/turno` - Entre/saia de serviço\n"
+                        "`/report` - Denuncie um usuário"
+                    ),
+                    inline=False
+                )
+                embed.add_field(
+                    name="💡 Dica:",
+                    value="Digite `/` para ver todos os comandos disponíveis!",
+                    inline=False
+                )
+                embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
+                
+                try:
+                    await message.channel.send(embed=embed)
+                except:
+                    pass  # Ignora erros de DM
         
         @self.bot.event
         async def on_guild_join(guild):
@@ -200,19 +192,19 @@ class GuardiaoBot:
                         color=0x00ff00
                     )
                     embed.add_field(
-                        name="📋 Comandos Disponíveis:",
+                        name="📋 Slash Commands Disponíveis:",
                         value=(
-                            f"`{self.bot.command_prefix}cadastro` - Cadastre-se no sistema\n"
-                            f"`{self.bot.command_prefix}stats` - Veja suas estatísticas\n"
-                            f"`{self.bot.command_prefix}formguardiao` - Torne-se um Guardião\n"
-                            f"`{self.bot.command_prefix}turno` - Entre/saia de serviço\n"
-                            f"`{self.bot.command_prefix}report <@usuario> <motivo>` - Denuncie um usuário"
+                            "`/cadastro` - Cadastre-se no sistema\n"
+                            "`/stats` - Veja suas estatísticas\n"
+                            "`/formguardiao` - Torne-se um Guardião\n"
+                            "`/turno` - Entre/saia de serviço\n"
+                            "`/report` - Denuncie um usuário"
                         ),
                         inline=False
                     )
                     embed.add_field(
                         name="💡 Dica:",
-                        value="Use os comandos em DM para cadastro e estatísticas pessoais!",
+                        value="Digite `/` para ver todos os comandos disponíveis!",
                         inline=False
                     )
                     embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
