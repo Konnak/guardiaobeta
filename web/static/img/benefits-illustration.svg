@@ -1,0 +1,11 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Placeholder SVG para benefits illustration -->
+  <rect width="300" height="200" fill="#f8f9fa"/>
+  <circle cx="150" cy="100" r="50" fill="#007bff" opacity="0.1"/>
+  <text x="150" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#007bff">
+    Benefícios
+  </text>
+  <text x="150" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">
+    Sistema Premium
+  </text>
+</svg>
