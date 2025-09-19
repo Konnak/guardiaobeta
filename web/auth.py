@@ -75,7 +75,7 @@ def setup_auth(app: Flask):
             return redirect(url_for('index'))
     
     @app.route('/callback')
-    async def callback():
+    def callback():
         """Processa o callback do OAuth2"""
         try:
             # Verifica se há código de autorização
@@ -95,21 +95,21 @@ def setup_auth(app: Flask):
             session.pop('oauth_state', None)
             
             # Troca o código por um token de acesso
-            token_data = await exchange_code_for_token(code)
+            token_data = exchange_code_for_token(code)
             
             if not token_data:
                 flash("Falha ao obter token de acesso.", "error")
                 return redirect(url_for('index'))
             
             # Obtém informações do usuário
-            user_data = await get_user_info(token_data['access_token'])
+            user_data = get_user_info(token_data['access_token'])
             
             if not user_data:
                 flash("Falha ao obter informações do usuário.", "error")
                 return redirect(url_for('index'))
             
             # Obtém lista de servidores do usuário
-            guilds_data = await get_user_guilds(token_data['access_token'])
+            guilds_data = get_user_guilds(token_data['access_token'])
             
             # Salva informações na sessão
             session['user'] = {
@@ -127,7 +127,7 @@ def setup_auth(app: Flask):
             }
             
             # Verifica se o usuário está cadastrado no sistema
-            user_db = await get_user_by_discord_id(int(user_data['id']))
+            user_db = get_user_by_discord_id(int(user_data['id']))
             
             if user_db:
                 session['user']['cadastrado'] = True
@@ -165,7 +165,7 @@ def setup_auth(app: Flask):
             return redirect(url_for('index'))
     
     @app.route('/api/user')
-    async def api_user():
+    def api_user():
         """API endpoint para informações do usuário"""
         try:
             if 'user' not in session:
@@ -184,7 +184,7 @@ def setup_auth(app: Flask):
             return jsonify({'error': 'Erro interno'}), 500
 
 
-async def exchange_code_for_token(code: str) -> dict:
+def exchange_code_for_token(code: str) -> dict:
     """Troca o código de autorização por um token de acesso"""
     try:
         data = {
@@ -199,62 +199,62 @@ async def exchange_code_for_token(code: str) -> dict:
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         
-        async with aiohttp.ClientSession() as session:
-            async with session.post(DISCORD_TOKEN_URL, data=data, headers=headers) as response:
-                if response.status == 200:
-                    token_data = await response.json()
-                    logger.info("Token de acesso obtido com sucesso")
-                    return token_data
-                else:
-                    error_text = await response.text()
-                    logger.error(f"Erro ao obter token: {response.status} - {error_text}")
-                    return None
+        import requests
+        response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers)
+        if response.status_code == 200:
+            token_data = response.json()
+            logger.info("Token de acesso obtido com sucesso")
+            return token_data
+        else:
+            error_text = response.text
+            logger.error(f"Erro ao obter token: {response.status_code} - {error_text}")
+            return None
                     
     except Exception as e:
         logger.error(f"Erro ao trocar código por token: {e}")
         return None
 
 
-async def get_user_info(access_token: str) -> dict:
+def get_user_info(access_token: str) -> dict:
     """Obtém informações do usuário do Discord"""
     try:
         headers = {
             'Authorization': f'Bearer {access_token}'
         }
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DISCORD_API_BASE}/users/@me", headers=headers) as response:
-                if response.status == 200:
-                    user_data = await response.json()
-                    logger.info(f"Informações do usuário obtidas: {user_data['username']}")
-                    return user_data
-                else:
-                    error_text = await response.text()
-                    logger.error(f"Erro ao obter informações do usuário: {response.status} - {error_text}")
-                    return None
+        import requests
+        response = requests.get(f"{DISCORD_API_BASE}/users/@me", headers=headers)
+        if response.status_code == 200:
+            user_data = response.json()
+            logger.info(f"Informações do usuário obtidas: {user_data['username']}")
+            return user_data
+        else:
+            error_text = response.text
+            logger.error(f"Erro ao obter informações do usuário: {response.status_code} - {error_text}")
+            return None
                     
     except Exception as e:
         logger.error(f"Erro ao obter informações do usuário: {e}")
         return None
 
 
-async def get_user_guilds(access_token: str) -> list:
+def get_user_guilds(access_token: str) -> list:
     """Obtém lista de servidores do usuário"""
     try:
         headers = {
             'Authorization': f'Bearer {access_token}'
         }
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DISCORD_API_BASE}/users/@me/guilds", headers=headers) as response:
-                if response.status == 200:
-                    guilds_data = await response.json()
-                    logger.info(f"Lista de servidores obtida: {len(guilds_data)} servidores")
-                    return guilds_data
-                else:
-                    error_text = await response.text()
-                    logger.error(f"Erro ao obter servidores: {response.status} - {error_text}")
-                    return None
+        import requests
+        response = requests.get(f"{DISCORD_API_BASE}/users/@me/guilds", headers=headers)
+        if response.status_code == 200:
+            guilds_data = response.json()
+            logger.info(f"Lista de servidores obtida: {len(guilds_data)} servidores")
+            return guilds_data
+        else:
+            error_text = response.text
+            logger.error(f"Erro ao obter servidores: {response.status_code} - {error_text}")
+            return None
                     
     except Exception as e:
         logger.error(f"Erro ao obter servidores: {e}")

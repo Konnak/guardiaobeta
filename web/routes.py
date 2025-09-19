@@ -64,7 +64,7 @@ def setup_routes(app):
             user_id = user_data['id']
             
             # Busca dados do usuário no banco
-            db_user = await get_user_by_discord_id(user_id)
+            db_user = get_user_by_discord_id(user_id)
             
             if not db_user:
                 # Usuário não cadastrado
@@ -80,7 +80,7 @@ def setup_routes(app):
                     (SELECT COUNT(*) FROM votos_guardioes WHERE id_guardiao = $1) as total_votos,
                     (SELECT COUNT(*) FROM denuncias WHERE id_denunciante = $1) as denuncias_feitas
             """
-            user_stats = await db_manager.execute_query(stats_query, user_id)
+            user_stats = db_manager.execute_query(stats_query, user_id)
             stats = user_stats[0] if user_stats else {'denuncias_atendidas': 0, 'total_votos': 0, 'denuncias_feitas': 0}
             
             # Calcula informações de experiência
@@ -140,14 +140,14 @@ def setup_routes(app):
                 return redirect(url_for('dashboard'))
             
             # Busca estatísticas do servidor
-            server_stats = await get_server_stats(server_id)
+            server_stats = get_server_stats(server_id)
             
             # Verifica se é servidor premium
             premium_query = """
                 SELECT * FROM servidores_premium 
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
-            premium_data = await db_manager.execute_one(premium_query, server_id)
+            premium_data = db_manager.execute_one(premium_query, server_id)
             is_premium = premium_data is not None
             
             # Busca configurações do servidor (se premium)
@@ -157,7 +157,7 @@ def setup_routes(app):
                     SELECT * FROM configuracoes_servidor 
                     WHERE id_servidor = $1
                 """
-                server_config = await db_manager.execute_one(config_query, server_id)
+                server_config = db_manager.execute_one(config_query, server_id)
             
             return render_template('server_panel.html',
                                  user=user_data,
@@ -190,7 +190,7 @@ def setup_routes(app):
                     SELECT * FROM servidores_premium 
                     WHERE id_servidor = $1 AND data_fim > NOW()
                 """
-                premium_data = await db_manager.execute_one(premium_query, int(guild['id']))
+                premium_data = db_manager.execute_one(premium_query, int(guild['id']))
                 
                 servers_info.append({
                     'guild': guild,
@@ -234,7 +234,7 @@ def setup_routes(app):
                 return jsonify({'error': 'Sem permissão'}), 403
             
             # Busca estatísticas
-            stats = await get_server_stats(server_id)
+            stats = get_server_stats(server_id)
             return jsonify(stats)
             
         except Exception as e:
@@ -291,14 +291,14 @@ def setup_routes(app):
             """
             params.extend([per_page, offset])
             
-            denuncias = await db_manager.execute_query(query, *params)
+            denuncias = db_manager.execute_query(query, *params)
             
             # Conta total para paginação
             count_query = f"""
                 SELECT COUNT(*) FROM denuncias 
                 WHERE {' AND '.join(where_conditions)}
             """
-            total = await db_manager.execute_scalar(count_query, *params[:-2])  # Remove limit e offset
+            total = db_manager.execute_scalar(count_query, *params[:-2])  # Remove limit e offset
             
             return jsonify({
                 'denuncias': denuncias,
@@ -330,7 +330,7 @@ def setup_routes(app):
                     (SELECT COUNT(*) FROM votos_guardioes WHERE id_guardiao = $1 AND voto = 'Intimidou') as votos_intimidou,
                     (SELECT COUNT(*) FROM votos_guardioes WHERE id_guardiao = $1 AND voto = 'Grave') as votos_grave
             """
-            stats = await db_manager.execute_query(stats_query, user_id)
+            stats = db_manager.execute_query(stats_query, user_id)
             
             # Gráfico de atividade (últimos 30 dias)
             activity_query = """
@@ -341,7 +341,7 @@ def setup_routes(app):
                 GROUP BY DATE(data_voto)
                 ORDER BY data
             """
-            activity = await db_manager.execute_query(activity_query, user_id)
+            activity = db_manager.execute_query(activity_query, user_id)
             
             return jsonify({
                 'stats': stats[0] if stats else {},
@@ -353,7 +353,7 @@ def setup_routes(app):
             return jsonify({'error': 'Erro interno'}), 500
 
 
-async def get_server_stats(server_id: int) -> dict:
+def get_server_stats(server_id: int) -> dict:
     """Busca estatísticas de um servidor"""
     try:
         # Estatísticas gerais
@@ -367,7 +367,7 @@ async def get_server_stats(server_id: int) -> dict:
             FROM denuncias 
             WHERE id_servidor = $1
         """
-        general_stats = await db_manager.execute_query(general_query, server_id)
+        general_stats = db_manager.execute_query(general_query, server_id)
         
         # Resultados das denúncias
         results_query = """
@@ -378,7 +378,7 @@ async def get_server_stats(server_id: int) -> dict:
             FROM denuncias 
             WHERE id_servidor = $1 AND status = 'Finalizada'
         """
-        results_stats = await db_manager.execute_query(results_query, server_id)
+        results_stats = db_manager.execute_query(results_query, server_id)
         
         # Denúncias por período (últimos 7 dias)
         period_query = """
@@ -389,7 +389,7 @@ async def get_server_stats(server_id: int) -> dict:
             GROUP BY DATE(data_criacao)
             ORDER BY data
         """
-        period_stats = await db_manager.execute_query(period_query, server_id)
+        period_stats = db_manager.execute_query(period_query, server_id)
         
         # Usuários mais denunciados
         top_denunciados_query = """
@@ -401,7 +401,7 @@ async def get_server_stats(server_id: int) -> dict:
             ORDER BY denuncias_count DESC
             LIMIT 10
         """
-        top_denunciados = await db_manager.execute_query(top_denunciados_query, server_id)
+        top_denunciados = db_manager.execute_query(top_denunciados_query, server_id)
         
         return {
             'general': general_stats[0] if general_stats else {},

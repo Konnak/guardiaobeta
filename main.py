@@ -17,7 +17,6 @@ from discord.ext import commands
 
 # Web Application
 from flask import Flask
-import aiohttp
 
 # Sistema Guardião BETA
 from config import *
@@ -271,7 +270,7 @@ class GuardiaoBot:
                             (SELECT COUNT(*) FROM denuncias) as total_denuncias,
                             (SELECT COUNT(DISTINCT id_servidor) FROM denuncias) as total_servidores
                     """
-                    stats = await self.db_manager.execute_query(stats_query)
+                    stats = self.db_manager.execute_query(stats_query)
                     
                     return stats[0] if stats else {}
                     
@@ -334,9 +333,8 @@ class GuardiaoBot:
             # Fecha conexões do banco
             await self.db_manager.close()
             
-            # Fecha sessão HTTP
-            if hasattr(self, 'http_session'):
-                await self.http_session.close()
+            # Fecha sessão HTTP (se existir)
+            pass
             
             logger.info("Sistema encerrado com sucesso")
             
