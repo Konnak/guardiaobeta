@@ -754,6 +754,7 @@ class ModeracaoCog(commands.Cog):
                 # Log para debug das primeiras mensagens
                 if total_messages_checked <= 10:
                     logger.info(f"Mensagem {total_messages_checked}: autor={message.author.id}, criada={message.created_at}, conteúdo='{message.content[:50]}...'")
+                    logger.info(f"Timestamp UTC: {message.created_at}, Timestamp Brasília: {message.created_at - timedelta(hours=3)}")
                 
                 # Captura mensagens de TODOS os usuários (não apenas denunciado/denunciante)
                 # Prepara URLs dos anexos
