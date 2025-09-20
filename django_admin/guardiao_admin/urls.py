@@ -37,6 +37,11 @@ urlpatterns = [
     path('discord-admin/', include('guardiao.urls')),  # Movido para fora do /admin/
     path('login/', LoginView.as_view(template_name='admin/login.html'), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    
+    # Rotas migradas do Flask (acessíveis diretamente)
+    path('servers/', include('guardiao.urls')),
+    path('server/<int:server_id>/', include('guardiao.urls')),
+    path('premium/', include('guardiao.urls')),
 ]
 
 # Serve static and media files in development

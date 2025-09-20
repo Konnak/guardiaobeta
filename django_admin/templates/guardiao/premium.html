@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium - Sistema Guardião BETA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .premium-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin: 2rem 0;
+            padding: 3rem;
+        }
+        
+        .pricing-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .pricing-card.featured {
+            border: 3px solid #ffd700;
+            transform: scale(1.05);
+        }
+        
+        .pricing-card.featured::before {
+            content: "MAIS POPULAR";
+            position: absolute;
+            top: 20px;
+            right: -30px;
+            background: #ffd700;
+            color: #333;
+            padding: 5px 40px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transform: rotate(45deg);
+        }
+        
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #007cba;
+            margin: 1rem 0;
+        }
+        
+        .price-period {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list i {
+            color: #28a745;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-premium {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border: none;
+            color: #333;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+            color: #333;
+        }
+        
+        .hero-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="premium-container">
+            <div class="hero-section">
+                <h1>
+                    <i class="bi bi-star-fill"></i> Guardião BETA Premium
+                </h1>
+                <p class="lead">
+                    Desbloqueie o potencial completo do seu servidor Discord com recursos avançados de moderação
+                </p>
+                
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">+300%</span>
+                        <span class="stat-label">Mais Eficiência</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Suporte Prioritário</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Sem Limites</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">99.9%</span>
+                        <span class="stat-label">Uptime Garantido</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="row g-4 mb-5">
+                <!-- Free Plan -->
+                <div class="col-lg-4">
+                    <div class="pricing-card">
+                        <div class="text-center">
+                            <h3 class="mb-3">Plano Gratuito</h3>
+                            <div class="price">R$ 0<span class="price-period">/mês</span></div>
+                            <p class="text-muted">Perfeito para servidores pequenos</p>
+                        </div>
+                        
+                        <ul class="feature-list">
+                            <li><i class="bi bi-check"></i> Moderação básica</li>
+                            <li><i class="bi bi-check"></i> Até 100 denúncias/mês</li>
+                            <li><i class="bi bi-check"></i> 5 guardiões simultâneos</li>
+                            <li><i class="bi bi-check"></i> Relatórios básicos</li>
+                            <li><i class="bi bi-check"></i> Suporte por ticket</li>
+                        </ul>
+                        
+                        <button class="btn btn-outline-primary" disabled>
+                            Plano Atual
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="col-lg-4">
+                    <div class="pricing-card featured">
+                        <div class="text-center">
+                            <h3 class="mb-3">Premium</h3>
+                            <div class="price">R$ 29,90<span class="price-period">/mês</span></div>
+                            <p class="text-muted">Ideal para servidores médios</p>
+                        </div>
+                        
+                        <ul class="feature-list">
+                            <li><i class="bi bi-check"></i> Tudo do plano gratuito</li>
+                            <li><i class="bi bi-check"></i> Denúncias ilimitadas</li>
+                            <li><i class="bi bi-check"></i> 50 guardiões simultâneos</li>
+                            <li><i class="bi bi-check"></i> Relatórios avançados</li>
+                            <li><i class="bi bi-check"></i> Configurações personalizadas</li>
+                            <li><i class="bi bi-check"></i> Suporte prioritário</li>
+                            <li><i class="bi bi-check"></i> Analytics detalhados</li>
+                            <li><i class="bi bi-check"></i> Backup automático</li>
+                        </ul>
+                        
+                        <button class="btn-premium">
+                            <i class="bi bi-star"></i> Upgrade Agora
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="col-lg-4">
+                    <div class="pricing-card">
+                        <div class="text-center">
+                            <h3 class="mb-3">Enterprise</h3>
+                            <div class="price">R$ 99,90<span class="price-period">/mês</span></div>
+                            <p class="text-muted">Para servidores grandes</p>
+                        </div>
+                        
+                        <ul class="feature-list">
+                            <li><i class="bi bi-check"></i> Tudo do Premium</li>
+                            <li><i class="bi bi-check"></i> Guardiões ilimitados</li>
+                            <li><i class="bi bi-check"></i> API personalizada</li>
+                            <li><i class="bi bi-check"></i> Integração com bots</li>
+                            <li><i class="bi bi-check"></i> Suporte 24/7</li>
+                            <li><i class="bi bi-check"></i> Consultoria incluída</li>
+                            <li><i class="bi bi-check"></i> SLA 99.9%</li>
+                            <li><i class="bi bi-check"></i> Customizações</li>
+                        </ul>
+                        
+                        <button class="btn-premium">
+                            <i class="bi bi-building"></i> Contatar Vendas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Comparison -->
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">
+                        <i class="bi bi-list-check"></i> Comparação de Recursos
+                    </h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Recurso</th>
+                                    <th class="text-center">Gratuito</th>
+                                    <th class="text-center">Premium</th>
+                                    <th class="text-center">Enterprise</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Denúncias por mês</td>
+                                    <td class="text-center">100</td>
+                                    <td class="text-center">∞</td>
+                                    <td class="text-center">∞</td>
+                                </tr>
+                                <tr>
+                                    <td>Guardiões simultâneos</td>
+                                    <td class="text-center">5</td>
+                                    <td class="text-center">50</td>
+                                    <td class="text-center">∞</td>
+                                </tr>
+                                <tr>
+                                    <td>Relatórios</td>
+                                    <td class="text-center">Básicos</td>
+                                    <td class="text-center">Avançados</td>
+                                    <td class="text-center">Personalizados</td>
+                                </tr>
+                                <tr>
+                                    <td>Suporte</td>
+                                    <td class="text-center">Ticket</td>
+                                    <td class="text-center">Prioritário</td>
+                                    <td class="text-center">24/7</td>
+                                </tr>
+                                <tr>
+                                    <td>API</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">✅</td>
+                                </tr>
+                                <tr>
+                                    <td>Customizações</td>
+                                    <td class="text-center">❌</td>
+                                    <td class="text-center">Limitadas</td>
+                                    <td class="text-center">Completas</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">
+                        <i class="bi bi-question-circle"></i> Perguntas Frequentes
+                    </h3>
+                    
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    Como funciona o upgrade para Premium?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    O upgrade é instantâneo! Assim que o pagamento for processado, todas as funcionalidades Premium serão ativadas automaticamente em seu servidor.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    Posso cancelar a qualquer momento?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim! Você pode cancelar sua assinatura Premium a qualquer momento. O acesso às funcionalidades Premium será mantido até o final do período pago.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    Os dados são seguros?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Absolutamente! Todos os dados são criptografados e armazenados de forma segura. Seguimos as melhores práticas de segurança da indústria.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
