@@ -172,11 +172,10 @@ class TrainingView(ui.View):
         # Remove todos os botões e adiciona botão para começar
         self.clear_items()
         
-        @ui.button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀")
-        async def start_exam(interaction: discord.Interaction, button: ui.Button):
-            await self._start_final_exam(interaction)
-        
-        self.add_item(start_exam)
+        # Cria um botão para começar a prova
+        button = ui.Button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀")
+        button.callback = lambda interaction: self._start_final_exam(interaction)
+        self.add_item(button)
         
         await interaction.edit_original_response(embed=embed, view=self)
     
