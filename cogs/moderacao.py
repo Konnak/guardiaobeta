@@ -151,7 +151,7 @@ class ReportView(ui.View):
                 # Processa mensagens (ordena do mais recente ao mais antigo)
                 mensagens_ordenadas = sorted(mensagens, key=lambda x: x['timestamp_mensagem'], reverse=True)
                 result = []
-                for msg in mensagens_ordenadas[:25]:  # Aumenta para 25 mensagens
+                for msg in mensagens_ordenadas[:100]:  # Limite de 100 mensagens
                     # Converte para horário de Brasília (UTC-3)
                     timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
                     timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
@@ -774,8 +774,8 @@ class ModeracaoCog(commands.Cog):
                 
                 messages_captured += 1
                 
-                # Limita a 50 mensagens para não sobrecarregar a interface
-                if messages_captured >= 50:
+                # Limita a 100 mensagens para não sobrecarregar a interface
+                if messages_captured >= 100:
                     break
             
             logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
