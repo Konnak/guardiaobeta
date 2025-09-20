@@ -507,7 +507,7 @@ class GuardiaoCog(commands.Cog):
             )
             
             view = TrainingView(self.bot, interaction.user.id)
-            await ctx.respond(embed=embed, view=view, ephemeral=True)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Erro no comando formguardiao para usuário {interaction.user.id}: {e}")
