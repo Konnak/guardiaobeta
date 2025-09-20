@@ -32,7 +32,7 @@ class TrainingView(ui.View):
         return interaction.user.id == self.user_id
     
     @ui.button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️")
-    async def next_step(self, button: ui.Button, interaction: discord.Interaction):
+    async def next_step(self, interaction: discord.Interaction):
         """Botão para avançar no treinamento"""
         await interaction.response.defer()
         
@@ -46,19 +46,19 @@ class TrainingView(ui.View):
             await interaction.followup.send("Treinamento concluído!", ephemeral=True)
     
     @ui.button(label="A", style=discord.ButtonStyle.secondary)
-    async def answer_a(self, button: ui.Button, interaction: discord.Interaction):
+    async def answer_a(self, interaction: discord.Interaction):
         await self._handle_quiz_answer(interaction, "A")
     
     @ui.button(label="B", style=discord.ButtonStyle.secondary)
-    async def answer_b(self, button: ui.Button, interaction: discord.Interaction):
+    async def answer_b(self, interaction: discord.Interaction):
         await self._handle_quiz_answer(interaction, "B")
     
     @ui.button(label="C", style=discord.ButtonStyle.secondary)
-    async def answer_c(self, button: ui.Button, interaction: discord.Interaction):
+    async def answer_c(self, interaction: discord.Interaction):
         await self._handle_quiz_answer(interaction, "C")
     
     @ui.button(label="D", style=discord.ButtonStyle.secondary)
-    async def answer_d(self, button: ui.Button, interaction: discord.Interaction):
+    async def answer_d(self, interaction: discord.Interaction):
         await self._handle_quiz_answer(interaction, "D")
     
     async def _show_theory_step2(self, interaction: discord.Interaction):
@@ -173,7 +173,7 @@ class TrainingView(ui.View):
         self.clear_items()
         
         @ui.button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀")
-        async def start_exam(button: ui.Button, interaction: discord.Interaction):
+        async def start_exam(interaction: discord.Interaction):
             await self._start_final_exam(interaction)
         
         self.add_item(start_exam)
