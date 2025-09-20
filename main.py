@@ -517,10 +517,16 @@ class GuardiaoBot:
             raise
     
     def run_web_app(self):
-        """Executa a aplicação web - Django Admin na porta 8080"""
+        """Executa a aplicação web - Flask na porta 8080 com Django integrado"""
         try:
-            # Inicia Django Admin diretamente na porta 8080
-            self.start_django_admin_direct()
+            # Configura Flask para rodar na porta 8080
+            logger.info("🌐 Iniciando servidor web Flask na porta 8080...")
+            self.web_app.run(
+                host='0.0.0.0',
+                port=8080,
+                debug=False,
+                threaded=True
+            )
             
         except Exception as e:
             logger.error(f"Erro ao executar aplicação web: {e}")
@@ -534,7 +540,7 @@ class GuardiaoBot:
         try:
             django_dir = os.path.join(os.path.dirname(__file__), 'django_admin')
             if os.path.exists(django_dir):
-                logger.info("🚀 Iniciando Django Admin Panel diretamente na porta 8080...")
+                logger.info("🚀 Iniciando Django Admin Panel na porta 8001...")
                 
                 # Executa script de inicialização do servidor
                 init_script = os.path.join(django_dir, 'init_server.py')
@@ -559,10 +565,10 @@ class GuardiaoBot:
                         sys.executable, 'manage.py', 'create_admin'
                     ], cwd=django_dir, check=False)
                 
-                # Inicia servidor Django diretamente na porta 8080
-                logger.info("🌐 Iniciando servidor Django na porta 8080 (porta principal)...")
+                # Inicia servidor Django na porta 8001
+                logger.info("🌐 Iniciando servidor Django na porta 8001...")
                 subprocess.run([
-                    sys.executable, 'manage.py', 'runserver', '0.0.0.0:8080'
+                    sys.executable, 'manage.py', 'runserver', '0.0.0.0:8001'
                 ], cwd=django_dir, check=False)
             else:
                 logger.error("Diretório Django Admin não encontrado!")
@@ -574,7 +580,11 @@ class GuardiaoBot:
     async def run(self):
         """Executa o sistema completo"""
         try:
-            # Inicia Django Admin diretamente na porta 8080
+            # Inicia Django Admin em thread separada
+            django_thread = threading.Thread(target=self.start_django_admin_direct, daemon=True)
+            django_thread.start()
+            
+            # Inicia Flask na porta 8080
             web_thread = threading.Thread(target=self.run_web_app, daemon=True)
             web_thread.start()
             
