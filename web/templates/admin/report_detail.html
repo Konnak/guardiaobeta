@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Denúncia #{{ report.id }} - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .breadcrumb { color: #7f8c8d; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        
+        .report-header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .report-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .report-id {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .report-badges {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .report-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .detail-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        .content-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .content-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .motivo-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+        
+        .votes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .vote-card {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        .vote-card.ok { border-color: #28a745; background: #f8fff9; }
+        .vote-card.intimidou { border-color: #ffc107; background: #fffef7; }
+        .vote-card.grave { border-color: #dc3545; background: #fff8f8; }
+        
+        .vote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .vote-guardiao {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .vote-value {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .vote-ok { background: #d4edda; color: #155724; }
+        .vote-intimidou { background: #fff3cd; color: #856404; }
+        .vote-grave { background: #f8d7da; color: #721c24; }
+        
+        .messages-section {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .message-author {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .message-time {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .message-content {
+            color: #2c3e50;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .message-attachments {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+        }
+        .attachment-link {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .attachment-link:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .badge-pendente { background: #fff3cd; color: #856404; }
+        .badge-analise { background: #cce5ff; color: #004085; }
+        .badge-finalizada { background: #d4edda; color: #155724; }
+        .badge-premium { background: #f8d7da; color: #721c24; }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        
+        .user-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .user-link:hover {
+            text-decoration: underline;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 10px; text-align: center; }
+            .report-title { flex-direction: column; text-align: center; }
+            .report-details { grid-template-columns: 1fr; }
+            .votes-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>📋 Detalhes da Denúncia #{{ report.id }}</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a> / 
+                    <a href="/admin/reports">Denúncias</a> / 
+                    #{{ report.id }}
+                </div>
+            </div>
+            <div>
+                <a href="/admin/reports" class="btn btn-secondary">← Voltar</a>
+            </div>
+        </div>
+        
+        <!-- Report Header -->
+        <div class="report-header">
+            <div class="report-title">
+                <div class="report-id">#{{ report.id }}</div>
+                <div class="report-badges">
+                    {% if report.status == 'Pendente' %}
+                        <span class="badge badge-pendente">⏳ {{ report.status }}</span>
+                    {% elif report.status == 'Em Análise' %}
+                        <span class="badge badge-analise">🔍 {{ report.status }}</span>
+                    {% elif report.status == 'Finalizada' %}
+                        <span class="badge badge-finalizada">✅ {{ report.status }}</span>
+                    {% endif %}
+                    
+                    {% if report.e_premium %}
+                        <span class="badge badge-premium">⭐ Premium</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="report-details">
+                <div class="detail-item">
+                    <div class="detail-label">👤 Denunciante</div>
+                    <div class="detail-value">
+                        {% if report.denunciante_username %}
+                            <a href="/admin/users/{{ report.id_denunciante }}" class="user-link">{{ report.denunciante_username }}</a>
+                            {% if report.denunciante_display %}
+                                <br><small>({{ report.denunciante_display }})</small>
+                            {% endif %}
+                        {% else %}
+                            ID: {{ report.id_denunciante }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">⚠️ Denunciado</div>
+                    <div class="detail-value">
+                        {% if report.denunciado_username %}
+                            <a href="/admin/users/{{ report.id_denunciado }}" class="user-link">{{ report.denunciado_username }}</a>
+                            {% if report.denunciado_display %}
+                                <br><small>({{ report.denunciado_display }})</small>
+                            {% endif %}
+                        {% else %}
+                            ID: {{ report.id_denunciado }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">🖥️ Servidor</div>
+                    <div class="detail-value">{{ report.id_servidor }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">📅 Data de Criação</div>
+                    <div class="detail-value">
+                        {{ report.data_criacao.strftime('%d/%m/%Y às %H:%M') if report.data_criacao else 'N/A' }}
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">🏆 Resultado Final</div>
+                    <div class="detail-value">
+                        {% if report.resultado_final %}
+                            {% if report.resultado_final == 'OK!' %}
+                                <span style="color: #28a745;">✅ {{ report.resultado_final }}</span>
+                            {% elif report.resultado_final == 'Intimidou' %}
+                                <span style="color: #ffc107;">⚠️ {{ report.resultado_final }}</span>
+                            {% elif report.resultado_final == 'Grave' %}
+                                <span style="color: #dc3545;">🚨 {{ report.resultado_final }}</span>
+                            {% else %}
+                                {{ report.resultado_final }}
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #7f8c8d;">Aguardando resultado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">🔗 Hash</div>
+                    <div class="detail-value" style="font-family: monospace; font-size: 0.9em;">
+                        {{ report.hash_denuncia[:16] }}...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Motivo da Denúncia -->
+        <div class="content-section">
+            <h3>📝 Motivo da Denúncia</h3>
+            <div class="motivo-content">
+                {{ report.motivo or 'Motivo não especificado' }}
+            </div>
+        </div>
+        
+        <!-- Votos dos Guardiões -->
+        <div class="content-section">
+            <h3>⚖️ Votos dos Guardiões</h3>
+            
+            <!-- Summary Stats -->
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #28a745;">{{ votes|selectattr('voto', 'equalto', 'OK!')|list|length }}</div>
+                    <div class="stat-label">✅ OK!</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #ffc107;">{{ votes|selectattr('voto', 'equalto', 'Intimidou')|list|length }}</div>
+                    <div class="stat-label">⚠️ Intimidou</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #dc3545;">{{ votes|selectattr('voto', 'equalto', 'Grave')|list|length }}</div>
+                    <div class="stat-label">🚨 Grave</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #2c3e50;">{{ votes|length }}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+            
+            <!-- Individual Votes -->
+            <div class="votes-grid">
+                {% for vote in votes %}
+                <div class="vote-card {% if vote.voto == 'OK!' %}ok{% elif vote.voto == 'Intimidou' %}intimidou{% elif vote.voto == 'Grave' %}grave{% endif %}">
+                    <div class="vote-header">
+                        <div class="vote-guardiao">
+                            {% if vote.guardiao_username %}
+                                <a href="/admin/users/{{ vote.id_guardiao }}" class="user-link">{{ vote.guardiao_username }}</a>
+                            {% else %}
+                                ID: {{ vote.id_guardiao }}
+                            {% endif %}
+                        </div>
+                        <div class="vote-value {% if vote.voto == 'OK!' %}vote-ok{% elif vote.voto == 'Intimidou' %}vote-intimidou{% elif vote.voto == 'Grave' %}vote-grave{% endif %}">
+                            {% if vote.voto == 'OK!' %}✅{% elif vote.voto == 'Intimidou' %}⚠️{% elif vote.voto == 'Grave' %}🚨{% endif %}
+                            {{ vote.voto }}
+                        </div>
+                    </div>
+                    <div style="color: #7f8c8d; font-size: 0.9em;">
+                        {{ vote.data_voto.strftime('%d/%m/%Y às %H:%M') if vote.data_voto else 'N/A' }}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% if not votes %}
+                <div style="text-align: center; color: #7f8c8d; grid-column: 1 / -1; padding: 40px;">
+                    <h4>📭 Nenhum voto registrado</h4>
+                    <p>Esta denúncia ainda não foi votada por nenhum guardião</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Mensagens Capturadas -->
+        <div class="content-section">
+            <h3>💬 Mensagens Capturadas ({{ messages|length }})</h3>
+            
+            <div class="messages-section">
+                {% for message in messages %}
+                <div class="message-item">
+                    <div class="message-header">
+                        <div class="message-author">
+                            {% if message.autor_username %}
+                                <a href="/admin/users/{{ message.id_autor }}" class="user-link">{{ message.autor_username }}</a>
+                            {% else %}
+                                ID: {{ message.id_autor }}
+                            {% endif %}
+                        </div>
+                        <div class="message-time">
+                            {{ message.timestamp_mensagem.strftime('%d/%m/%Y às %H:%M:%S') if message.timestamp_mensagem else 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        {{ message.conteudo or '[Mensagem vazia]' }}
+                    </div>
+                    {% if message.anexos_urls %}
+                    <div class="message-attachments">
+                        <strong>📎 Anexos:</strong>
+                        {% for url in message.anexos_urls.split(',') %}
+                            <a href="{{ url.strip() }}" target="_blank" class="attachment-link">Anexo {{ loop.index }}</a>
+                            {% if not loop.last %} • {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                {% if not messages %}
+                <div style="text-align: center; color: #7f8c8d; padding: 40px;">
+                    <h4>📭 Nenhuma mensagem capturada</h4>
+                    <p>Não foram capturadas mensagens para esta denúncia</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

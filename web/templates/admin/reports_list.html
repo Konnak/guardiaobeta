@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Denúncias - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { color: #2c3e50; }
+        .breadcrumb { color: #7f8c8d; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        
+        .filters-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .filters-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        
+        .stats-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-info { color: #7f8c8d; }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            color: #2c3e50;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f2f6;
+            vertical-align: middle;
+        }
+        tr:hover { background: #f8f9fa; }
+        
+        .report-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .report-info p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .report-content {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .user-link:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .badge-pendente { background: #fff3cd; color: #856404; }
+        .badge-analise { background: #cce5ff; color: #004085; }
+        .badge-finalizada { background: #d4edda; color: #155724; }
+        .badge-premium { background: #f8d7da; color: #721c24; }
+        .badge-ok { background: #d4edda; color: #155724; }
+        .badge-intimidou { background: #fff3cd; color: #856404; }
+        .badge-grave { background: #f8d7da; color: #721c24; }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+        .btn-info { background: #17a2b8; }
+        .btn-info:hover { background: #138496; }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #dee2e6;
+            text-decoration: none;
+            color: #495057;
+            border-radius: 4px;
+        }
+        .pagination a:hover { background: #e9ecef; }
+        .pagination .current {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .priority-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .priority-low { background: #28a745; }
+        .priority-medium { background: #ffc107; }
+        .priority-high { background: #dc3545; }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 10px; text-align: center; }
+            .filters-form { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>📋 Gerenciamento de Denúncias</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a> / Denúncias
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-card">
+            <form method="GET" class="filters-form">
+                <div class="form-group">
+                    <label>📊 Status</label>
+                    <select name="status">
+                        <option value="">Todos</option>
+                        <option value="Pendente" {% if filters.status == 'Pendente' %}selected{% endif %}>⏳ Pendente</option>
+                        <option value="Em Análise" {% if filters.status == 'Em Análise' %}selected{% endif %}>🔍 Em Análise</option>
+                        <option value="Finalizada" {% if filters.status == 'Finalizada' %}selected{% endif %}>✅ Finalizada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>📅 Período</label>
+                    <select name="periodo">
+                        <option value="">Todo período</option>
+                        <option value="1" {% if filters.periodo == '1' %}selected{% endif %}>Último dia</option>
+                        <option value="7" {% if filters.periodo == '7' %}selected{% endif %}>Última semana</option>
+                        <option value="30" {% if filters.periodo == '30' %}selected{% endif %}>Último mês</option>
+                        <option value="90" {% if filters.periodo == '90' %}selected{% endif %}>Últimos 3 meses</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn">🔍 Filtrar</button>
+                    <a href="/admin/reports" class="btn btn-secondary">🔄 Limpar</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stats-info">
+                📊 Total: <strong>{{ total_reports }}</strong> denúncias
+            </div>
+            <div class="stats-info">
+                📄 Página {{ page }} de {{ total_pages }}
+            </div>
+        </div>
+        
+        <!-- Reports Table -->
+        <div class="table-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>🆔 ID</th>
+                            <th>👤 Denunciante</th>
+                            <th>⚠️ Denunciado</th>
+                            <th>📝 Motivo</th>
+                            <th>📊 Status</th>
+                            <th>🏆 Resultado</th>
+                            <th>📅 Data</th>
+                            <th>🔧 Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td>
+                                <strong>#{{ report.id }}</strong>
+                                {% if report.e_premium %}
+                                    <br><span class="badge badge-premium">⭐ Premium</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="report-info">
+                                    {% if report.denunciante_username %}
+                                        <h4><a href="/admin/users/{{ report.id_denunciante }}" class="user-link">{{ report.denunciante_username }}</a></h4>
+                                    {% else %}
+                                        <h4>ID: {{ report.id_denunciante }}</h4>
+                                    {% endif %}
+                                    <p>Servidor: {{ report.id_servidor }}</p>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="report-info">
+                                    {% if report.denunciado_username %}
+                                        <h4><a href="/admin/users/{{ report.id_denunciado }}" class="user-link">{{ report.denunciado_username }}</a></h4>
+                                    {% else %}
+                                        <h4>ID: {{ report.id_denunciado }}</h4>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="report-content" title="{{ report.motivo }}">
+                                    {{ report.motivo[:100] }}{% if report.motivo|length > 100 %}...{% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if report.status == 'Pendente' %}
+                                    <span class="priority-indicator priority-high"></span>
+                                    <span class="badge badge-pendente">⏳ {{ report.status }}</span>
+                                {% elif report.status == 'Em Análise' %}
+                                    <span class="priority-indicator priority-medium"></span>
+                                    <span class="badge badge-analise">🔍 {{ report.status }}</span>
+                                {% elif report.status == 'Finalizada' %}
+                                    <span class="priority-indicator priority-low"></span>
+                                    <span class="badge badge-finalizada">✅ {{ report.status }}</span>
+                                {% else %}
+                                    <span class="badge">{{ report.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if report.resultado_final %}
+                                    {% if report.resultado_final == 'OK!' %}
+                                        <span class="badge badge-ok">✅ {{ report.resultado_final }}</span>
+                                    {% elif report.resultado_final == 'Intimidou' %}
+                                        <span class="badge badge-intimidou">⚠️ {{ report.resultado_final }}</span>
+                                    {% elif report.resultado_final == 'Grave' %}
+                                        <span class="badge badge-grave">🚨 {{ report.resultado_final }}</span>
+                                    {% else %}
+                                        <span class="badge">{{ report.resultado_final }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color: #7f8c8d;">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="report-info">
+                                    <h4>{{ report.data_criacao.strftime('%d/%m/%Y') if report.data_criacao else 'N/A' }}</h4>
+                                    <p>{{ report.data_criacao.strftime('%H:%M') if report.data_criacao else '' }}</p>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a href="/admin/reports/{{ report.id }}" class="btn btn-sm btn-info">👁️ Ver</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if not reports %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                                <h3>🔍 Nenhuma denúncia encontrada</h3>
+                                <p>Tente ajustar os filtros de busca</p>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="?page=1&status={{ filters.status }}&periodo={{ filters.periodo }}">« Primeira</a>
+                <a href="?page={{ page - 1 }}&status={{ filters.status }}&periodo={{ filters.periodo }}">‹ Anterior</a>
+            {% endif %}
+            
+            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}&status={{ filters.status }}&periodo={{ filters.periodo }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}&status={{ filters.status }}&periodo={{ filters.periodo }}">Próxima ›</a>
+                <a href="?page={{ total_pages }}&status={{ filters.status }}&periodo={{ filters.periodo }}">Última »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

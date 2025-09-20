@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👥 Usuários - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { color: #2c3e50; }
+        .breadcrumb { color: #7f8c8d; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        
+        .filters-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .filters-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        
+        .stats-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-info { color: #7f8c8d; }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            color: #2c3e50;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f2f6;
+            vertical-align: middle;
+        }
+        tr:hover { background: #f8f9fa; }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .user-details h4 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .user-details p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .badge-usuario { background: #e9ecef; color: #495057; }
+        .badge-guardiao { background: #d4edda; color: #155724; }
+        .badge-admin { background: #f8d7da; color: #721c24; }
+        .badge-servico { background: #d1ecf1; color: #0c5460; }
+        .badge-offline { background: #f1f3f4; color: #5f6368; }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+        .btn-info { background: #17a2b8; }
+        .btn-info:hover { background: #138496; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #dee2e6;
+            text-decoration: none;
+            color: #495057;
+            border-radius: 4px;
+        }
+        .pagination a:hover { background: #e9ecef; }
+        .pagination .current {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 10px; text-align: center; }
+            .filters-form { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>👥 Gerenciamento de Usuários</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a> / Usuários
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-card">
+            <form method="GET" class="filters-form">
+                <div class="form-group">
+                    <label>🔍 Buscar</label>
+                    <input type="text" name="search" placeholder="Nome, username..." value="{{ filters.search }}">
+                </div>
+                <div class="form-group">
+                    <label>📋 Categoria</label>
+                    <select name="categoria">
+                        <option value="">Todas</option>
+                        <option value="Usuário" {% if filters.categoria == 'Usuário' %}selected{% endif %}>Usuário</option>
+                        <option value="Guardião" {% if filters.categoria == 'Guardião' %}selected{% endif %}>Guardião</option>
+                        <option value="Admin" {% if filters.categoria == 'Admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>🛡️ Status Serviço</label>
+                    <select name="em_servico">
+                        <option value="">Todos</option>
+                        <option value="true" {% if filters.em_servico == 'true' %}selected{% endif %}>Em Serviço</option>
+                        <option value="false" {% if filters.em_servico == 'false' %}selected{% endif %}>Offline</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn">🔍 Filtrar</button>
+                    <a href="/admin/users" class="btn btn-secondary">🔄 Limpar</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stats-info">
+                📊 Total: <strong>{{ total_users }}</strong> usuários
+            </div>
+            <div class="stats-info">
+                📄 Página {{ page }} de {{ total_pages }}
+            </div>
+        </div>
+        
+        <!-- Users Table -->
+        <div class="table-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>👤 Usuário</th>
+                            <th>📋 Categoria</th>
+                            <th>⚡ Status</th>
+                            <th>🏆 Pontos</th>
+                            <th>⭐ XP</th>
+                            <th>📅 Cadastro</th>
+                            <th>🔧 Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        {{ user.username[0].upper() if user.username else '?' }}
+                                    </div>
+                                    <div class="user-details">
+                                        <h4>{{ user.display_name or user.username }}</h4>
+                                        <p>@{{ user.username }} • ID: {{ user.id_discord }}</p>
+                                        {% if user.nome_completo %}
+                                        <p>{{ user.nome_completo }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if user.categoria == 'Guardião' %}
+                                    <span class="badge badge-guardiao">🛡️ {{ user.categoria }}</span>
+                                {% elif user.categoria == 'Admin' %}
+                                    <span class="badge badge-admin">👑 {{ user.categoria }}</span>
+                                {% else %}
+                                    <span class="badge badge-usuario">👤 {{ user.categoria }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.em_servico %}
+                                    <span class="badge badge-servico">🟢 Em Serviço</span>
+                                {% else %}
+                                    <span class="badge badge-offline">⚫ Offline</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ user.pontos or 0 }}</strong> pts
+                            </td>
+                            <td>
+                                <strong>{{ user.experiencia or 0 }}</strong> XP
+                            </td>
+                            <td>
+                                {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a href="/admin/users/{{ user.id_discord }}" class="btn btn-sm btn-info">👁️ Ver</a>
+                                    <a href="/admin/users/{{ user.id_discord }}/edit" class="btn btn-sm btn-warning">✏️ Editar</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if not users %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                                <h3>🔍 Nenhum usuário encontrado</h3>
+                                <p>Tente ajustar os filtros de busca</p>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="?page=1&categoria={{ filters.categoria }}&em_servico={{ filters.em_servico }}&search={{ filters.search }}">« Primeira</a>
+                <a href="?page={{ page - 1 }}&categoria={{ filters.categoria }}&em_servico={{ filters.em_servico }}&search={{ filters.search }}">‹ Anterior</a>
+            {% endif %}
+            
+            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}&categoria={{ filters.categoria }}&em_servico={{ filters.em_servico }}&search={{ filters.search }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}&categoria={{ filters.categoria }}&em_servico={{ filters.em_servico }}&search={{ filters.search }}">Próxima ›</a>
+                <a href="?page={{ total_pages }}&categoria={{ filters.categoria }}&em_servico={{ filters.em_servico }}&search={{ filters.search }}">Última »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

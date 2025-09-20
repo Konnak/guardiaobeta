@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ Servidores Premium - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { color: #2c3e50; }
+        .breadcrumb { color: #7f8c8d; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table-header h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .table-header p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            color: #2c3e50;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f2f6;
+            vertical-align: middle;
+        }
+        tr:hover { background: #f8f9fa; }
+        
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .server-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #f39c12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .server-details h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .server-details p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .badge-ativo { background: #d4edda; color: #155724; }
+        .badge-expirado { background: #f8d7da; color: #721c24; }
+        .badge-expirando { background: #fff3cd; color: #856404; }
+        
+        .duration-info {
+            text-align: center;
+        }
+        .duration-days {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .duration-days.positive { color: #27ae60; }
+        .duration-days.negative { color: #e74c3c; }
+        .duration-days.warning { color: #f39c12; }
+        
+        .config-info {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .config-item {
+            margin-bottom: 3px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219a52; }
+        .btn-warning { background: #f39c12; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+        
+        .premium-features {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .feature-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+        }
+        .feature-item h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .feature-item p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 10px; text-align: center; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .server-info { flex-direction: column; text-align: center; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>⭐ Gerenciamento Premium</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a> / Servidores Premium
+                </div>
+            </div>
+            <div>
+                <a href="/admin/dashboard" class="btn btn-secondary">← Voltar</a>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ servers|selectattr('status', 'equalto', 'Ativo')|list|length }}</div>
+                <div class="stat-label">🟢 Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ servers|selectattr('status', 'equalto', 'Expirado')|list|length }}</div>
+                <div class="stat-label">🔴 Expirados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ servers|length }}</div>
+                <div class="stat-label">📊 Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">R$ {{ (servers|selectattr('status', 'equalto', 'Ativo')|list|length * 29.90)|round(2) }}</div>
+                <div class="stat-label">💰 Receita Mensal</div>
+            </div>
+        </div>
+        
+        <!-- Premium Features Info -->
+        <div class="premium-features">
+            <h3>⭐ Recursos Premium Disponíveis</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h4>🔧 Configurações Personalizadas</h4>
+                    <p>Ajuste durações de punições e canais de log específicos</p>
+                </div>
+                <div class="feature-item">
+                    <h4>📊 Relatórios Avançados</h4>
+                    <p>Estatísticas detalhadas e histórico completo</p>
+                </div>
+                <div class="feature-item">
+                    <h4>🚀 Processamento Prioritário</h4>
+                    <p>Denúncias processadas com prioridade alta</p>
+                </div>
+                <div class="feature-item">
+                    <h4>💬 Suporte Dedicado</h4>
+                    <p>Canal de suporte exclusivo para servidores premium</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Servers Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3>🖥️ Servidores Premium</h3>
+                <p>Lista completa de todos os servidores com assinatura premium</p>
+            </div>
+            
+            {% if servers %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>🖥️ Servidor</th>
+                            <th>📊 Status</th>
+                            <th>📅 Período</th>
+                            <th>⏰ Restante</th>
+                            <th>⚙️ Configurações</th>
+                            <th>🔧 Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for server in servers %}
+                        <tr>
+                            <td>
+                                <div class="server-info">
+                                    <div class="server-icon">
+                                        {{ server.id_servidor|string|slice(0, 2) }}
+                                    </div>
+                                    <div class="server-details">
+                                        <h4>ID: {{ server.id_servidor }}</h4>
+                                        <p>Servidor Discord</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if server.status == 'Ativo' %}
+                                    <span class="badge badge-ativo">🟢 {{ server.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-expirado">🔴 {{ server.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="font-size: 0.9em;">
+                                    <div><strong>Início:</strong> {{ server.data_inicio.strftime('%d/%m/%Y') if server.data_inicio else 'N/A' }}</div>
+                                    <div><strong>Fim:</strong> {{ server.data_fim.strftime('%d/%m/%Y') if server.data_fim else 'N/A' }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="duration-info">
+                                    {% if server.status == 'Ativo' %}
+                                        <div class="duration-days positive">Ativo</div>
+                                        <div style="font-size: 0.8em; color: #7f8c8d;">até {{ server.data_fim.strftime('%d/%m') if server.data_fim else 'N/A' }}</div>
+                                    {% else %}
+                                        <div class="duration-days negative">---</div>
+                                        <div style="font-size: 0.8em; color: #7f8c8d;">Expirado</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if server.canal_log or server.duracao_intimidou or server.duracao_grave %}
+                                <div class="config-info">
+                                    {% if server.canal_log %}
+                                    <div class="config-item">📢 Log: {{ server.canal_log }}</div>
+                                    {% endif %}
+                                    {% if server.duracao_intimidou %}
+                                    <div class="config-item">⚠️ Intimidou: {{ server.duracao_intimidou }}h</div>
+                                    {% endif %}
+                                    {% if server.duracao_grave %}
+                                    <div class="config-item">🚨 Grave: {{ server.duracao_grave }}h</div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span style="color: #7f8c8d; font-style: italic;">Padrão</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    {% if server.status == 'Ativo' %}
+                                        <button class="btn btn-success" onclick="extendPremium({{ server.id_servidor }})">
+                                            ⏰ Estender
+                                        </button>
+                                        <button class="btn btn-warning" onclick="configurePremium({{ server.id_servidor }})">
+                                            ⚙️ Configurar
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-success" onclick="reactivatePremium({{ server.id_servidor }})">
+                                            🔄 Reativar
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-danger" onclick="removePremium({{ server.id_servidor }})">
+                                        🗑️ Remover
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <h3>📭 Nenhum servidor premium encontrado</h3>
+                <p>Ainda não há servidores com assinatura premium ativa</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function extendPremium(serverId) {
+            const days = prompt('Quantos dias deseja estender?', '30');
+            if (days && !isNaN(days) && parseInt(days) > 0) {
+                if (confirm(`Estender premium do servidor ${serverId} por ${days} dias?`)) {
+                    // Implementar chamada para API
+                    alert('Funcionalidade será implementada em breve!');
+                }
+            }
+        }
+        
+        function configurePremium(serverId) {
+            alert(`Abrindo configurações para servidor ${serverId}...\nFuncionalidade será implementada em breve!`);
+        }
+        
+        function reactivatePremium(serverId) {
+            const days = prompt('Por quantos dias reativar?', '30');
+            if (days && !isNaN(days) && parseInt(days) > 0) {
+                if (confirm(`Reativar premium do servidor ${serverId} por ${days} dias?`)) {
+                    // Implementar chamada para API
+                    alert('Funcionalidade será implementada em breve!');
+                }
+            }
+        }
+        
+        function removePremium(serverId) {
+            if (confirm(`⚠️ ATENÇÃO!\n\nTem certeza que deseja remover o premium do servidor ${serverId}?\n\nEsta ação não pode ser desfeita e o servidor perderá todos os recursos premium imediatamente.`)) {
+                // Implementar chamada para API
+                alert('Funcionalidade será implementada em breve!');
+            }
+        }
+        
+        // Auto-refresh da página a cada 5 minutos para atualizar status
+        setInterval(function() {
+            if (document.visibilityState === 'visible') {
+                location.reload();
+            }
+        }, 300000); // 5 minutos
+    </script>
+</body>
+</html>

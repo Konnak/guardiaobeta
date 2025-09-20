@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✏️ Editar {{ user.display_name or user.username }} - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .breadcrumb { color: #7f8c8d; margin-top: 10px; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .user-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .user-info h3 { color: #2c3e50; margin-bottom: 5px; }
+        .user-info p { color: #7f8c8d; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .form-help {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .danger-zone {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .danger-zone h3 {
+            color: #e53e3e;
+            margin-bottom: 10px;
+        }
+        .danger-zone p {
+            color: #742a2a;
+            margin-bottom: 15px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #219a52;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .badge-usuario { background: #e9ecef; color: #495057; }
+        .badge-guardiao { background: #d4edda; color: #155724; }
+        .badge-admin { background: #f8d7da; color: #721c24; }
+        
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-actions { flex-direction: column; }
+            .user-preview { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>✏️ Editar Usuário</h1>
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">Dashboard</a> / 
+                <a href="/admin/users">Usuários</a> / 
+                <a href="/admin/users/{{ user.id_discord }}">{{ user.display_name or user.username }}</a> / 
+                Editar
+            </div>
+        </div>
+        
+        <!-- Form Card -->
+        <div class="form-card">
+            <!-- User Preview -->
+            <div class="user-preview">
+                <div class="user-avatar">
+                    {{ user.username[0].upper() if user.username else '?' }}
+                </div>
+                <div class="user-info">
+                    <h3>{{ user.display_name or user.username }}</h3>
+                    <p>@{{ user.username }} • ID: {{ user.id_discord }}</p>
+                    <p>Cadastrado em: {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}</p>
+                </div>
+            </div>
+            
+            <!-- Edit Form -->
+            <form method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="categoria">📋 Categoria</label>
+                        <select name="categoria" id="categoria" required>
+                            <option value="Usuário" {% if user.categoria == 'Usuário' %}selected{% endif %}>👤 Usuário</option>
+                            <option value="Guardião" {% if user.categoria == 'Guardião' %}selected{% endif %}>🛡️ Guardião</option>
+                            <option value="Admin" {% if user.categoria == 'Admin' %}selected{% endif %}>👑 Admin</option>
+                        </select>
+                        <div class="form-help">
+                            Determina as permissões e responsabilidades do usuário no sistema
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pontos">🏆 Pontos</label>
+                        <input type="number" name="pontos" id="pontos" value="{{ user.pontos or 0 }}" min="0" required>
+                        <div class="form-help">
+                            Pontos acumulados pelo usuário através de atividades
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="experiencia">⭐ Experiência</label>
+                        <input type="number" name="experiencia" id="experiencia" value="{{ user.experiencia or 0 }}" min="0" required>
+                        <div class="form-help">
+                            XP acumulado que determina o nível do usuário
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🛡️ Status de Serviço</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="em_servico" id="em_servico" {% if user.em_servico %}checked{% endif %}>
+                            <label for="em_servico">Usuário está em serviço ativo</label>
+                        </div>
+                        <div class="form-help">
+                            Indica se o guardião está disponível para atender denúncias
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Current Status Display -->
+                <div class="form-group full-width">
+                    <label>📊 Status Atual</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        {% if user.categoria == 'Guardião' %}
+                            <span class="badge badge-guardiao">🛡️ {{ user.categoria }}</span>
+                        {% elif user.categoria == 'Admin' %}
+                            <span class="badge badge-admin">👑 {{ user.categoria }}</span>
+                        {% else %}
+                            <span class="badge badge-usuario">👤 {{ user.categoria }}</span>
+                        {% endif %}
+                        
+                        <span class="badge" style="background: {% if user.em_servico %}#d4edda; color: #155724{% else %}#f1f3f4; color: #5f6368{% endif %}">
+                            {% if user.em_servico %}🟢 Em Serviço{% else %}⚫ Offline{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Information Display -->
+                <div class="form-grid" style="margin-top: 30px;">
+                    <div class="form-group">
+                        <label>📧 Email (Somente Leitura)</label>
+                        <input type="text" value="{{ user.email or 'Não informado' }}" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📱 Telefone (Somente Leitura)</label>
+                        <input type="text" value="{{ user.telefone or 'Não informado' }}" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🎂 Idade (Somente Leitura)</label>
+                        <input type="text" value="{{ user.idade or 'Não informado' }} anos" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>⏰ Último Turno (Somente Leitura)</label>
+                        <input type="text" value="{{ user.ultimo_turno_inicio.strftime('%d/%m/%Y %H:%M') if user.ultimo_turno_inicio else 'Nunca' }}" readonly style="background: #f8f9fa;">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label>👤 Nome Completo (Somente Leitura)</label>
+                    <input type="text" value="{{ user.nome_completo or 'Não informado' }}" readonly style="background: #f8f9fa;">
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="/admin/users/{{ user.id_discord }}" class="btn btn-secondary">❌ Cancelar</a>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Alterações</button>
+                </div>
+            </form>
+            
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h3>⚠️ Zona de Perigo</h3>
+                <p>
+                    <strong>Atenção:</strong> As alterações feitas aqui afetam diretamente o funcionamento do usuário no sistema. 
+                    Mudanças na categoria podem alterar as permissões e funcionalidades disponíveis.
+                </p>
+                <ul style="margin-left: 20px; color: #742a2a;">
+                    <li><strong>Usuário:</strong> Acesso básico ao sistema</li>
+                    <li><strong>Guardião:</strong> Pode votar em denúncias e entrar em serviço</li>
+                    <li><strong>Admin:</strong> Acesso total ao sistema administrativo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Preview das mudanças
+        document.getElementById('categoria').addEventListener('change', function() {
+            console.log('Categoria alterada para:', this.value);
+        });
+        
+        document.getElementById('em_servico').addEventListener('change', function() {
+            console.log('Status de serviço:', this.checked ? 'Ativo' : 'Inativo');
+        });
+        
+        // Confirmação antes de salvar
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const categoria = document.getElementById('categoria').value;
+            const pontos = document.getElementById('pontos').value;
+            const experiencia = document.getElementById('experiencia').value;
+            const emServico = document.getElementById('em_servico').checked;
+            
+            const confirmMessage = `Confirmar alterações?\n\nCategoria: ${categoria}\nPontos: ${pontos}\nExperiência: ${experiencia}\nEm Serviço: ${emServico ? 'Sim' : 'Não'}`;
+            
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

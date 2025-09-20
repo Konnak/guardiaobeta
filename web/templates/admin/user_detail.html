@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 {{ user.display_name or user.username }} - Admin Sistema Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .breadcrumb { color: #7f8c8d; }
+        .breadcrumb a { color: #3498db; text-decoration: none; }
+        
+        .user-profile {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .profile-info h1 { color: #2c3e50; margin-bottom: 5px; }
+        .profile-info p { color: #7f8c8d; }
+        
+        .profile-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .detail-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        .stats-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #7f8c8d;
+        }
+        
+        .activity-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        .activity-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .activity-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 10px;
+            border-bottom: 1px solid #f1f2f6;
+            margin-bottom: 10px;
+        }
+        .activity-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .activity-item h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .activity-item p {
+            color: #7f8c8d;
+            font-size: 0.8em;
+            margin-bottom: 3px;
+        }
+        .activity-item small {
+            color: #95a5a6;
+            font-size: 0.7em;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .badge-usuario { background: #e9ecef; color: #495057; }
+        .badge-guardiao { background: #d4edda; color: #155724; }
+        .badge-admin { background: #f8d7da; color: #721c24; }
+        .badge-servico { background: #d1ecf1; color: #0c5460; }
+        .badge-offline { background: #f1f3f4; color: #5f6368; }
+        .badge-pendente { background: #fff3cd; color: #856404; }
+        .badge-finalizada { background: #d4edda; color: #155724; }
+        .badge-analise { background: #cce5ff; color: #004085; }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-warning { background: #f39c12; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .activity-section { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; text-align: center; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>👤 Detalhes do Usuário</h1>
+                <div class="breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a> / 
+                    <a href="/admin/users">Usuários</a> / 
+                    {{ user.display_name or user.username }}
+                </div>
+            </div>
+            <div class="actions">
+                <a href="/admin/users/{{ user.id_discord }}/edit" class="btn btn-warning">✏️ Editar</a>
+                <a href="/admin/users" class="btn btn-secondary">← Voltar</a>
+            </div>
+        </div>
+        
+        <!-- User Profile -->
+        <div class="user-profile">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {{ user.username[0].upper() if user.username else '?' }}
+                </div>
+                <div class="profile-info">
+                    <h1>{{ user.display_name or user.username }}</h1>
+                    <p>@{{ user.username }} • ID: {{ user.id_discord }}</p>
+                    {% if user.categoria == 'Guardião' %}
+                        <span class="badge badge-guardiao">🛡️ {{ user.categoria }}</span>
+                    {% elif user.categoria == 'Admin' %}
+                        <span class="badge badge-admin">👑 {{ user.categoria }}</span>
+                    {% else %}
+                        <span class="badge badge-usuario">👤 {{ user.categoria }}</span>
+                    {% endif %}
+                    
+                    {% if user.em_servico %}
+                        <span class="badge badge-servico">🟢 Em Serviço</span>
+                    {% else %}
+                        <span class="badge badge-offline">⚫ Offline</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="profile-details">
+                <div class="detail-item">
+                    <div class="detail-label">📧 Email</div>
+                    <div class="detail-value">{{ user.email or 'Não informado' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">📱 Telefone</div>
+                    <div class="detail-value">{{ user.telefone or 'Não informado' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">🎂 Idade</div>
+                    <div class="detail-value">{{ user.idade or 'Não informado' }} anos</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">👤 Nome Completo</div>
+                    <div class="detail-value">{{ user.nome_completo or 'Não informado' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">📅 Cadastro</div>
+                    <div class="detail-value">{{ user.data_criacao_registro.strftime('%d/%m/%Y às %H:%M') if user.data_criacao_registro else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">⏰ Último Turno</div>
+                    <div class="detail-value">{{ user.ultimo_turno_inicio.strftime('%d/%m/%Y às %H:%M') if user.ultimo_turno_inicio else 'Nunca' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-section">
+            <h3>📊 Estatísticas do Usuário</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ user.pontos or 0 }}</div>
+                    <div class="stat-label">🏆 Pontos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ user.experiencia or 0 }}</div>
+                    <div class="stat-label">⭐ Experiência</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.denuncias_feitas or 0 }}</div>
+                    <div class="stat-label">📋 Denúncias Feitas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.denuncias_recebidas or 0 }}</div>
+                    <div class="stat-label">⚠️ Denúncias Recebidas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.votos_dados or 0 }}</div>
+                    <div class="stat-label">⚖️ Votos Dados</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Sections -->
+        <div class="activity-section">
+            <!-- Denúncias Feitas -->
+            <div class="activity-card">
+                <h3>📋 Denúncias Feitas</h3>
+                <div class="activity-list">
+                    {% for denuncia in denuncias_feitas %}
+                    <div class="activity-item">
+                        <h4>Contra: {{ denuncia.denunciado_username or 'ID: ' + denuncia.id_denunciado|string }}</h4>
+                        <p>{{ denuncia.motivo[:100] }}{% if denuncia.motivo|length > 100 %}...{% endif %}</p>
+                        <p>
+                            {% if denuncia.status == 'Pendente' %}
+                                <span class="badge badge-pendente">⏳ {{ denuncia.status }}</span>
+                            {% elif denuncia.status == 'Finalizada' %}
+                                <span class="badge badge-finalizada">✅ {{ denuncia.status }}</span>
+                            {% else %}
+                                <span class="badge badge-analise">🔍 {{ denuncia.status }}</span>
+                            {% endif %}
+                        </p>
+                        <small>{{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}</small>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not denuncias_feitas %}
+                    <div class="activity-item">
+                        <p style="text-align: center; color: #7f8c8d;">Nenhuma denúncia feita</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Denúncias Recebidas -->
+            <div class="activity-card">
+                <h3>⚠️ Denúncias Recebidas</h3>
+                <div class="activity-list">
+                    {% for denuncia in denuncias_recebidas %}
+                    <div class="activity-item">
+                        <h4>Por: {{ denuncia.denunciante_username or 'ID: ' + denuncia.id_denunciante|string }}</h4>
+                        <p>{{ denuncia.motivo[:100] }}{% if denuncia.motivo|length > 100 %}...{% endif %}</p>
+                        <p>
+                            {% if denuncia.status == 'Pendente' %}
+                                <span class="badge badge-pendente">⏳ {{ denuncia.status }}</span>
+                            {% elif denuncia.status == 'Finalizada' %}
+                                <span class="badge badge-finalizada">✅ {{ denuncia.status }}</span>
+                            {% else %}
+                                <span class="badge badge-analise">🔍 {{ denuncia.status }}</span>
+                            {% endif %}
+                        </p>
+                        <small>{{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}</small>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not denuncias_recebidas %}
+                    <div class="activity-item">
+                        <p style="text-align: center; color: #7f8c8d;">Nenhuma denúncia recebida</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Votos Dados -->
+            <div class="activity-card">
+                <h3>⚖️ Votos Dados</h3>
+                <div class="activity-list">
+                    {% for voto in votos_dados %}
+                    <div class="activity-item">
+                        <h4>Voto: <strong>{{ voto.voto }}</strong></h4>
+                        <p>{{ voto.motivo[:100] if voto.motivo else 'Sem descrição' }}{% if voto.motivo and voto.motivo|length > 100 %}...{% endif %}</p>
+                        <small>{{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}</small>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not votos_dados %}
+                    <div class="activity-item">
+                        <p style="text-align: center; color: #7f8c8d;">Nenhum voto dado</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

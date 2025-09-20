@@ -34,6 +34,7 @@ from web.auth import setup_auth
 from web.routes import setup_routes
 from web.admin_routes import setup_admin_routes
 from web.admin_routes_fixed import setup_admin_routes_fixed
+from web.admin_complete import setup_admin_complete
 
 # Configuração de logging
 logging.basicConfig(
@@ -325,6 +326,11 @@ class GuardiaoBot:
             logger.info("🔧 Configurando rotas admin fixas...")
             setup_admin_routes_fixed(self.web_app)
             logger.info("✅ Rotas admin fixas configuradas")
+            
+            # Configura painel admin completo
+            logger.info("🔧 Configurando painel admin completo...")
+            setup_admin_complete(self.web_app)
+            logger.info("✅ Painel admin completo configurado")
             
             # Lista todas as rotas registradas
             with self.web_app.app_context():
