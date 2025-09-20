@@ -390,7 +390,7 @@ class GuardiaoCog(commands.Cog):
         self.bot = bot
         self.points_loop.start()
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="formguardiao",
         description="Torne-se um Guardião do Sistema Guardião BETA"
     )
@@ -518,7 +518,7 @@ class GuardiaoCog(commands.Cog):
             )
             await ctx.respond(embed=embed, ephemeral=True)
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="turno",
         description="Entre ou saia de serviço como Guardião"
     )

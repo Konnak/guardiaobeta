@@ -25,7 +25,7 @@ class StatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="stats",
         description="Exibe suas estatísticas no Sistema Guardião BETA"
     )

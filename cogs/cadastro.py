@@ -198,7 +198,7 @@ class CadastroCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="cadastro",
         description="Cadastre-se no Sistema Guardião BETA"
     )

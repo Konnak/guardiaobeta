@@ -510,7 +510,7 @@ class ModeracaoCog(commands.Cog):
         self.distribution_loop.start()
         self.inactivity_check.start()
     
-    @discord.slash_command(
+    @commands.slash_command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
