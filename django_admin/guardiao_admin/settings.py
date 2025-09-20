@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-guardiao-beta-admin
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # Para desenvolvimento
+ALLOWED_HOSTS = ['*', 'guardiaobeta.discloud.app', 'localhost', '127.0.0.1']  # Para produção
 
 # Application definition
 INSTALLED_APPS = [

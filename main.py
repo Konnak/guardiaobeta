@@ -342,11 +342,48 @@ class GuardiaoBot:
             
             # Adiciona rota para Django Admin Panel
             @self.web_app.route('/admin')
-            def django_admin():
-                """Redireciona para o Django Admin Panel"""
-                from flask import redirect
-                # Redireciona para a porta 8001 do Django
-                return redirect('http://localhost:8001/admin/', code=302)
+            @self.web_app.route('/admin/')
+            @self.web_app.route('/admin/<path:path>')
+            def django_admin(path=''):
+                """Proxy para o Django Admin Panel"""
+                import requests
+                from flask import request, Response
+                
+                try:
+                    # Constrói URL do Django Admin
+                    django_url = f'http://localhost:8001/admin/{path}'
+                    if request.query_string:
+                        django_url += f'?{request.query_string.decode()}'
+                    
+                    # Faz requisição para o Django
+                    django_response = requests.request(
+                        method=request.method,
+                        url=django_url,
+                        headers=dict(request.headers),
+                        data=request.get_data(),
+                        cookies=request.cookies,
+                        allow_redirects=False
+                    )
+                    
+                    # Retorna resposta do Django
+                    return Response(
+                        django_response.content,
+                        status=django_response.status_code,
+                        headers=dict(django_response.headers)
+                    )
+                    
+                except requests.exceptions.ConnectionError:
+                    # Django não está rodando, redireciona para página de erro
+                    return '''
+                    <html>
+                        <head><title>Django Admin - Indisponível</title></head>
+                        <body>
+                            <h1>Django Admin Panel</h1>
+                            <p>O Django Admin Panel está sendo iniciado. Aguarde alguns segundos e recarregue a página.</p>
+                            <p><a href="/admin">Recarregar</a></p>
+                        </body>
+                    </html>
+                    ''', 503
             
             logger.info("Aplicação web configurada com sucesso")
             
@@ -385,7 +422,7 @@ class GuardiaoBot:
                     subprocess.run([
                         sys.executable, 'manage.py', 'migrate', '--run-syncdb'
                     ], cwd=django_dir, check=False)
-                    # Inicia servidor
+                    # Inicia servidor Django
                     subprocess.run([
                         sys.executable, 'manage.py', 'runserver', '0.0.0.0:8001'
                     ], cwd=django_dir, check=False)
@@ -395,7 +432,7 @@ class GuardiaoBot:
         # Inicia Django em thread separada
         django_thread = threading.Thread(target=run_django, daemon=True)
         django_thread.start()
-        logger.info("Django Admin Panel será iniciado em http://localhost:8001/admin/")
+        logger.info("Django Admin Panel será iniciado na porta 8001")
     
     async def run(self):
         """Executa o sistema completo"""
