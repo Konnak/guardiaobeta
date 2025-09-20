@@ -108,23 +108,34 @@ def setup_auth(app: Flask):
                 flash("Falha ao obter informações do usuário.", "error")
                 return redirect(url_for('index'))
             
-            # Obtém lista de servidores do usuário
+            # Obtém lista de servidores do usuário (apenas servidores de admin para economizar espaço)
             guilds_data = get_user_guilds(token_data['access_token'])
+            admin_guilds = []
+            if guilds_data:
+                for guild in guilds_data:
+                    permissions = int(guild.get('permissions', 0))
+                    if permissions & 0x8:  # 0x8 = Administrator permission
+                        admin_guilds.append({
+                            'id': guild['id'],
+                            'name': guild['name'],
+                            'icon': guild.get('icon')
+                        })
             
-            # Salva informações na sessão
+            # Salva informações na sessão (otimizada para reduzir tamanho do cookie)
             session['user'] = {
                 'id': int(user_data['id']),
                 'username': user_data['username'],
                 'discriminator': user_data.get('discriminator', '0'),
                 'avatar': user_data.get('avatar'),
-                'email': user_data.get('email'),
                 'verified': user_data.get('verified', False),
-                'guilds': guilds_data or [],
+                'admin_guilds': admin_guilds,  # Apenas servidores de admin
                 'login_time': datetime.utcnow().isoformat(),
-                'access_token': token_data['access_token'],
-                'refresh_token': token_data.get('refresh_token'),
                 'expires_at': (datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))).isoformat()
             }
+            
+            # Salva tokens separadamente (não na sessão para segurança)
+            session['access_token'] = token_data['access_token']
+            session['refresh_token'] = token_data.get('refresh_token')
             
             # Verifica se o usuário está cadastrado no sistema
             user_db = db_manager.execute_one_sync(
@@ -176,9 +187,9 @@ def setup_auth(app: Flask):
             
             user_data = session['user'].copy()
             
-            # Remove informações sensíveis
-            user_data.pop('access_token', None)
-            user_data.pop('refresh_token', None)
+            # Adiciona informações dos tokens se necessário (sem expor os valores)
+            user_data['has_access_token'] = bool(session.get('access_token'))
+            user_data['has_refresh_token'] = bool(session.get('refresh_token'))
             
             return jsonify(user_data)
             
@@ -302,16 +313,8 @@ def get_user_guilds_admin():
         if 'user' not in session:
             return []
         
-        guilds = session['user'].get('guilds', [])
-        admin_guilds = []
-        
-        for guild in guilds:
-            # Verifica se o usuário tem permissões de administrador
-            permissions = int(guild.get('permissions', 0))
-            if permissions & 0x8:  # 0x8 = Administrator permission
-                admin_guilds.append(guild)
-        
-        return admin_guilds
+        # Retorna diretamente os servidores de admin já filtrados
+        return session['user'].get('admin_guilds', [])
         
     except Exception as e:
         logger.error(f"Erro ao obter servidores de admin: {e}")
