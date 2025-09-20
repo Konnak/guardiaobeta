@@ -26,22 +26,58 @@ class TrainingView(ui.View):
         self.current_step = 1
         self.quiz_answers = []
         self.correct_answers = 0
-        
-        # Estado inicial dos botões (apenas "Próximo" habilitado)
-        self.next_step.disabled = False
-        self.start_exam.disabled = True
-        self.answer_a.disabled = True
-        self.answer_b.disabled = True
-        self.answer_c.disabled = True
-        self.answer_d.disabled = True
+        self.current_question = 0
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """Verifica se o usuário pode interagir com a view"""
         return interaction.user.id == self.user_id
     
-    @ui.button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️", row=0)
-    async def next_step(self, interaction: discord.Interaction, button: ui.Button):
-        """Botão para avançar no treinamento"""
+    def _update_buttons(self):
+        """Atualiza os botões baseado no estado atual"""
+        # Remove todos os botões existentes
+        self.clear_items()
+        
+        if self.current_step == 1:
+            # Etapa 1: Apenas botão "Próximo"
+            next_btn = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️", row=0)
+            next_btn.callback = self._next_step_callback
+            self.add_item(next_btn)
+            
+        elif self.current_step == 2:
+            # Etapa 2: Botões de resposta A, B, C, D
+            for letter in ["A", "B", "C", "D"]:
+                btn = ui.Button(label=letter, style=discord.ButtonStyle.secondary, row=0)
+                async def callback(interaction, letter=letter):
+                    await self._handle_quiz_answer(interaction, letter)
+                btn.callback = callback
+                self.add_item(btn)
+                
+        elif self.current_step == 3:
+            # Etapa 3: Botões de resposta A, B, C, D
+            for letter in ["A", "B", "C", "D"]:
+                btn = ui.Button(label=letter, style=discord.ButtonStyle.secondary, row=0)
+                async def callback(interaction, letter=letter):
+                    await self._handle_quiz_answer(interaction, letter)
+                btn.callback = callback
+                self.add_item(btn)
+                
+        elif self.current_step == 4:
+            # Prova final: Botão "Começar Prova"
+            start_btn = ui.Button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀", row=0)
+            start_btn.callback = self._start_exam_callback
+            self.add_item(start_btn)
+            
+        elif self.current_step == 5:
+            # Durante a prova: Botões de resposta A, B, C, D
+            for letter in ["A", "B", "C", "D"]:
+                btn = ui.Button(label=letter, style=discord.ButtonStyle.secondary, row=0)
+                async def callback(interaction, letter=letter):
+                    await self._handle_quiz_answer(interaction, letter)
+                btn.callback = callback
+                self.add_item(btn)
+    
+    async def _next_step_callback(self, interaction: discord.Interaction):
+        """Callback para o botão Próximo"""
         await interaction.response.defer()
         
         if self.current_step == 1:
@@ -53,37 +89,14 @@ class TrainingView(ui.View):
         else:
             await interaction.followup.send("Treinamento concluído!", ephemeral=True)
     
-    @ui.button(label="A", style=discord.ButtonStyle.secondary, row=1)
-    async def answer_a(self, interaction: discord.Interaction, button: ui.Button):
-        await self._handle_quiz_answer(interaction, "A")
-    
-    @ui.button(label="B", style=discord.ButtonStyle.secondary, row=1)
-    async def answer_b(self, interaction: discord.Interaction, button: ui.Button):
-        await self._handle_quiz_answer(interaction, "B")
-    
-    @ui.button(label="C", style=discord.ButtonStyle.secondary, row=1)
-    async def answer_c(self, interaction: discord.Interaction, button: ui.Button):
-        await self._handle_quiz_answer(interaction, "C")
-    
-    @ui.button(label="D", style=discord.ButtonStyle.secondary, row=1)
-    async def answer_d(self, interaction: discord.Interaction, button: ui.Button):
-        await self._handle_quiz_answer(interaction, "D")
-    
-    @ui.button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀", row=0)
-    async def start_exam(self, interaction: discord.Interaction, button: ui.Button):
+    async def _start_exam_callback(self, interaction: discord.Interaction):
+        """Callback para o botão Começar Prova"""
         await self._start_final_exam(interaction)
     
     async def _show_theory_step2(self, interaction: discord.Interaction):
         """Mostra a segunda etapa do treinamento"""
         self.current_step = 2
-        
-        # Mostra apenas os botões de resposta
-        self.next_step.disabled = True
-        self.start_exam.disabled = True
-        self.answer_a.disabled = False
-        self.answer_b.disabled = False
-        self.answer_c.disabled = False
-        self.answer_d.disabled = False
+        self._update_buttons()
         
         embed = discord.Embed(
             title="📚 Etapa 2: Ética na Moderação",
@@ -118,19 +131,18 @@ class TrainingView(ui.View):
             inline=False
         )
         
-        # Habilita apenas os botões de resposta
-        self.next_step.disabled = True
-        self.start_exam.disabled = True
-        self.answer_a.disabled = False
-        self.answer_b.disabled = False
-        self.answer_c.disabled = False
-        self.answer_d.disabled = False
+        self._update_buttons()
         
-        await interaction.edit_original_response(embed=embed, view=self)
+        try:
+            await interaction.edit_original_response(embed=embed, view=self)
+        except discord.NotFound:
+            # Se a resposta original não existir mais, envia uma nova mensagem
+            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _show_theory_step3(self, interaction: discord.Interaction):
         """Mostra a terceira etapa do treinamento"""
         self.current_step = 3
+        self._update_buttons()
         
         embed = discord.Embed(
             title="🛠️ Etapa 3: Boa e Má Utilização da Ferramenta",
@@ -165,11 +177,16 @@ class TrainingView(ui.View):
             inline=False
         )
         
-        await interaction.edit_original_response(embed=embed, view=self)
+        try:
+            await interaction.edit_original_response(embed=embed, view=self)
+        except discord.NotFound:
+            # Se a resposta original não existir mais, envia uma nova mensagem
+            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _show_final_exam(self, interaction: discord.Interaction):
         """Mostra a prova final"""
         self.current_step = 4
+        self._update_buttons()
         
         embed = discord.Embed(
             title="🎓 Prova Final - Sistema Guardião BETA",
@@ -190,15 +207,12 @@ class TrainingView(ui.View):
             inline=False
         )
         
-        # Habilita apenas o botão "Começar Prova"
-        self.next_step.disabled = True
-        self.start_exam.disabled = False
-        self.answer_a.disabled = True
-        self.answer_b.disabled = True
-        self.answer_c.disabled = True
-        self.answer_d.disabled = True
         
-        await interaction.edit_original_response(embed=embed, view=self)
+        try:
+            await interaction.edit_original_response(embed=embed, view=self)
+        except discord.NotFound:
+            # Se a resposta original não existir mais, envia uma nova mensagem
+            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _start_final_exam(self, interaction: discord.Interaction):
         """Inicia a prova final"""
@@ -225,6 +239,8 @@ class TrainingView(ui.View):
         self.quiz_questions = questions
         self.current_question = 0
         self.correct_answers = 0
+        self.current_step = 5
+        self._update_buttons()
         
         await self._show_question(interaction)
     
@@ -247,19 +263,17 @@ class TrainingView(ui.View):
             inline=False
         )
         
-        # Habilita apenas os botões de resposta
-        self.next_step.disabled = True
-        self.start_exam.disabled = True
-        self.answer_a.disabled = False
-        self.answer_b.disabled = False
-        self.answer_c.disabled = False
-        self.answer_d.disabled = False
+        self._update_buttons()
         
         try:
             await interaction.response.defer()
             await interaction.followup.edit_message(interaction.message.id, embed=embed, view=self)
         except:
+            try:
             await interaction.edit_original_response(embed=embed, view=self)
+        except discord.NotFound:
+            # Se a resposta original não existir mais, envia uma nova mensagem
+            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _handle_quiz_answer(self, interaction: discord.Interaction, answer: str):
         """Processa uma resposta do quiz"""
@@ -274,13 +288,7 @@ class TrainingView(ui.View):
                     color=0x00ff00
                 )
                 self.current_step = 3
-                # Habilita o botão próximo
-                self.next_step.disabled = False
-                self.start_exam.disabled = True
-                self.answer_a.disabled = True
-                self.answer_b.disabled = True
-                self.answer_c.disabled = True
-                self.answer_d.disabled = True
+                self._update_buttons()
             else:
                 embed = discord.Embed(
                     title="❌ Resposta Incorreta",
@@ -292,13 +300,7 @@ class TrainingView(ui.View):
                     value="Mesmo conhecendo a pessoa, você deve analisar a denúncia normalmente, mantendo a imparcialidade e julgando apenas o conteúdo.",
                     inline=False
                 )
-                # Habilita o botão próximo
-                self.next_step.disabled = False
-                self.start_exam.disabled = True
-                self.answer_a.disabled = True
-                self.answer_b.disabled = True
-                self.answer_c.disabled = True
-                self.answer_d.disabled = True
+                self._update_buttons()
             
             await interaction.response.edit_message(embed=embed, view=self)
             
@@ -313,13 +315,7 @@ class TrainingView(ui.View):
                     color=0x00ff00
                 )
                 self.current_step = 4
-                # Habilita o botão próximo
-                self.next_step.disabled = False
-                self.start_exam.disabled = True
-                self.answer_a.disabled = True
-                self.answer_b.disabled = True
-                self.answer_c.disabled = True
-                self.answer_d.disabled = True
+                self._update_buttons()
             else:
                 embed = discord.Embed(
                     title="❌ Resposta Incorreta",
@@ -331,13 +327,7 @@ class TrainingView(ui.View):
                     value="Uma moderação adequada requer análise cuidadosa de todas as evidências antes de tomar uma decisão.",
                     inline=False
                 )
-                # Habilita o botão próximo
-                self.next_step.disabled = False
-                self.start_exam.disabled = True
-                self.answer_a.disabled = True
-                self.answer_b.disabled = True
-                self.answer_c.disabled = True
-                self.answer_d.disabled = True
+                self._update_buttons()
             
             await interaction.response.edit_message(embed=embed, view=self)
             
@@ -405,7 +395,11 @@ class TrainingView(ui.View):
             # Define o cooldown da prova
             await self._set_prova_cooldown(interaction.user.id)
         
-        await interaction.edit_original_response(embed=embed, view=self)
+        try:
+            await interaction.edit_original_response(embed=embed, view=self)
+        except discord.NotFound:
+            # Se a resposta original não existir mais, envia uma nova mensagem
+            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _update_user_to_guardian(self, user_id: int):
         """Atualiza a categoria do usuário para Guardião"""
@@ -419,7 +413,8 @@ class TrainingView(ui.View):
     async def _set_prova_cooldown(self, user_id: int):
         """Define o cooldown da prova"""
         try:
-            cooldown_time = datetime.now(timezone.utc) + timedelta(hours=PROVA_COOLDOWN_HOURS)
+            # Usar datetime UTC sem timezone para compatibilidade com PostgreSQL
+            cooldown_time = datetime.utcnow() + timedelta(hours=PROVA_COOLDOWN_HOURS)
             query = "UPDATE usuarios SET cooldown_prova = $1 WHERE id_discord = $2"
             await db_manager.execute_command(query, cooldown_time, user_id)
             logger.info(f"Cooldown de prova definido para usuário {user_id}")
@@ -450,7 +445,7 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica a idade da conta (mínimo 3 meses)
-            account_age = datetime.now(timezone.utc) - interaction.user.created_at
+            account_age = datetime.utcnow() - interaction.user.created_at
             if account_age.days < (GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30):
                 embed = discord.Embed(
                     title="❌ Conta Muito Nova",
