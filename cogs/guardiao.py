@@ -271,9 +271,9 @@ class TrainingView(ui.View):
         except:
             try:
                 await interaction.edit_original_response(embed=embed, view=self)
-        except discord.NotFound:
-            # Se a resposta original não existir mais, envia uma nova mensagem
-            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
+            except discord.NotFound:
+                # Se a resposta original não existir mais, envia uma nova mensagem
+                await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _handle_quiz_answer(self, interaction: discord.Interaction, answer: str):
         """Processa uma resposta do quiz"""
