@@ -167,11 +167,28 @@ class ReportView(ui.View):
                 mensagens_anonimizadas = "\n\n".join(result)
                 logger.info(f"Resultado final: {mensagens_anonimizadas[:200]}...")
                 
-                embed.add_field(
-                    name="💬 Mensagens Capturadas",
-                    value=mensagens_anonimizadas,
-                    inline=False
-                )
+                # Divide as mensagens em chunks para evitar limite do Discord (1024 caracteres por field)
+                chunks = []
+                current_chunk = ""
+                
+                for linha in result:
+                    if len(current_chunk + linha + "\n\n") > 1000:  # Deixa margem de segurança
+                        chunks.append(current_chunk.strip())
+                        current_chunk = linha + "\n\n"
+                    else:
+                        current_chunk += linha + "\n\n"
+                
+                if current_chunk.strip():
+                    chunks.append(current_chunk.strip())
+                
+                # Adiciona cada chunk como um field separado
+                for i, chunk in enumerate(chunks):
+                    field_name = f"💬 Mensagens Capturadas" if i == 0 else f"💬 Mensagens Capturadas (continuação {i+1})"
+                    embed.add_field(
+                        name=field_name,
+                        value=chunk,
+                        inline=False
+                    )
             else:
                 logger.info("Nenhuma mensagem capturada encontrada")
                 embed.add_field(
