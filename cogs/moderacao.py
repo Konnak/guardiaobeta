@@ -149,8 +149,8 @@ class ReportView(ui.View):
                 # Processa mensagens
                 result = []
                 for msg in mensagens[:15]:
-                    # Converte para horário de Brasília (UTC-3)
-                    timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
+                    # Converte para horário de Brasília (UTC+3)
+                    timestamp_brasilia = msg['timestamp_mensagem'] + timedelta(hours=3)
                     timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
                     
                     autor = usuarios_unicos[msg['id_autor']]
