@@ -510,11 +510,11 @@ class ModeracaoCog(commands.Cog):
         self.distribution_loop.start()
         self.inactivity_check.start()
     
-    @commands.slash_command(
+    @discord.slash_command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
-    async def report(self, ctx, usuario: discord.Member, motivo: str):
+    async def report(self, ctx: discord.ApplicationContext, usuario: discord.Member, motivo: str):
         """
         Comando para denunciar usuários
         

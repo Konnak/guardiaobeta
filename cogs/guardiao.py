@@ -390,11 +390,11 @@ class GuardiaoCog(commands.Cog):
         self.bot = bot
         self.points_loop.start()
     
-    @commands.slash_command(
+    @discord.slash_command(
         name="formguardiao",
         description="Torne-se um Guardião do Sistema Guardião BETA"
     )
-    async def formguardiao(self, ctx):
+    async def formguardiao(self, ctx: discord.ApplicationContext):
         """
         Comando para se tornar um Guardião
         
@@ -518,11 +518,11 @@ class GuardiaoCog(commands.Cog):
             )
             await ctx.respond(embed=embed, ephemeral=True)
     
-    @commands.slash_command(
+    @discord.slash_command(
         name="turno",
         description="Entre ou saia de serviço como Guardião"
     )
-    async def turno(self, ctx):
+    async def turno(self, ctx: discord.ApplicationContext):
         """
         Comando para entrar/sair de serviço
         
@@ -593,7 +593,7 @@ class GuardiaoCog(commands.Cog):
             )
             await ctx.respond(embed=embed, ephemeral=True)
     
-    async def _enter_service(self, ctx, user_data: dict):
+    async def _enter_service(self, ctx: discord.ApplicationContext, user_data: dict):
         """Entra em serviço"""
         try:
             now = datetime.utcnow()
@@ -630,7 +630,7 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro ao entrar em serviço para usuário {ctx.author.id}: {e}")
             raise
     
-    async def _exit_service(self, ctx, user_data: dict):
+    async def _exit_service(self, ctx: discord.ApplicationContext, user_data: dict):
         """Sai de serviço"""
         try:
             now = datetime.utcnow()
@@ -705,7 +705,7 @@ class GuardiaoCog(commands.Cog):
         await self.bot.wait_until_ready()
     
     @formguardiao.error
-    async def formguardiao_error(self, ctx, error):
+    async def formguardiao_error(self, ctx: discord.ApplicationContext, error):
         """Tratamento de erros do comando formguardiao"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -718,7 +718,7 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro não tratado no comando formguardiao: {error}")
     
     @turno.error
-    async def turno_error(self, ctx, error):
+    async def turno_error(self, ctx: discord.ApplicationContext, error):
         """Tratamento de erros do comando turno"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
