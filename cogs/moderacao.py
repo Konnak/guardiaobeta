@@ -727,6 +727,8 @@ class ModeracaoCog(commands.Cog):
             if not mensagens:
                 return "Nenhuma mensagem encontrada."
             
+            logger.info(f"Iniciando anonimização de {len(mensagens)} mensagens para denunciado {id_denunciado}")
+            
             # Mapeia usuários únicos para nomes anônimos
             usuarios_unicos = {}
             contador_usuario = 1
@@ -736,15 +738,20 @@ class ModeracaoCog(commands.Cog):
                 if msg['id_autor'] not in usuarios_unicos:
                     if msg['id_autor'] == id_denunciado:
                         usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
+                        logger.info(f"Usuário {msg['id_autor']} mapeado como Denunciado")
                     else:
                         usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
+                        logger.info(f"Usuário {msg['id_autor']} mapeado como Usuário {contador_usuario}")
                         contador_usuario += 1
             
             result = []
             for msg in mensagens[:15]:  # Limita a 15 mensagens para não exceder o limite do Discord
                 # Converte para horário de Brasília (UTC-3)
-                timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
+                timestamp_original = msg['timestamp_mensagem']
+                timestamp_brasilia = timestamp_original - timedelta(hours=3)
                 timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
+                
+                logger.info(f"Timestamp original: {timestamp_original}, Brasília: {timestamp_brasilia}, formatado: {timestamp_formatado}")
                 
                 # Pega o nome anônimo do autor
                 autor = usuarios_unicos[msg['id_autor']]
@@ -754,15 +761,21 @@ class ModeracaoCog(commands.Cog):
                 
                 # Destaque especial para o denunciado
                 if msg['id_autor'] == id_denunciado:
-                    result.append(f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**")
+                    linha = f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**"
+                    result.append(linha)
+                    logger.info(f"Linha denunciado: {linha}")
                 else:
-                    result.append(f"{autor} ({timestamp_formatado}): {conteudo}")
+                    linha = f"{autor} ({timestamp_formatado}): {conteudo}"
+                    result.append(linha)
+                    logger.info(f"Linha usuário: {linha}")
                 
                 # Adiciona anexos se existirem
                 if msg['anexos_urls']:
                     result.append(f"📎 Anexos: {msg['anexos_urls']}")
             
-            return "\n\n".join(result)
+            resultado_final = "\n\n".join(result)
+            logger.info(f"Resultado final da anonimização: {resultado_final}")
+            return resultado_final
             
         except Exception as e:
             logger.error(f"Erro ao anonimizar mensagens: {e}")
