@@ -42,12 +42,15 @@ class ReportView(ui.View):
     async def _handle_atender(self, interaction: discord.Interaction):
         """Processa o atendimento de uma denúncia"""
         try:
+            logger.info(f"Guardian {interaction.user.id} tentando atender denúncia {self.hash_denuncia}")
+            
             # Verifica se ainda há vagas para esta denúncia
             count_query = """
                 SELECT COUNT(*) FROM votos_guardioes 
                 WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
             count = db_manager.execute_scalar_sync(count_query, self.hash_denuncia)
+            logger.info(f"Votos existentes para denúncia {self.hash_denuncia}: {count}")
             
             if count >= REQUIRED_VOTES_FOR_DECISION:
                 embed = discord.Embed(
@@ -68,9 +71,32 @@ class ReportView(ui.View):
             """
             denuncia = db_manager.execute_one_sync(denuncia_query, self.hash_denuncia)
             
+            # Debug: verifica se a denúncia existe sem JOINs
             if not denuncia:
-                await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
-                return
+                # Tenta buscar apenas a denúncia sem JOINs para debug
+                simple_query = "SELECT * FROM denuncias WHERE hash_denuncia = $1"
+                simple_denuncia = db_manager.execute_one_sync(simple_query, self.hash_denuncia)
+                
+                if simple_denuncia:
+                    logger.error(f"Denúncia encontrada sem JOINs: {simple_denuncia}")
+                    # Busca os usuários separadamente
+                    denunciante = db_manager.execute_one_sync(
+                        "SELECT username FROM usuarios WHERE id_discord = $1", 
+                        simple_denuncia['id_denunciante']
+                    )
+                    denunciado = db_manager.execute_one_sync(
+                        "SELECT username FROM usuarios WHERE id_discord = $1", 
+                        simple_denuncia['id_denunciado']
+                    )
+                    
+                    # Cria o objeto denúncia manualmente
+                    denuncia = simple_denuncia.copy()
+                    denuncia['denunciante_name'] = denunciante['username'] if denunciante else 'Usuário não encontrado'
+                    denuncia['denunciado_name'] = denunciado['username'] if denunciado else 'Usuário não encontrado'
+                else:
+                    logger.error(f"Denúncia com hash {self.hash_denuncia} não encontrada no banco")
+                    await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
+                    return
             
             # Busca as mensagens capturadas
             mensagens_query = """
