@@ -537,7 +537,7 @@ class ModeracaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica se o usuário está cadastrado
-            user_data = get_user_by_discord_id(interaction.user.id)
+            user_data = await get_user_by_discord_id(interaction.user.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
@@ -582,7 +582,7 @@ class ModeracaoCog(commands.Cog):
             )
             
             # Captura mensagens do histórico
-            await self._capture_messages(ctx, usuario, denuncia_id)
+            await self._capture_messages(interaction, usuario, denuncia_id)
             
             # Conta guardiões em serviço
             guardians_query = """
@@ -635,7 +635,7 @@ class ModeracaoCog(commands.Cog):
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    async def _capture_messages(self, ctx: commands.Context, target_user: discord.Member, denuncia_id: int):
+    async def _capture_messages(self, interaction: discord.Interaction, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""
         try:
             messages_captured = 0
