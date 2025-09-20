@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 try:
-    from config import POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT
+    from config import POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
 except ImportError:
     # Fallback para variáveis de ambiente
     POSTGRES_DB = os.getenv('POSTGRES_DB', 'guardiaobeta')
@@ -18,6 +18,8 @@ except ImportError:
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'SUA_SENHA_AQUI')
     POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'guardiaobeta')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
+    DISCORD_CLIENT_ID = os.getenv('DISCORD_CLIENT_ID', '')
+    DISCORD_CLIENT_SECRET = os.getenv('DISCORD_CLIENT_SECRET', '')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +46,10 @@ CSRF_COOKIE_SECURE = False  # Desabilitado para debug
 SESSION_COOKIE_SECURE = False  # Desabilitado para debug
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Configurações Discord OAuth2
+DISCORD_CLIENT_ID = DISCORD_CLIENT_ID
+DISCORD_CLIENT_SECRET = DISCORD_CLIENT_SECRET
 
 # Application definition
 INSTALLED_APPS = [

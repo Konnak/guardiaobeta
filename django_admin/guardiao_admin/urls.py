@@ -21,6 +21,7 @@ def admin_login_redirect(request):
 urlpatterns = [
     path('', admin_login_redirect, name='home'),
     path('admin/', admin.site.urls),
+    path('admin/discord-login/', include('guardiao.urls')),
     path('login/', LoginView.as_view(template_name='admin/login.html'), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('guardiao/', include('guardiao.urls')),

@@ -1,117 +1,122 @@
 """
-Views personalizadas para o Sistema Guardião BETA
+Views personalizadas para Django Admin
 """
 
-from django.shortcuts import render, get_object_or_404
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count, Q
-from django.utils import timezone
-from datetime import timedelta
-from .models import Usuario, Denuncia, MensagemCapturada, VotoGuardiao
+import requests
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.conf import settings
+from django.urls import reverse
+import logging
 
+logger = logging.getLogger(__name__)
 
-@staff_member_required
-def dashboard(request):
-    """Dashboard principal com estatísticas"""
+def discord_login(request):
+    """View para login via Discord OAuth2"""
     
-    # Estatísticas gerais
-    total_usuarios = Usuario.objects.count()
-    total_denuncias = Denuncia.objects.count()
-    denuncias_em_analise = Denuncia.objects.filter(status='Em Análise').count()
-    guardioes_servico = Usuario.objects.filter(em_servico=True, categoria='Guardião').count()
+    # Se já está logado, redireciona para admin
+    if request.user.is_authenticated:
+        return redirect('/admin/')
     
-    # Estatísticas recentes (últimos 7 dias)
-    semana_passada = timezone.now() - timedelta(days=7)
-    denuncias_recentes = Denuncia.objects.filter(data_criacao__gte=semana_passada).count()
-    usuarios_recentes = Usuario.objects.filter(data_cadastro__gte=semana_passada).count()
+    # Parâmetros OAuth2 Discord
+    client_id = getattr(settings, 'DISCORD_CLIENT_ID', '')
+    redirect_uri = f"{request.scheme}://{request.get_host()}/admin/discord-callback/"
     
-    # Top guardiões por atividade
-    top_guardioes = Usuario.objects.filter(
-        categoria='Guardião'
-    ).annotate(
-        total_votos=Count('votoguardiao')
-    ).order_by('-total_votos')[:5]
-    
-    # Denúncias recentes
-    denuncias_recentes_list = Denuncia.objects.select_related('id_denunciante').order_by('-data_criacao')[:10]
+    # URL de autorização Discord
+    discord_auth_url = (
+        f"https://discord.com/api/oauth2/authorize"
+        f"?client_id={client_id}"
+        f"&redirect_uri={redirect_uri}"
+        f"&response_type=code"
+        f"&scope=identify"
+    )
     
     context = {
-        'total_usuarios': total_usuarios,
-        'total_denuncias': total_denuncias,
-        'denuncias_em_analise': denuncias_em_analise,
-        'guardioes_servico': guardioes_servico,
-        'denuncias_recentes': denuncias_recentes,
-        'usuarios_recentes': usuarios_recentes,
-        'top_guardioes': top_guardioes,
-        'denuncias_recentes_list': denuncias_recentes_list,
+        'discord_auth_url': discord_auth_url,
+        'site_title': 'Guardião BETA - Login via Discord'
     }
     
-    return render(request, 'guardiao/dashboard.html', context)
+    return render(request, 'guardiao/discord_login.html', context)
 
+def discord_callback(request):
+    """Callback do OAuth2 Discord"""
+    
+    code = request.GET.get('code')
+    if not code:
+        messages.error(request, 'Código de autorização não fornecido.')
+        return redirect('/admin/')
+    
+    try:
+        # Troca código por token
+        token_data = {
+            'client_id': getattr(settings, 'DISCORD_CLIENT_ID', ''),
+            'client_secret': getattr(settings, 'DISCORD_CLIENT_SECRET', ''),
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': f"{request.scheme}://{request.get_host()}/admin/discord-callback/"
+        }
+        
+        response = requests.post('https://discord.com/api/oauth2/token', data=token_data)
+        
+        if response.status_code == 200:
+            token_info = response.json()
+            access_token = token_info.get('access_token')
+            
+            # Obtém informações do usuário
+            headers = {'Authorization': f'Bearer {access_token}'}
+            user_response = requests.get('https://discord.com/api/v10/users/@me', headers=headers)
+            
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                discord_id = user_data.get('id')
+                username = user_data.get('username')
+                
+                # Verifica se é admin autorizado
+                if _is_authorized_admin(discord_id):
+                    # Cria ou obtém usuário Django
+                    user, created = User.objects.get_or_create(
+                        username=f'discord_{discord_id}',
+                        defaults={
+                            'email': f'{username}@discord.local',
+                            'first_name': username,
+                            'is_staff': True,
+                            'is_superuser': True,
+                            'is_active': True
+                        }
+                    )
+                    
+                    if not created:
+                        user.email = f'{username}@discord.local'
+                        user.first_name = username
+                        user.is_active = True
+                        user.save()
+                    
+                    # Faz login do usuário
+                    login(request, user)
+                    logger.info(f"Login Discord bem-sucedido: {username} ({discord_id})")
+                    return redirect('/admin/')
+                else:
+                    messages.error(request, f'Usuário {username} não está autorizado como administrador.')
+                    return redirect('/admin/')
+            else:
+                messages.error(request, 'Erro ao obter informações do usuário Discord.')
+                return redirect('/admin/')
+        else:
+            messages.error(request, 'Erro ao obter token de acesso do Discord.')
+            return redirect('/admin/')
+            
+    except Exception as e:
+        logger.error(f"Erro no callback Discord: {e}")
+        messages.error(request, 'Erro interno durante autenticação.')
+        return redirect('/admin/')
 
-@staff_member_required
-def estatisticas(request):
-    """Página de estatísticas detalhadas"""
+def _is_authorized_admin(discord_id):
+    """Verifica se o Discord ID está autorizado como admin"""
+    authorized_admins = [
+        '1369940071246991380',  # Seu ID Discord
+        # Adicione outros IDs aqui conforme necessário
+    ]
     
-    # Estatísticas por período
-    hoje = timezone.now().date()
-    semana_passada = hoje - timedelta(days=7)
-    mes_passado = hoje - timedelta(days=30)
-    
-    # Denúncias por status
-    denuncias_por_status = Denuncia.objects.values('status').annotate(
-        total=Count('id')
-    ).order_by('-total')
-    
-    # Usuários por categoria
-    usuarios_por_categoria = Usuario.objects.values('categoria').annotate(
-        total=Count('id')
-    ).order_by('-total')
-    
-    # Denúncias por dia (últimos 30 dias)
-    denuncias_por_dia = []
-    for i in range(30):
-        data = hoje - timedelta(days=i)
-        count = Denuncia.objects.filter(data_criacao__date=data).count()
-        denuncias_por_dia.append({'data': data, 'count': count})
-    
-    # Top denunciantes
-    top_denunciantes = Usuario.objects.annotate(
-        total_denuncias=Count('denuncias_feitas')
-    ).filter(total_denuncias__gt=0).order_by('-total_denuncias')[:10]
-    
-    context = {
-        'denuncias_por_status': denuncias_por_status,
-        'usuarios_por_categoria': usuarios_por_categoria,
-        'denuncias_por_dia': denuncias_por_dia,
-        'top_denunciantes': top_denunciantes,
-    }
-    
-    return render(request, 'guardiao/estatisticas.html', context)
-
-
-@staff_member_required
-def detalhes_denuncia(request, denuncia_id):
-    """Detalhes de uma denúncia específica"""
-    
-    denuncia = get_object_or_404(Denuncia, id=denuncia_id)
-    mensagens = MensagemCapturada.objects.filter(id_denuncia=denuncia).order_by('-timestamp_mensagem')
-    votos = VotoGuardiao.objects.filter(id_denuncia=denuncia).select_related('id_guardiao')
-    
-    # Estatísticas da denúncia
-    total_votos = votos.count()
-    votos_aprovar = votos.filter(decisao='Aprovar').count()
-    votos_rejeitar = votos.filter(decisao='Rejeitar').count()
-    votos_abster = votos.filter(decisao='Abster').count()
-    
-    context = {
-        'denuncia': denuncia,
-        'mensagens': mensagens,
-        'votos': votos,
-        'total_votos': total_votos,
-        'votos_aprovar': votos_aprovar,
-        'votos_rejeitar': votos_rejeitar,
-        'votos_abster': votos_abster,
-    }
-    
-    return render(request, 'guardiao/detalhes_denuncia.html', context)
+    return str(discord_id) in authorized_admins
