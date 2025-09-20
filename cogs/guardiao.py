@@ -650,8 +650,8 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica se está em cooldown
-            if user_data['cooldown_dispensa'] and user_data['cooldown_dispensa'] > datetime.now(timezone.utc):
-                time_left = user_data['cooldown_dispensa'] - datetime.now(timezone.utc)
+            if user_data['cooldown_dispensa'] and user_data['cooldown_dispensa'] > datetime.utcnow():
+                time_left = user_data['cooldown_dispensa'] - datetime.utcnow()
                 minutes = time_left.seconds // 60
                 
                 embed = discord.Embed(
@@ -669,10 +669,10 @@ class GuardiaoCog(commands.Cog):
             
             if user_data['em_servico']:
                 # Sair de serviço
-                await self._exit_service(ctx, user_data)
+                await self._exit_service(interaction, user_data)
             else:
                 # Entrar em serviço
-                await self._enter_service(ctx, user_data)
+                await self._enter_service(interaction, user_data)
                 
         except Exception as e:
             logger.error(f"Erro no comando turno para usuário {interaction.user.id}: {e}")
@@ -683,16 +683,16 @@ class GuardiaoCog(commands.Cog):
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    async def _enter_service(self, ctx, user_data: dict):
+    async def _enter_service(self, interaction: discord.Interaction, user_data: dict):
         """Entra em serviço"""
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
             query = """
                 UPDATE usuarios 
                 SET em_servico = TRUE, ultimo_turno_inicio = $1 
                 WHERE id_discord = $2
             """
-            await db_manager.execute_command(query, now, interaction.user.id)
+            await db_manager.execute_command(query, now, user_data['id_discord'])
             
             embed = discord.Embed(
                 title="🟢 Você Entrou em Serviço!",
@@ -720,10 +720,10 @@ class GuardiaoCog(commands.Cog):
             logger.error(f"Erro ao entrar em serviço para usuário {interaction.user.id}: {e}")
             raise
     
-    async def _exit_service(self, ctx, user_data: dict):
+    async def _exit_service(self, interaction: discord.Interaction, user_data: dict):
         """Sai de serviço"""
         try:
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
             inicio_turno = user_data['ultimo_turno_inicio']
             
             if inicio_turno:
@@ -739,7 +739,7 @@ class GuardiaoCog(commands.Cog):
                         pontos = pontos + $1 
                     WHERE id_discord = $2
                 """
-                await db_manager.execute_command(query, pontos_ganhos, interaction.user.id)
+                await db_manager.execute_command(query, pontos_ganhos, user_data['id_discord'])
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
