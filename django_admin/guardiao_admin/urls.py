@@ -24,7 +24,6 @@ urlpatterns = [
     path('admin/discord-login/', include('guardiao.urls')),
     path('login/', LoginView.as_view(template_name='admin/login.html'), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
-    path('guardiao/', include('guardiao.urls')),
 ]
 
 # Serve static and media files in development
