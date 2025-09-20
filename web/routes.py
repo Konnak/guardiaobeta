@@ -447,6 +447,7 @@ def get_server_stats(server_id: int) -> dict:
         """Rota de teste para verificar se as rotas admin funcionam"""
         return "Rota admin funcionando!"
     
+    logger.info("🔧 Registrando rota /admin...")
     @app.route('/admin')
     def admin_dashboard():
         """Painel administrativo principal - VERSÃO FUNCIONAL"""
@@ -664,6 +665,8 @@ def get_server_stats(server_id: int) -> dict:
                 <a href="/dashboard" style="color: #721c24;">Voltar ao Dashboard</a>
             </div>
             """
+    
+    logger.info("✅ Rota /admin registrada com sucesso!")
     
     @app.route('/admin/usuarios')
     def admin_usuarios():
