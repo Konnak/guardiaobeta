@@ -6,7 +6,7 @@ Implementa todas as rotas principais do site
 import logging
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
-from database.connection import db_manager, get_user_by_discord_id
+from database.connection import db_manager
 from utils.experience_system import get_experience_rank, get_rank_emoji, format_experience_display
 from web.auth import login_required, admin_required, get_user_guilds_admin, get_bot_invite_url, get_user_avatar_url, get_guild_icon_url
 
@@ -64,7 +64,10 @@ def setup_routes(app):
             user_id = user_data['id']
             
             # Busca dados do usuário no banco
-            db_user = get_user_by_discord_id(user_id)
+            db_user = db_manager.execute_one_sync(
+                "SELECT * FROM usuarios WHERE id_discord = $1", 
+                user_id
+            )
             
             if not db_user:
                 # Usuário não cadastrado
@@ -287,9 +290,8 @@ def setup_routes(app):
                 LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
                 WHERE {' AND '.join(where_conditions)}
                 ORDER BY d.data_criacao DESC
-                LIMIT ${param_count + 1} OFFSET ${param_count + 2}
+                LIMIT {per_page} OFFSET {offset}
             """
-            params.extend([per_page, offset])
             
             denuncias = db_manager.execute_query_sync(query, *params)
             
@@ -298,7 +300,7 @@ def setup_routes(app):
                 SELECT COUNT(*) FROM denuncias 
                 WHERE {' AND '.join(where_conditions)}
             """
-            total = db_manager.execute_scalar_sync(count_query, *params[:-2])  # Remove limit e offset
+            total = db_manager.execute_scalar_sync(count_query, *params)
             
             return jsonify({
                 'denuncias': denuncias,

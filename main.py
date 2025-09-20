@@ -340,6 +340,14 @@ class GuardiaoBot:
                     logger.error(f"Erro ao buscar estatísticas: {e}")
                     return {'error': 'Internal server error'}, 500
             
+            # Adiciona rota para Django Admin Panel
+            @self.web_app.route('/admin')
+            def django_admin():
+                """Redireciona para o Django Admin Panel"""
+                from flask import redirect
+                # Usa o mesmo domínio da aplicação Flask
+                return redirect('http://guardiaobeta.discloud.app:8001/admin/', code=302)
+            
             logger.info("Aplicação web configurada com sucesso")
             
         except Exception as e:

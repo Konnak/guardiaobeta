@@ -358,40 +358,114 @@ function loadCharts() {
     // Activity Chart
     const activityCtx = document.getElementById('activityChart');
     if (activityCtx) {
-        const periodData = {{ stats.period | tojson }};
-        const labels = periodData.map(item => new Date(item.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-        const quantities = periodData.map(item => item.quantidade);
-
-        new Chart(activityCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Denúncias',
-                    data: quantities,
-                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
-                    borderColor: 'rgb(13, 110, 253)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+        try {
+            const periodData = {{ stats.period | tojson }};
+            
+            // Verifica se há dados válidos
+            if (!periodData || !Array.isArray(periodData) || periodData.length === 0) {
+                // Dados padrão se não houver dados
+                const defaultLabels = ['Sem dados'];
+                const defaultQuantities = [0];
+                
+                new Chart(activityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: defaultLabels,
+                        datasets: [{
+                            label: 'Denúncias',
+                            data: defaultQuantities,
+                            backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                            borderColor: 'rgb(108, 117, 125)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
                     }
+                });
+            } else {
+                // Processa dados válidos
+                const labels = periodData.map(item => {
+                    if (item && item.data) {
+                        return new Date(item.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    }
+                    return 'Data inválida';
+                });
+                const quantities = periodData.map(item => {
+                    return (item && typeof item.quantidade === 'number') ? item.quantidade : 0;
+                });
+
+                new Chart(activityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Denúncias',
+                            data: quantities,
+                            backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                            borderColor: 'rgb(13, 110, 253)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao criar gráfico de atividade:', error);
+            // Fallback: gráfico vazio
+            new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Erro'],
+                    datasets: [{
+                        label: 'Erro',
+                        data: [0],
+                        backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                        borderColor: 'rgb(220, 53, 69)',
+                        borderWidth: 1
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 }
 
