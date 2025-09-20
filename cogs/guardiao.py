@@ -354,6 +354,7 @@ class TrainingView(ui.View):
             if self.current_question < len(self.quiz_questions):
                 await self._show_question(interaction)
             else:
+                await interaction.response.defer()
                 await self._finish_exam(interaction)
     
     async def _finish_exam(self, interaction: discord.Interaction):
@@ -407,10 +408,13 @@ class TrainingView(ui.View):
             await self._set_prova_cooldown(interaction.user.id)
         
         try:
-            await interaction.edit_original_response(embed=embed, view=self)
-        except discord.NotFound:
-            # Se a resposta original não existir mais, envia uma nova mensagem
-            await interaction.followup.send(embed=embed, view=self, ephemeral=True)
+            await interaction.response.edit_message(embed=embed, view=self)
+        except:
+            try:
+                await interaction.edit_original_response(embed=embed, view=self)
+            except discord.NotFound:
+                # Se a resposta original não existir mais, envia uma nova mensagem
+                await interaction.followup.send(embed=embed, view=self, ephemeral=True)
     
     async def _update_user_to_guardian(self, user_id: int):
         """Atualiza a categoria do usuário para Guardião"""
