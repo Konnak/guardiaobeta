@@ -352,6 +352,8 @@ class GuardiaoBot:
                 try:
                     # Log para debug
                     logger.info(f"Django Admin proxy: {request.method} {path}")
+                    logger.info(f"Request URL: {request.url}")
+                    logger.info(f"Request headers: {dict(request.headers)}")
                     
                     # Constrói URL do Django Admin
                     django_url = f'http://localhost:8001/admin/{path}'
@@ -425,6 +427,62 @@ class GuardiaoBot:
                 except Exception as e:
                     logger.error(f"Erro no proxy Django: {e}")
                     return f"Erro no Django Admin: {e}", 500
+            
+            # Adiciona rotas para Discord Admin (fora do namespace /admin/)
+            @self.web_app.route('/discord-admin', methods=['GET', 'POST'])
+            @self.web_app.route('/discord-admin/', methods=['GET', 'POST'])
+            @self.web_app.route('/discord-admin/<path:path>', methods=['GET', 'POST'])
+            def discord_admin(path=''):
+                """Proxy para rotas Discord Admin"""
+                import requests
+                from flask import request, Response
+                
+                try:
+                    # Log para debug
+                    logger.info(f"Discord Admin proxy: {request.method} {path}")
+                    logger.info(f"Request URL: {request.url}")
+                    logger.info(f"Request headers: {dict(request.headers)}")
+                    
+                    # Constrói URL do Django
+                    django_url = f'http://localhost:8001/discord-admin/{path}'
+                    if request.query_string:
+                        django_url += f'?{request.query_string.decode()}'
+                    
+                    # Headers para o Django (remove alguns headers problemáticos)
+                    headers = dict(request.headers)
+                    headers.pop('Host', None)  # Remove Host header
+                    headers.pop('Content-Length', None)  # Remove Content-Length
+                    
+                    # Faz a requisição para o Django
+                    if request.method == 'POST':
+                        # Para POST, envia dados do formulário
+                        if request.form:
+                            response = requests.post(django_url, data=request.form, headers=headers)
+                        else:
+                            response = requests.post(django_url, data=request.get_data(), headers=headers)
+                    else:
+                        response = requests.get(django_url, headers=headers)
+                    
+                    # Cria resposta Flask
+                    flask_response = Response(
+                        response.content,
+                        status=response.status_code,
+                        headers=dict(response.headers)
+                    )
+                    
+                    # Corrige cookies para o domínio correto
+                    if 'Set-Cookie' in response.headers:
+                        cookies = response.headers['Set-Cookie']
+                        # Substitui localhost.local e localhost pelo domínio correto
+                        cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
+                        cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
+                        flask_response.headers['Set-Cookie'] = cookies
+                    
+                    return flask_response
+                    
+                except Exception as e:
+                    logger.error(f"Erro no proxy Discord Admin: {e}")
+                    return f"Erro no proxy: {e}", 500
             
             # Adiciona rota para arquivos estáticos do Django Admin
             @self.web_app.route('/static/admin/<path:filename>')
