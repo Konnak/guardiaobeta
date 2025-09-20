@@ -678,21 +678,27 @@ class ModeracaoCog(commands.Cog):
             messages_captured = 0
             total_messages_checked = 0
             target_user_messages = 0
+            denunciante_messages = 0
             
             # Busca mensagens das últimas 24 horas
             cutoff_time = datetime.utcnow() - timedelta(hours=24)
-            logger.info(f"Capturando mensagens do usuário {target_user.id} ({target_user.display_name}) desde {cutoff_time}")
+            logger.info(f"Capturando mensagens do canal desde {cutoff_time}")
+            logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
+            logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
             
             async for message in interaction.channel.history(limit=100, after=cutoff_time):
                 total_messages_checked += 1
                 
                 # Log para debug
-                if total_messages_checked <= 5:
+                if total_messages_checked <= 10:
                     logger.info(f"Mensagem {total_messages_checked}: autor={message.author.id}, criada={message.created_at}, conteúdo='{message.content[:50]}...'")
                 
-                # Filtra apenas mensagens do usuário denunciado
-                if message.author.id == target_user.id:
-                    target_user_messages += 1
+                # Captura mensagens do usuário denunciado OU do denunciante
+                if message.author.id == target_user.id or message.author.id == interaction.user.id:
+                    if message.author.id == target_user.id:
+                        target_user_messages += 1
+                    else:
+                        denunciante_messages += 1
                     
                     # Prepara URLs dos anexos
                     attachment_urls = []
@@ -715,7 +721,8 @@ class ModeracaoCog(commands.Cog):
                     if messages_captured >= 20:  # Limita a 20 mensagens
                         break
             
-            logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id} (total verificadas: {total_messages_checked}, do usuário: {target_user_messages})")
+            logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
+            logger.info(f"Total verificadas: {total_messages_checked}, do denunciado: {target_user_messages}, do denunciante: {denunciante_messages}")
             
         except Exception as e:
             logger.error(f"Erro ao capturar mensagens: {e}")
@@ -734,7 +741,7 @@ class ModeracaoCog(commands.Cog):
                 if msg['id_autor'] == id_denunciado:
                     autor = "🔴 **Denunciado**"
                 else:
-                    autor = "👤 **Usuário**"
+                    autor = "📝 **Denunciante**"
                 
                 # Limita o conteúdo da mensagem
                 conteudo = msg['conteudo'][:200] + "..." if len(msg['conteudo']) > 200 else msg['conteudo']
