@@ -37,6 +37,14 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8001',
 ]
 
+# Configurações de cookies para funcionar com proxy
+CSRF_COOKIE_DOMAIN = '.guardiaobeta.discloud.app'
+SESSION_COOKIE_DOMAIN = '.guardiaobeta.discloud.app'
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
