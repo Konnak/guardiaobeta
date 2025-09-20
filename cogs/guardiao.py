@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from discord import ui, app_commands
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from database.connection import db_manager, get_user_by_discord_id_sync
 from config import GUARDIAO_MIN_ACCOUNT_AGE_MONTHS, TURN_POINTS_PER_HOUR, PROVA_COOLDOWN_HOURS
 
@@ -375,7 +375,7 @@ class TrainingView(ui.View):
     async def _set_prova_cooldown(self, user_id: int):
         """Define o cooldown da prova"""
         try:
-            cooldown_time = datetime.utcnow() + timedelta(hours=PROVA_COOLDOWN_HOURS)
+            cooldown_time = datetime.now(timezone.utc) + timedelta(hours=PROVA_COOLDOWN_HOURS)
             query = "UPDATE usuarios SET cooldown_prova = $1 WHERE id_discord = $2"
             await db_manager.execute_command(query, cooldown_time, user_id)
             logger.info(f"Cooldown de prova definido para usuário {user_id}")
@@ -406,7 +406,7 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica a idade da conta (mínimo 3 meses)
-            account_age = datetime.utcnow() - interaction.user.created_at
+            account_age = datetime.now(timezone.utc) - interaction.user.created_at
             if account_age.days < (GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30):
                 embed = discord.Embed(
                     title="❌ Conta Muito Nova",
@@ -452,8 +452,8 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica cooldown da prova
-            if user_data['cooldown_prova'] and user_data['cooldown_prova'] > datetime.utcnow():
-                time_left = user_data['cooldown_prova'] - datetime.utcnow()
+            if user_data['cooldown_prova'] and user_data['cooldown_prova'] > datetime.now(timezone.utc):
+                time_left = user_data['cooldown_prova'] - datetime.now(timezone.utc)
                 hours = time_left.seconds // 3600
                 minutes = (time_left.seconds % 3600) // 60
                 
@@ -560,8 +560,8 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica se está em cooldown
-            if user_data['cooldown_dispensa'] and user_data['cooldown_dispensa'] > datetime.utcnow():
-                time_left = user_data['cooldown_dispensa'] - datetime.utcnow()
+            if user_data['cooldown_dispensa'] and user_data['cooldown_dispensa'] > datetime.now(timezone.utc):
+                time_left = user_data['cooldown_dispensa'] - datetime.now(timezone.utc)
                 minutes = time_left.seconds // 60
                 
                 embed = discord.Embed(
@@ -596,7 +596,7 @@ class GuardiaoCog(commands.Cog):
     async def _enter_service(self, ctx, user_data: dict):
         """Entra em serviço"""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             query = """
                 UPDATE usuarios 
                 SET em_servico = TRUE, ultimo_turno_inicio = $1 
@@ -633,7 +633,7 @@ class GuardiaoCog(commands.Cog):
     async def _exit_service(self, ctx, user_data: dict):
         """Sai de serviço"""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             inicio_turno = user_data['ultimo_turno_inicio']
             
             if inicio_turno:

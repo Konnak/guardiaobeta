@@ -58,7 +58,7 @@ class StatsCog(commands.Cog):
                 return
             
             # Busca estatísticas adicionais
-            stats_data = await self._get_user_stats(ctx.author.id)
+            stats_data = await self._get_user_stats(interaction.user.id)
             
             # Cria o embed principal
             embed = discord.Embed(
