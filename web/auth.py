@@ -112,6 +112,7 @@ def setup_auth(app: Flask):
             guilds_data = get_user_guilds(token_data['access_token'])
             
             # Salva informações na sessão
+            # Salva informações essenciais do usuário na sessão (otimizado)
             session['user'] = {
                 'id': int(user_data['id']),
                 'username': user_data['username'],
@@ -119,16 +120,18 @@ def setup_auth(app: Flask):
                 'avatar': user_data.get('avatar'),
                 'email': user_data.get('email'),
                 'verified': user_data.get('verified', False),
-                'guilds': guilds_data or [],
                 'login_time': datetime.utcnow().isoformat(),
                 'access_token': token_data['access_token'],
-                'refresh_token': token_data.get('refresh_token'),
                 'expires_at': (datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))).isoformat()
             }
             
+            # Salva guilds separadamente para reduzir tamanho do cookie
+            if guilds_data:
+                session['user_guilds'] = guilds_data
+            
             # Verifica se o usuário está cadastrado no sistema
             user_db = db_manager.execute_one_sync(
-                "SELECT * FROM usuarios WHERE discord_id = $1", (int(user_data['id']),)
+                "SELECT * FROM usuarios WHERE id_discord = $1", (int(user_data['id']),)
             )
             
             if user_db:
@@ -301,7 +304,7 @@ def get_user_guilds_admin():
         if 'user' not in session:
             return []
         
-        guilds = session['user'].get('guilds', [])
+        guilds = session.get('user_guilds', [])
         admin_guilds = []
         
         for guild in guilds:

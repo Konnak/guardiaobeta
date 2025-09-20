@@ -65,7 +65,7 @@ def setup_routes(app):
             
             # Busca dados do usuário no banco
             db_user = db_manager.execute_one_sync(
-                "SELECT * FROM usuarios WHERE discord_id = $1", (user_id,)
+                "SELECT * FROM usuarios WHERE id_discord = $1", (user_id,)
             )
             
             if not db_user:
