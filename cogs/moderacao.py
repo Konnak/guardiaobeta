@@ -129,8 +129,44 @@ class ReportView(ui.View):
             if mensagens:
                 logger.info(f"Exibindo {len(mensagens)} mensagens capturadas")
                 logger.info(f"Chamando _anonymize_messages com denunciado ID: {denuncia['id_denunciado']}")
-                mensagens_anonimizadas = self._anonymize_messages(mensagens, denuncia['id_denunciado'])
-                logger.info(f"Resultado da anonimização: {mensagens_anonimizadas[:200]}...")
+                
+                # Anonimização inline simples para teste
+                usuarios_unicos = {}
+                contador_usuario = 1
+                id_denunciado = denuncia['id_denunciado']
+                
+                # Mapeia usuários únicos
+                for msg in mensagens:
+                    if msg['id_autor'] not in usuarios_unicos:
+                        if msg['id_autor'] == id_denunciado:
+                            usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
+                        else:
+                            usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
+                            contador_usuario += 1
+                
+                logger.info(f"Mapeamento de usuários: {usuarios_unicos}")
+                
+                # Processa mensagens
+                result = []
+                for msg in mensagens[:15]:
+                    # Converte para horário de Brasília (UTC-3)
+                    timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
+                    timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
+                    
+                    autor = usuarios_unicos[msg['id_autor']]
+                    conteudo = msg['conteudo'][:150] + "..." if len(msg['conteudo']) > 150 else msg['conteudo']
+                    
+                    if msg['id_autor'] == id_denunciado:
+                        linha = f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**"
+                    else:
+                        linha = f"{autor} ({timestamp_formatado}): {conteudo}"
+                    
+                    result.append(linha)
+                    logger.info(f"Linha criada: {linha}")
+                
+                mensagens_anonimizadas = "\n\n".join(result)
+                logger.info(f"Resultado final: {mensagens_anonimizadas[:200]}...")
+                
                 embed.add_field(
                     name="💬 Mensagens Capturadas",
                     value=mensagens_anonimizadas,
