@@ -117,11 +117,13 @@ class ReportView(ui.View):
                 color=0xff6600
             )
             
+            # Converte data da denúncia para horário de Brasília
+            data_brasilia = denuncia['data_criacao'] - timedelta(hours=3)
             embed.add_field(
                 name="📋 Informações da Denúncia",
                 value=f"**Hash:** `{self.hash_denuncia}`\n"
                       f"**Motivo:** {denuncia['motivo']}\n"
-                      f"**Data:** {denuncia['data_criacao'].strftime('%d/%m/%Y às %H:%M')}",
+                      f"**Data:** {data_brasilia.strftime('%d/%m/%Y às %H:%M')}",
                 inline=False
             )
             
@@ -146,11 +148,12 @@ class ReportView(ui.View):
                 
                 logger.info(f"Mapeamento de usuários: {usuarios_unicos}")
                 
-                # Processa mensagens
+                # Processa mensagens (ordena do mais recente ao mais antigo)
+                mensagens_ordenadas = sorted(mensagens, key=lambda x: x['timestamp_mensagem'], reverse=True)
                 result = []
-                for msg in mensagens[:15]:
-                    # Converte para horário de Brasília (UTC+3)
-                    timestamp_brasilia = msg['timestamp_mensagem'] + timedelta(hours=3)
+                for msg in mensagens_ordenadas[:25]:  # Aumenta para 25 mensagens
+                    # Converte para horário de Brasília (UTC-3)
+                    timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
                     timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
                     
                     autor = usuarios_unicos[msg['id_autor']]
