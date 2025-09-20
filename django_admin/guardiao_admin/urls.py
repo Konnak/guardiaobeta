@@ -28,7 +28,7 @@ def home_page(request):
         'site_description': 'Sistema de Moderação Inteligente para Discord'
     }
     
-    return render(request, 'guardiao/home.html', context)
+    return render(request, 'guardiao/index.html', context)
 
 urlpatterns = [
     path('', home_page, name='home'),

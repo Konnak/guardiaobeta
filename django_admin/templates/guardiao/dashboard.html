@@ -1,258 +1,404 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema Guardião BETA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .dashboard-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            margin: 2rem 0;
-            padding: 2rem;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            height: 100%;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #007cba;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .btn-admin {
-            background: #dc3545;
-            border: none;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-admin:hover {
-            background: #c82333;
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .alert-custom {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .progress-custom {
-            height: 10px;
-            border-radius: 5px;
-            background: #e9ecef;
-        }
-        
-        .progress-bar-custom {
-            background: linear-gradient(90deg, #007cba, #00a8ff);
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="dashboard-container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center">
-                            <img src="{{ avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="64" height="64">
-                            <div>
-                                <h1 class="h3 mb-0">Olá, {{ user.first_name }}!</h1>
-                                <p class="text-muted mb-0">Bem-vindo ao seu dashboard</p>
-                            </div>
+{% extends "guardiao/base.html" %}
+
+{% block title %}Dashboard - Sistema Guardião BETA{% endblock %}
+
+{% block main_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <img src="{{ avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="64" height="64">
+                    <div>
+                        <h1 class="h3 mb-0">Olá, {{ user.username }}!</h1>
+                        <p class="text-muted mb-0">Bem-vindo ao seu dashboard</p>
+                    </div>
+                </div>
+                
+                <!-- Admin Button (only for authorized Discord ID) -->
+                {% if user.id == '1369940071246991380' %}
+                <div>
+                    <a href="/discord-admin/discord-login/" class="btn btn-outline-primary">
+                        <i class="bi bi-gear"></i> Admin Panel
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if not cadastrado %}
+        <!-- Not Registered Alert -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Cadastro Necessário
+                    </h4>
+                    <p>
+                        Você ainda não está cadastrado no Sistema Guardião BETA. 
+                        Para usar todas as funcionalidades, complete seu cadastro no Discord.
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Como se cadastrar:</strong><br>
+                        1. Abra uma conversa privada com o bot Guardião BETA<br>
+                        2. Use o comando <code>/cadastro</code><br>
+                        3. Preencha o formulário com seus dados
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- User Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="bi bi-shield-check" style="font-size: 2rem;"></i>
                         </div>
-                        
-                        <!-- Admin Button (only for admins) -->
-                        {% if user.is_superuser %}
-                        <div class="d-flex gap-2">
-                            <a href="/admin/" class="btn-admin">
-                                <i class="bi bi-gear"></i> Admin Panel
-                            </a>
-                            <a href="/logout/" class="btn btn-outline-secondary">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </div>
-                        {% else %}
-                        <div>
-                            <a href="/logout/" class="btn btn-outline-secondary">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </div>
-                        {% endif %}
+                        <h3 class="card-title">{{ db_user.categoria }}</h3>
+                        <p class="card-text text-muted">Sua Categoria</p>
                     </div>
                 </div>
             </div>
-
-            {% if not cadastrado %}
-                <!-- Not Registered Alert -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="alert alert-warning alert-custom" role="alert">
-                            <h4 class="alert-heading">
-                                <i class="bi bi-exclamation-triangle"></i> Cadastro Necessário
-                            </h4>
-                            <p>
-                                Você ainda não está cadastrado no Sistema Guardião BETA. 
-                                Para usar todas as funcionalidades, complete seu cadastro no Discord.
-                            </p>
-                            <hr>
-                            <p class="mb-0">
-                                <strong>Como se cadastrar:</strong><br>
-                                1. Abra uma conversa privada com o bot Guardião BETA<br>
-                                2. Use o comando <code>/cadastro</code><br>
-                                3. Preencha o formulário com seus dados
-                            </p>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="bi bi-star-fill" style="font-size: 2rem;"></i>
                         </div>
+                        <h3 class="card-title">{{ db_user.experiencia }}</h3>
+                        <p class="card-text text-muted">Pontos de Experiência</p>
                     </div>
                 </div>
-            {% else %}
-                <!-- User Stats -->
-                <div class="row g-4 mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card text-center">
-                            <div class="stat-number">{{ stats.denuncias_atendidas|default:0 }}</div>
-                            <div class="stat-label">Denúncias Atendidas</div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-trophy" style="font-size: 2rem;"></i>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card text-center">
-                            <div class="stat-number">{{ stats.total_votos|default:0 }}</div>
-                            <div class="stat-label">Total de Votos</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card text-center">
-                            <div class="stat-number">{{ stats.denuncias_feitas|default:0 }}</div>
-                            <div class="stat-label">Denúncias Feitas</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card text-center">
-                            <div class="stat-number">{{ emoji }} {{ rank }}</div>
-                            <div class="stat-label">Seu Rank</div>
-                        </div>
+                        <h3 class="card-title">{{ db_user.pontos }}</h3>
+                        <p class="card-text text-muted">Pontos de Serviço</p>
                     </div>
                 </div>
-
-                <!-- Experience Progress -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="stat-card">
-                            <h5 class="mb-3">
-                                <i class="bi bi-trophy"></i> Progresso de Experiência
-                            </h5>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold">{{ experience_display }}</span>
-                                <span class="text-muted">{{ ultima_atividade }}</span>
-                            </div>
-                            <div class="progress progress-custom">
-                                <div class="progress-bar progress-bar-custom" role="progressbar" 
-                                     style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
-                                </div>
-                            </div>
-                            <small class="text-muted">Continue participando para subir de rank!</small>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-info mb-2">
+                            <i class="bi bi-clock" style="font-size: 2rem;"></i>
                         </div>
+                        <h3 class="card-title">{{ ultima_atividade }}</h3>
+                        <p class="card-text text-muted">Última Atividade</p>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Quick Actions -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="stat-card">
-                            <h5 class="mb-3">
-                                <i class="bi bi-lightning"></i> Ações Rápidas
-                            </h5>
-                            <div class="d-flex gap-3 flex-wrap">
-                                <a href="/servers/" class="btn btn-primary">
-                                    <i class="bi bi-server"></i> Meus Servidores
-                                </a>
-                                <a href="/premium/" class="btn btn-warning">
-                                    <i class="bi bi-star"></i> Premium
-                                </a>
-                                <a href="https://discord.com/api/oauth2/authorize?client_id=1418660046610370751&permissions=8&scope=bot" 
-                                   class="btn btn-success" target="_blank">
-                                    <i class="bi bi-plus-circle"></i> Adicionar Bot
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-
-            <!-- User Info -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="stat-card">
-                        <h5 class="mb-3">
-                            <i class="bi bi-person-circle"></i> Informações da Conta
+        <!-- Experience Rank -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-award"></i> Seu Rank de Experiência
                         </h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>ID Discord:</strong> {{ user.username|slice:"8:" }}</p>
-                                <p><strong>Username:</strong> {{ user.first_name }}</p>
-                                {% if cadastrado %}
-                                <p><strong>Categoria:</strong> {{ db_user.2|default:"N/A" }}</p>
-                                <p><strong>Experiência:</strong> {{ db_user.6|default:0 }} XP</p>
-                                {% endif %}
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <span style="font-size: 3rem;">{{ emoji }}</span>
                             </div>
-                            <div class="col-md-6">
-                                <p><strong>Status:</strong> 
-                                    {% if cadastrado %}
-                                        <span class="badge bg-success">Cadastrado</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">Não Cadastrado</span>
-                                    {% endif %}
-                                </p>
-                                <p><strong>Última Atividade:</strong> {{ ultima_atividade|default:"Nunca" }}</p>
-                                {% if cadastrado %}
-                                <p><strong>Data de Cadastro:</strong> {{ db_user.3|date:"d/m/Y"|default:"N/A" }}</p>
-                                {% endif %}
+                            <div class="flex-grow-1">
+                                <h4 class="mb-1">{{ rank }}</h4>
+                                <p class="text-muted mb-0">{{ experience_display }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+        <!-- Activity Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="bi bi-flag" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.denuncias_atendidas }}</h3>
+                        <p class="card-text text-muted">Denúncias Atendidas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.total_votos }}</h3>
+                        <p class="card-text text-muted">Total de Votos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="bi bi-send" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title">{{ stats.denuncias_feitas }}</h3>
+                        <p class="card-text text-muted">Denúncias Feitas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status and Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person-check"></i> Status Atual
+                        </h5>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                {% if db_user.em_servico %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="bi bi-circle-fill"></i> Em Serviço
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">
+                                        <i class="bi bi-circle"></i> Fora de Serviço
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if db_user.categoria in ['Guardião', 'Moderador', 'Administrador'] %}
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-primary" onclick="toggleService()">
+                                    <i class="bi bi-power"></i> 
+                                    {{ 'Sair de Serviço' if db_user.em_servico else 'Entrar em Serviço' }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">
+                                Para entrar em serviço, você precisa ser um Guardião. 
+                                Use o comando <code>/formguardiao</code> no Discord.
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-info-circle"></i> Informações Pessoais
+                        </h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>Nome:</strong> {{ db_user.nome_completo }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Idade:</strong> {{ db_user.idade }} anos
+                            </li>
+                            <li class="mb-2">
+                                <strong>Email:</strong> {{ db_user.email }}
+                            </li>
+                            <li class="mb-2">
+                                <strong>Telefone:</strong> {{ db_user.telefone }}
+                            </li>
+                            <li class="mb-0">
+                                <strong>Membro desde:</strong> 
+                                {{ db_user.data_criacao_registro.strftime('%d/%m/%Y') }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up"></i> Atividade dos Últimos 30 Dias
+                        </h5>
+                        <canvas id="activityChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightning"></i> Ações Rápidas
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <a href="{{ url_for('servers') }}" class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-server"></i><br>
+                                    <small>Meus Servidores</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('premium') }}" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-star"></i><br>
+                                    <small>Assinar Premium</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="#" class="btn btn-outline-info w-100" onclick="refreshStats()">
+                                    <i class="bi bi-arrow-clockwise"></i><br>
+                                    <small>Atualizar Stats</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="#" class="btn btn-outline-secondary w-100" onclick="showHelp()">
+                                    <i class="bi bi-question-circle"></i><br>
+                                    <small>Ajuda</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Service Toggle Modal -->
+<div class="modal fade" id="serviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alterar Status de Serviço</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja alterar seu status de serviço?</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Lembrete:</strong> Guardiões em serviço recebem denúncias para análise.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmServiceToggle()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Activity Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('activityChart');
+    if (ctx) {
+        // Fetch user stats
+        fetch('/api/user/stats')
+            .then(response => response.json())
+            .then(data => {
+                const activityData = data.activity || [];
+                
+                // Prepare chart data
+                const labels = [];
+                const votes = [];
+                
+                // Generate last 30 days
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                    
+                    // Find votes for this date
+                    const dayVotes = activityData.find(item => 
+                        new Date(item.data).toDateString() === date.toDateString()
+                    );
+                    votes.push(dayVotes ? dayVotes.votos : 0);
+                }
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Votos por Dia',
+                            data: votes,
+                            borderColor: 'rgb(13, 110, 253)',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar estatísticas:', error);
+            });
+    }
+});
+
+// Service toggle functions
+function toggleService() {
+    const modal = new bootstrap.Modal(document.getElementById('serviceModal'));
+    modal.show();
+}
+
+function confirmServiceToggle() {
+    // This would make an API call to toggle service status
+    // For now, just show a message
+    alert('Funcionalidade em desenvolvimento. Use o comando /turno no Discord.');
+    bootstrap.Modal.getInstance(document.getElementById('serviceModal')).hide();
+}
+
+// Other functions
+function refreshStats() {
+    location.reload();
+}
+
+function showHelp() {
+    alert('Ajuda em desenvolvimento. Entre em contato através do Discord.');
+}
+</script>
+{% endblock %}

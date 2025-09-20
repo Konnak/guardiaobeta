@@ -112,7 +112,7 @@ def discord_callback(request):
                     user.save()
                 
                 # Faz login do usuário
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 logger.info(f"Login Discord bem-sucedido: {username} ({discord_id}) - Admin: {is_admin}")
                 
                 # Redireciona baseado no tipo de usuário
