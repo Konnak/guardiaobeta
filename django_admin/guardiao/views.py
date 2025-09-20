@@ -55,6 +55,11 @@ def discord_callback(request):
         return redirect('/admin/')
     
     try:
+        # Usa o domínio correto em vez de localhost
+        host = request.get_host()
+        if 'localhost' in host or '127.0.0.1' in host:
+            host = 'guardiaobeta.discloud.app'
+        
         # Troca código por token
         token_data = {
             'client_id': getattr(settings, 'DISCORD_CLIENT_ID', ''),
