@@ -448,7 +448,7 @@ def get_server_stats(server_id: int) -> dict:
                 ORDER BY data_criacao_registro DESC 
                 LIMIT 10
             """
-            recent_users = db_manager.execute_all_sync(recent_users_query)
+            recent_users = db_manager.execute_query_sync(recent_users_query)
             
             # Denúncias recentes
             recent_denuncias_query = """
@@ -457,7 +457,7 @@ def get_server_stats(server_id: int) -> dict:
                 ORDER BY data_criacao DESC 
                 LIMIT 10
             """
-            recent_denuncias = db_manager.execute_all_sync(recent_denuncias_query)
+            recent_denuncias = db_manager.execute_query_sync(recent_denuncias_query)
             
             return render_template('admin/dashboard.html',
                                  stats=stats,
@@ -486,7 +486,7 @@ def get_server_stats(server_id: int) -> dict:
                 ORDER BY data_criacao_registro DESC 
                 LIMIT $1 OFFSET $2
             """
-            usuarios = db_manager.execute_all_sync(usuarios_query, per_page, offset)
+            usuarios = db_manager.execute_query_sync(usuarios_query, per_page, offset)
             
             # Conta total de usuários
             total_query = "SELECT COUNT(*) as total FROM usuarios"
@@ -526,7 +526,7 @@ def get_server_stats(server_id: int) -> dict:
                 WHERE id_denunciado = $1 
                 ORDER BY data_criacao DESC
             """
-            denuncias = db_manager.execute_all_sync(denuncias_query, user_id)
+            denuncias = db_manager.execute_query_sync(denuncias_query, user_id)
             
             # Busca votos do usuário (se for guardião)
             votos_query = """
@@ -537,7 +537,7 @@ def get_server_stats(server_id: int) -> dict:
                 ORDER BY v.data_voto DESC
                 LIMIT 20
             """
-            votos = db_manager.execute_all_sync(votos_query, user_id)
+            votos = db_manager.execute_query_sync(votos_query, user_id)
             
             return render_template('admin/usuario_detalhes.html',
                                  usuario=usuario,
@@ -615,7 +615,7 @@ def get_server_stats(server_id: int) -> dict:
             denuncias_query = base_query + where_clause + " ORDER BY d.data_criacao DESC LIMIT $" + str(len(params) + 1) + " OFFSET $" + str(len(params) + 2)
             params.extend([per_page, offset])
             
-            denuncias = db_manager.execute_all_sync(denuncias_query, *params)
+            denuncias = db_manager.execute_query_sync(denuncias_query, *params)
             
             # Conta total de denúncias
             count_query = "SELECT COUNT(*) as total FROM denuncias d" + where_clause
@@ -663,7 +663,7 @@ def get_server_stats(server_id: int) -> dict:
                 WHERE v.id_denuncia = $1
                 ORDER BY v.data_voto
             """
-            votos = db_manager.execute_all_sync(votos_query, denuncia_id)
+            votos = db_manager.execute_query_sync(votos_query, denuncia_id)
             
             # Busca mensagens capturadas
             mensagens_query = """
@@ -672,7 +672,7 @@ def get_server_stats(server_id: int) -> dict:
                 ORDER BY timestamp_mensagem DESC
                 LIMIT 100
             """
-            mensagens = db_manager.execute_all_sync(mensagens_query, denuncia_id)
+            mensagens = db_manager.execute_query_sync(mensagens_query, denuncia_id)
             
             return render_template('admin/denuncia_detalhes.html',
                                  denuncia=denuncia,
