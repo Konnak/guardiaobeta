@@ -367,7 +367,7 @@ class TrainingView(ui.View):
         """Atualiza a categoria do usuário para Guardião"""
         try:
             query = "UPDATE usuarios SET categoria = 'Guardião' WHERE id_discord = $1"
-            db_manager.execute_command(query, user_id)
+            await db_manager.execute_command(query, user_id)
             logger.info(f"Usuário {user_id} promovido a Guardião")
         except Exception as e:
             logger.error(f"Erro ao promover usuário {user_id} a Guardião: {e}")
@@ -377,7 +377,7 @@ class TrainingView(ui.View):
         try:
             cooldown_time = datetime.utcnow() + timedelta(hours=PROVA_COOLDOWN_HOURS)
             query = "UPDATE usuarios SET cooldown_prova = $1 WHERE id_discord = $2"
-            db_manager.execute_command(query, cooldown_time, user_id)
+            await db_manager.execute_command(query, cooldown_time, user_id)
             logger.info(f"Cooldown de prova definido para usuário {user_id}")
         except Exception as e:
             logger.error(f"Erro ao definir cooldown de prova para usuário {user_id}: {e}")
@@ -602,7 +602,7 @@ class GuardiaoCog(commands.Cog):
                 SET em_servico = TRUE, ultimo_turno_inicio = $1 
                 WHERE id_discord = $2
             """
-            db_manager.execute_command(query, now, interaction.user.id)
+            await db_manager.execute_command(query, now, interaction.user.id)
             
             embed = discord.Embed(
                 title="🟢 Você Entrou em Serviço!",
@@ -649,7 +649,7 @@ class GuardiaoCog(commands.Cog):
                         pontos = pontos + $1 
                     WHERE id_discord = $2
                 """
-                db_manager.execute_command(query, pontos_ganhos, interaction.user.id)
+                await db_manager.execute_command(query, pontos_ganhos, interaction.user.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -666,7 +666,7 @@ class GuardiaoCog(commands.Cog):
             else:
                 # Sai de serviço sem calcular pontos
                 query = "UPDATE usuarios SET em_servico = FALSE, ultimo_turno_inicio = NULL WHERE id_discord = $1"
-                db_manager.execute_command(query, interaction.user.id)
+                await db_manager.execute_command(query, interaction.user.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -692,7 +692,7 @@ class GuardiaoCog(commands.Cog):
                 SET pontos = pontos + $1 
                 WHERE em_servico = TRUE AND categoria IN ('Guardião', 'Moderador', 'Administrador')
             """
-            db_manager.execute_command(query, TURN_POINTS_PER_HOUR)
+            await db_manager.execute_command(query, TURN_POINTS_PER_HOUR)
             
             logger.info(f"Pontos adicionados para Guardiões em serviço: +{TURN_POINTS_PER_HOUR}")
             

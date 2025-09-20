@@ -185,7 +185,7 @@ class CadastroModal(ui.Modal, title="Cadastro no Sistema Guardião BETA"):
         """Verifica se o email já existe no banco de dados"""
         try:
             query = "SELECT id_discord FROM usuarios WHERE email = $1"
-            result = db_manager.execute_one(query, email.lower().strip())
+            result = await db_manager.execute_one(query, email.lower().strip())
             return result is not None
         except Exception as e:
             logger.error(f"Erro ao verificar email existente: {e}")

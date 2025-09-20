@@ -149,7 +149,7 @@ class StatsCog(commands.Cog):
                 FROM votos_guardioes 
                 WHERE id_guardiao = $1
             """
-            denuncias_atendidas = db_manager.execute_scalar(denuncias_query, user_id)
+            denuncias_atendidas = await db_manager.execute_scalar(denuncias_query, user_id)
             
             # Conta votos realizados
             votos_query = """
@@ -157,7 +157,7 @@ class StatsCog(commands.Cog):
                 FROM votos_guardioes 
                 WHERE id_guardiao = $1
             """
-            votos_realizados = db_manager.execute_scalar(votos_query, user_id)
+            votos_realizados = await db_manager.execute_scalar(votos_query, user_id)
             
             return {
                 'denuncias_atendidas': denuncias_atendidas or 0,
