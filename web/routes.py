@@ -431,49 +431,213 @@ def get_server_stats(server_id: int) -> dict:
     
     @app.route('/admin')
     def admin_dashboard():
-        """Painel administrativo principal - VERSÃO SIMPLIFICADA"""
+        """Painel administrativo principal - VERSÃO FUNCIONAL"""
+        # Verificação de segurança (sem dependências do banco)
+        if 'user' not in session:
+            flash("Você precisa fazer login para acessar esta página.", "warning")
+            return redirect(url_for('login'))
+        
+        user_id = session['user']['id']
+        if user_id != 1369940071246991380:
+            flash("Acesso negado. Você não tem permissões de administrador.", "error")
+            return redirect(url_for('dashboard'))
+        
         try:
             return """
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Painel Admin - Sistema Guardião</title>
+                <title>🛡️ Painel Administrativo - Sistema Guardião</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
-                    .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 25px; border-radius: 8px; margin-bottom: 30px; }
-                    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
-                    .stat-card { background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-                    .stat-number { font-size: 2em; font-weight: bold; color: #2c3e50; }
-                    .stat-label { color: #7f8c8d; margin-top: 5px; }
-                    .btn { background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 5px; }
-                    .btn:hover { background: #2980b9; }
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    .container { 
+                        max-width: 1200px; 
+                        margin: 0 auto; 
+                        background: white; 
+                        border-radius: 15px; 
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        overflow: hidden;
+                    }
+                    .header { 
+                        background: linear-gradient(135deg, #2c3e50, #3498db); 
+                        color: white; 
+                        padding: 30px; 
+                        text-align: center;
+                    }
+                    .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+                    .header p { font-size: 1.2em; opacity: 0.9; }
+                    .content { padding: 40px; }
+                    .stats { 
+                        display: grid; 
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+                        gap: 25px; 
+                        margin: 30px 0; 
+                    }
+                    .stat-card { 
+                        background: #fff; 
+                        padding: 25px; 
+                        border-radius: 12px; 
+                        border-left: 5px solid #3498db; 
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+                        transition: transform 0.3s ease;
+                    }
+                    .stat-card:hover { transform: translateY(-5px); }
+                    .stat-number { 
+                        font-size: 3em; 
+                        font-weight: bold; 
+                        color: #2c3e50; 
+                        margin-bottom: 10px;
+                    }
+                    .stat-label { 
+                        color: #7f8c8d; 
+                        font-size: 1.1em;
+                        font-weight: 500;
+                    }
+                    .btn { 
+                        background: linear-gradient(135deg, #3498db, #2980b9); 
+                        color: white; 
+                        padding: 15px 30px; 
+                        text-decoration: none; 
+                        border-radius: 8px; 
+                        display: inline-block; 
+                        margin: 10px 10px 10px 0;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+                    }
+                    .btn:hover { 
+                        background: linear-gradient(135deg, #2980b9, #1f4e79); 
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+                    }
+                    .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+                    .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
+                    .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+                    .success-message {
+                        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+                        color: #155724;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                        border-left: 5px solid #28a745;
+                    }
+                    .admin-info {
+                        background: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                        border: 2px solid #e9ecef;
+                    }
+                    .feature-list {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 20px;
+                        margin: 30px 0;
+                    }
+                    .feature-item {
+                        background: #fff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border: 1px solid #e9ecef;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                    }
+                    .feature-item h4 {
+                        color: #2c3e50;
+                        margin-bottom: 10px;
+                        font-size: 1.2em;
+                    }
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="header">
                         <h1>🛡️ Painel Administrativo</h1>
-                        <p>Sistema Guardião BETA - Funcionando!</p>
+                        <p>Sistema Guardião BETA - Gerenciamento Central</p>
                     </div>
-                    <div class="stats">
-                        <div class="stat-card">
-                            <div class="stat-number">✅</div>
-                            <div class="stat-label">Painel Funcionando</div>
+                    
+                    <div class="content">
+                        <div class="success-message">
+                            <h3>✅ Painel Admin Funcionando Perfeitamente!</h3>
+                            <p>O painel administrativo está operacional e pronto para uso.</p>
                         </div>
-                    </div>
-                    <div style="margin-top: 30px;">
-                        <a href="/dashboard" class="btn">📊 Dashboard</a>
-                        <a href="/admin-simple" class="btn">🔧 Painel Simples</a>
-                        <a href="/" class="btn">🏠 Início</a>
+                        
+                        <div class="admin-info">
+                            <h3>👤 Informações do Administrador</h3>
+                            <p><strong>Usuário:</strong> {username}</p>
+                            <p><strong>ID:</strong> {user_id}</p>
+                            <p><strong>Status:</strong> <span style="color: #27ae60; font-weight: bold;">✅ Administrador Autorizado</span></p>
+                        </div>
+                        
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-number">🛡️</div>
+                                <div class="stat-label">Sistema Operacional</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">⚡</div>
+                                <div class="stat-label">Performance Otimizada</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">🔒</div>
+                                <div class="stat-label">Segurança Ativa</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">📊</div>
+                                <div class="stat-label">Monitoramento Ativo</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <h4>👥 Gerenciamento de Usuários</h4>
+                                <p>Visualizar, editar e gerenciar todos os usuários cadastrados no sistema.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h4>🚨 Sistema de Denúncias</h4>
+                                <p>Monitorar e gerenciar todas as denúncias e casos de moderação.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h4>📈 Estatísticas e Relatórios</h4>
+                                <p>Acompanhar métricas de uso, atividade e performance do sistema.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h4>⚙️ Configurações do Sistema</h4>
+                                <p>Configurar parâmetros, regras e funcionalidades do Sistema Guardião.</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 40px; text-align: center;">
+                            <h3>🎯 Ações Rápidas</h3>
+                            <a href="/dashboard" class="btn">📊 Dashboard Principal</a>
+                            <a href="/admin-simple" class="btn btn-success">🔧 Painel Simples</a>
+                            <a href="/admin-fixed" class="btn btn-warning">✅ Painel Fixo</a>
+                            <a href="/" class="btn btn-danger">🏠 Página Inicial</a>
+                        </div>
                     </div>
                 </div>
             </body>
             </html>
-            """
+            """.format(
+                username=session['user']['username'],
+                user_id=user_id
+            )
         except Exception as e:
             logger.error(f"Erro no painel admin: {e}")
-            return f"Erro: {e}"
+            return f"""
+            <div style="padding: 20px; background: #f8d7da; color: #721c24; border-radius: 8px; margin: 20px;">
+                <h3>❌ Erro no Painel Admin</h3>
+                <p>Erro: {e}</p>
+                <a href="/dashboard" style="color: #721c24;">Voltar ao Dashboard</a>
+            </div>
+            """
     
     @app.route('/admin/usuarios')
     def admin_usuarios():
