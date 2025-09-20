@@ -299,7 +299,7 @@ class GuardiaoBot:
         logger.info("Background tasks iniciadas")
     
     def setup_web_app(self):
-        """Configura a aplicação web Flask"""
+        """Configura a aplicação web Flask (apenas para API - Django Admin roda diretamente)"""
         try:
             # Configura autenticação
             setup_auth(self.web_app)
@@ -340,99 +340,99 @@ class GuardiaoBot:
                     logger.error(f"Erro ao buscar estatísticas: {e}")
                     return {'error': 'Internal server error'}, 500
             
-            # Adiciona rota para Django Admin Panel
-            @self.web_app.route('/admin', methods=['GET', 'POST'])
-            @self.web_app.route('/admin/', methods=['GET', 'POST'])
-            @self.web_app.route('/admin/<path:path>', methods=['GET', 'POST'])
-            def django_admin(path=''):
-                """Proxy para o Django Admin Panel"""
-                import requests
-                from flask import request, Response
-                
-                try:
-                    # Log para debug
-                    logger.info(f"Django Admin proxy: {request.method} {path}")
-                    logger.info(f"Request URL: {request.url}")
-                    logger.info(f"Request headers: {dict(request.headers)}")
-                    
-                    # Constrói URL do Django Admin
-                    django_url = f'http://localhost:8001/admin/{path}'
-                    if request.query_string:
-                        django_url += f'?{request.query_string.decode()}'
-                    
-                    # Headers para o Django (remove alguns headers problemáticos)
-                    headers = dict(request.headers)
-                    headers.pop('Host', None)  # Remove Host header
-                    headers.pop('Content-Length', None)  # Remove Content-Length
-                    # Adiciona headers para funcionar com proxy
-                    headers['X-Forwarded-Proto'] = 'https'
-                    headers['X-Forwarded-For'] = request.remote_addr or '127.0.0.1'
-                    
-                    # Prepara dados para requisição
-                    if request.method == 'POST':
-                        # Para POST, usa form data ou JSON
-                        if request.form:
-                            data = request.form
-                        else:
-                            data = request.get_data()
-                    else:
-                        data = request.get_data()
-                    
-                    # Faz requisição para o Django
-                    django_response = requests.request(
-                        method=request.method,
-                        url=django_url,
-                        headers=headers,
-                        data=data,
-                        cookies=request.cookies,
-                        allow_redirects=False,
-                        timeout=30
-                    )
-                    
-                    # Headers da resposta (remove alguns headers problemáticos)
-                    response_headers = dict(django_response.headers)
-                    response_headers.pop('Content-Encoding', None)
-                    response_headers.pop('Transfer-Encoding', None)
-                    
-                    # Corrige cookies para usar o domínio correto
-                    if 'Set-Cookie' in response_headers:
-                        cookies = response_headers['Set-Cookie']
-                        # Remove domínio localhost e ajusta para o domínio correto
-                        cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
-                        cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
-                        # Remove configurações de domínio específico para funcionar com proxy
-                        cookies = cookies.replace('Domain=guardiaobeta.discloud.app;', '')
-                        cookies = cookies.replace('Domain=localhost;', '')
-                        response_headers['Set-Cookie'] = cookies
-                    
-                    # Log para debug de autenticação
-                    if request.method == 'POST' and 'login' in path:
-                        logger.info(f"Login POST - Status: {django_response.status_code}")
-                        logger.info(f"Login POST - Headers: {dict(django_response.headers)}")
-                        logger.info(f"Login POST - Cookies: {django_response.cookies}")
-                    
-                    # Retorna resposta do Django
-                    return Response(
-                        django_response.content,
-                        status=django_response.status_code,
-                        headers=response_headers
-                    )
-                    
-                except requests.exceptions.ConnectionError:
-                    # Django não está rodando, redireciona para página de erro
-                    return '''
-                    <html>
-                        <head><title>Django Admin - Indisponível</title></head>
-                        <body>
-                            <h1>Django Admin Panel</h1>
-                            <p>O Django Admin Panel está sendo iniciado. Aguarde alguns segundos e recarregue a página.</p>
-                            <p><a href="/admin">Recarregar</a></p>
-                        </body>
-                    </html>
-                    ''', 503
-                except Exception as e:
-                    logger.error(f"Erro no proxy Django: {e}")
-                    return f"Erro no Django Admin: {e}", 500
+            # Django Admin Panel agora roda diretamente na porta 8080 - sem proxy necessário
+            # @self.web_app.route('/admin', methods=['GET', 'POST'])
+            # @self.web_app.route('/admin/', methods=['GET', 'POST'])
+            # @self.web_app.route('/admin/<path:path>', methods=['GET', 'POST'])
+            # def django_admin(path=''):
+            #     """Proxy para o Django Admin Panel"""
+            #     import requests
+            #     from flask import request, Response
+            #     
+            #     try:
+            #         # Log para debug
+            #         logger.info(f"Django Admin proxy: {request.method} {path}")
+            #         logger.info(f"Request URL: {request.url}")
+            #         logger.info(f"Request headers: {dict(request.headers)}")
+            #         
+            #         # Constrói URL do Django Admin
+            #         django_url = f'http://localhost:8001/admin/{path}'
+            #         if request.query_string:
+            #             django_url += f'?{request.query_string.decode()}'
+            #         
+            #         # Headers para o Django (remove alguns headers problemáticos)
+            #         headers = dict(request.headers)
+            #         headers.pop('Host', None)  # Remove Host header
+            #         headers.pop('Content-Length', None)  # Remove Content-Length
+            #         # Adiciona headers para funcionar com proxy
+            #         headers['X-Forwarded-Proto'] = 'https'
+            #         headers['X-Forwarded-For'] = request.remote_addr or '127.0.0.1'
+            #         
+            #         # Prepara dados para requisição
+            #         if request.method == 'POST':
+            #             # Para POST, usa form data ou JSON
+            #             if request.form:
+            #                 data = request.form
+            #             else:
+            #                 data = request.get_data()
+            #         else:
+            #             data = request.get_data()
+            #         
+            #         # Faz requisição para o Django
+            #         django_response = requests.request(
+            #             method=request.method,
+            #             url=django_url,
+            #             headers=headers,
+            #             data=data,
+            #             cookies=request.cookies,
+            #             allow_redirects=False,
+            #             timeout=30
+            #         )
+            #         
+            #         # Headers da resposta (remove alguns headers problemáticos)
+            #         response_headers = dict(django_response.headers)
+            #         response_headers.pop('Content-Encoding', None)
+            #         response_headers.pop('Transfer-Encoding', None)
+            #         
+            #         # Corrige cookies para usar o domínio correto
+            #         if 'Set-Cookie' in response_headers:
+            #             cookies = response_headers['Set-Cookie']
+            #             # Remove domínio localhost e ajusta para o domínio correto
+            #             cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
+            #             cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
+            #             # Remove configurações de domínio específico para funcionar com proxy
+            #             cookies = cookies.replace('Domain=guardiaobeta.discloud.app;', '')
+            #             cookies = cookies.replace('Domain=localhost;', '')
+            #             response_headers['Set-Cookie'] = cookies
+            #         
+            #         # Log para debug de autenticação
+            #         if request.method == 'POST' and 'login' in path:
+            #             logger.info(f"Login POST - Status: {django_response.status_code}")
+            #             logger.info(f"Login POST - Headers: {dict(django_response.headers)}")
+            #             logger.info(f"Login POST - Cookies: {django_response.cookies}")
+            #         
+            #         # Retorna resposta do Django
+            #         return Response(
+            #             django_response.content,
+            #             status=django_response.status_code,
+            #             headers=response_headers
+            #         )
+            #         
+            #     except requests.exceptions.ConnectionError:
+            #         # Django não está rodando, redireciona para página de erro
+            #         return '''
+            #         <html>
+            #             <head><title>Django Admin - Indisponível</title></head>
+            #             <body>
+            #                 <h1>Django Admin Panel</h1>
+            #                 <p>O Django Admin Panel está sendo iniciado. Aguarde alguns segundos e recarregue a página.</p>
+            #                 <p><a href="/admin">Recarregar</a></p>
+            #             </body>
+            #         </html>
+            #         ''', 503
+            #     except Exception as e:
+            #         logger.error(f"Erro no proxy Django: {e}")
+            #         return f"Erro no Django Admin: {e}", 500
             
             # Adiciona rotas para Discord Admin (fora do namespace /admin/)
             @self.web_app.route('/discord-admin', methods=['GET', 'POST'])
@@ -517,81 +517,69 @@ class GuardiaoBot:
             raise
     
     def run_web_app(self):
-        """Executa a aplicação web em thread separada com Django Admin integrado"""
+        """Executa a aplicação web - Django Admin na porta 8080"""
         try:
-            # Inicia Django Admin em thread separada
-            self.start_django_admin()
-            
-            port = int(WEB_PORT)
-            host = '0.0.0.0'  # Para funcionar na Discloud
-            
-            logger.info(f"Iniciando servidor web na porta {port}")
-            self.web_app.run(host=host, port=port, debug=False, threaded=True)
+            # Inicia Django Admin diretamente na porta 8080
+            self.start_django_admin_direct()
             
         except Exception as e:
             logger.error(f"Erro ao executar aplicação web: {e}")
             raise
     
-    def start_django_admin(self):
-        """Inicia o Django Admin Panel em thread separada"""
-        import threading
+    def start_django_admin_direct(self):
+        """Inicia o Django Admin Panel diretamente na porta 8080"""
         import subprocess
         import sys
         
-        def run_django():
-            try:
-                django_dir = os.path.join(os.path.dirname(__file__), 'django_admin')
-                if os.path.exists(django_dir):
-                    logger.info("Iniciando Django Admin Panel...")
+        try:
+            django_dir = os.path.join(os.path.dirname(__file__), 'django_admin')
+            if os.path.exists(django_dir):
+                logger.info("🚀 Iniciando Django Admin Panel diretamente na porta 8080...")
+                
+                # Executa script de inicialização do servidor
+                init_script = os.path.join(django_dir, 'init_server.py')
+                if os.path.exists(init_script):
+                    logger.info("Executando inicialização do servidor...")
+                    result = subprocess.run([
+                        sys.executable, init_script
+                    ], cwd=django_dir, capture_output=True, text=True, timeout=120)
                     
-                    # Executa script de inicialização do servidor
-                    init_script = os.path.join(django_dir, 'init_server.py')
-                    if os.path.exists(init_script):
-                        logger.info("Executando inicialização do servidor...")
-                        result = subprocess.run([
-                            sys.executable, init_script
-                        ], cwd=django_dir, capture_output=True, text=True, timeout=120)
-                        
-                        if result.returncode == 0:
-                            logger.info("✅ Inicialização do Django Admin concluída!")
-                            logger.info(result.stdout)
-                        else:
-                            logger.warning(f"⚠️ Avisos na inicialização: {result.stderr}")
+                    if result.returncode == 0:
+                        logger.info("✅ Inicialização do Django Admin concluída!")
+                        logger.info(result.stdout)
                     else:
-                        # Fallback para inicialização manual
-                        logger.info("Executando inicialização manual...")
-                        subprocess.run([
-                            sys.executable, 'manage.py', 'migrate', '--run-syncdb'
-                        ], cwd=django_dir, check=False)
-                        subprocess.run([
-                            sys.executable, 'manage.py', 'create_admin'
-                        ], cwd=django_dir, check=False)
-                    
-                    # Inicia servidor Django
-                    logger.info("Iniciando servidor Django na porta 8001...")
+                        logger.warning(f"⚠️ Avisos na inicialização: {result.stderr}")
+                else:
+                    # Fallback para inicialização manual
+                    logger.info("Executando inicialização manual...")
                     subprocess.run([
-                        sys.executable, 'manage.py', 'runserver', '0.0.0.0:8001'
+                        sys.executable, 'manage.py', 'migrate', '--run-syncdb'
                     ], cwd=django_dir, check=False)
-            except Exception as e:
-                logger.warning(f"Django Admin não pôde ser iniciado: {e}")
-        
-        # Inicia Django em thread separada
-        django_thread = threading.Thread(target=run_django, daemon=True)
-        django_thread.start()
-        logger.info("Django Admin Panel será iniciado na porta 8001")
+                    subprocess.run([
+                        sys.executable, 'manage.py', 'create_admin'
+                    ], cwd=django_dir, check=False)
+                
+                # Inicia servidor Django diretamente na porta 8080
+                logger.info("🌐 Iniciando servidor Django na porta 8080 (porta principal)...")
+                subprocess.run([
+                    sys.executable, 'manage.py', 'runserver', '0.0.0.0:8080'
+                ], cwd=django_dir, check=False)
+            else:
+                logger.error("Diretório Django Admin não encontrado!")
+                
+        except Exception as e:
+            logger.error(f"Django Admin não pôde ser iniciado: {e}")
+            raise
     
     async def run(self):
         """Executa o sistema completo"""
         try:
-            # Configura aplicação web
-            self.setup_web_app()
-            
-            # Inicia aplicação web em thread separada
+            # Inicia Django Admin diretamente na porta 8080
             web_thread = threading.Thread(target=self.run_web_app, daemon=True)
             web_thread.start()
             
-            # Aguarda um pouco para a web app inicializar
-            await asyncio.sleep(2)
+            # Aguarda um pouco para o Django Admin inicializar
+            await asyncio.sleep(3)
             
             # Configura bot
             await self.setup_bot()
