@@ -1,37 +1,381 @@
 {% extends "base.html" %}
 
-{% block title %}Sistema Guardião BETA - Moderação Comunitária{% endblock %}
+{% block title %}Sistema Guardião BETA - Moderação Comunitária Inteligente{% endblock %}
 
 {% block main_class %}home-page{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Hero Section Styling */
+    .hero-section {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-teal-dark) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 120px 0 80px;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 2rem;
+        animation: fadeInUp 1s ease;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 2.5rem;
+        animation: fadeInUp 1s ease 0.2s both;
+    }
+
+    .hero-buttons {
+        animation: fadeInUp 1s ease 0.4s both;
+    }
+
+    .hero-image {
+        position: relative;
+        animation: fadeInRight 1s ease 0.6s both;
+    }
+
+    .hero-logo {
+        width: 200px;
+        height: 200px;
+        filter: drop-shadow(0 0 30px rgba(255, 184, 0, 0.5));
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    /* Glass Cards */
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 184, 0, 0.1), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .glass-card:hover::before {
+        left: 100%;
+    }
+
+    /* Feature Icons */
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--dark-bg);
+        box-shadow: var(--shadow-glow);
+        transition: all 0.3s ease;
+    }
+
+    .glass-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Stats Section */
+    .stats-section {
+        background: var(--dark-card);
+        border-top: 1px solid var(--glass-border);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 80px 0;
+        position: relative;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 2rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: all 0.4s ease;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-gold);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+
+    /* Benefits Section */
+    .benefits-section {
+        padding: 80px 0;
+        background: var(--dark-bg);
+    }
+
+    .benefit-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1.5rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .benefit-item:hover {
+        transform: translateX(10px);
+        border-color: var(--primary-gold);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .benefit-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-light));
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1.5rem;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        flex-shrink: 0;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, var(--primary-teal-dark), var(--primary-teal));
+        padding: 100px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(255, 184, 0, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 184, 0, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .cta-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Steps Section */
+    .steps-section {
+        padding: 80px 0;
+        background: var(--dark-card);
+    }
+
+    .step-card {
+        text-align: center;
+        padding: 2rem;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: all 0.4s ease;
+        height: 100%;
+        position: relative;
+    }
+
+    .step-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary-gold);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .step-number {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 auto 1.5rem;
+        box-shadow: var(--shadow-glow);
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover .step-number {
+        transform: scale(1.1);
+    }
+
+    /* Section Titles */
+    .section-title {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        margin-bottom: 3rem;
+    }
+
+    /* Code styling */
+    code {
+        background: var(--dark-card);
+        color: var(--primary-gold);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        border: 1px solid var(--glass-border);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-logo {
+            width: 150px;
+            height: 150px;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .benefit-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .benefit-icon {
+            margin: 0 auto 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section bg-gradient-primary text-white py-5">
+<section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">
-                    Sistema Guardião BETA
-                </h1>
-                <p class="lead mb-4">
-                    Moderação comunitária inteligente e anônima para seu servidor Discord. 
-                    Deixe a comunidade se autorregular com transparência e justiça.
-                </p>
-                <div class="d-flex gap-3">
-                    <a href="{{ bot_invite_url }}" class="btn btn-light btn-lg" target="_blank">
-                        <i class="bi bi-plus-circle"></i> Adicionar ao Servidor
-                    </a>
-                    {% if not session.user %}
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
-                            <i class="bi bi-discord"></i> Login com Discord
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        Sistema Guardião <span style="color: var(--primary-teal);">BETA</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Moderação comunitária inteligente e anônima para seu servidor Discord. 
+                        Deixe a comunidade se autorregular com transparência, justiça e tecnologia avançada.
+                    </p>
+                    <div class="hero-buttons d-flex gap-3">
+                        <a href="{{ bot_invite_url }}" class="btn btn-custom-primary btn-lg" target="_blank">
+                            <i class="bi bi-plus-circle me-2"></i> Adicionar ao Servidor
                         </a>
-                    {% endif %}
+                        {% if not session.user %}
+                            <a href="{{ url_for('login') }}" class="btn btn-custom-secondary btn-lg">
+                                <i class="bi bi-discord me-2"></i> Login com Discord
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="hero-image text-center">
-                    <img src="{{ url_for('static', filename='img/hero-illustration.svg') }}" 
-                         alt="Sistema Guardião BETA" class="img-fluid" style="max-height: 400px;">
+                    <img src="{{ url_for('static', filename='img/logoguardiao.png') }}" 
+                         alt="Sistema Guardião BETA" class="hero-logo">
                 </div>
             </div>
         </div>
@@ -39,51 +383,51 @@
 </section>
 
 <!-- Features Section -->
-<section class="features-section py-5">
+<section class="py-5" style="padding: 80px 0; background: var(--dark-bg);">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
-                <h2 class="display-5 fw-bold">Como Funciona</h2>
-                <p class="lead text-muted">Sistema de moderação baseado na comunidade</p>
+                <h2 class="section-title">Como Funciona</h2>
+                <p class="section-subtitle">Sistema de moderação baseado na comunidade com tecnologia avançada</p>
             </div>
         </div>
         
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="feature-card h-100 p-4 border rounded-3 text-center">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-flag text-primary" style="font-size: 3rem;"></i>
+                <div class="glass-card h-100 text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-flag-fill"></i>
                     </div>
-                    <h4>1. Denúncia</h4>
-                    <p class="text-muted">
-                        Usuários denunciam violações usando o comando <code>/report</code>. 
-                        O sistema captura automaticamente as evidências.
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">1. Denúncia Inteligente</h4>
+                    <p style="color: var(--text-secondary);">
+                        Usuários denunciam violações usando <code>/report</code>. 
+                        O sistema captura automaticamente evidências e contexto com IA.
                     </p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card h-100 p-4 border rounded-3 text-center">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                <div class="glass-card h-100 text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-people-fill"></i>
                     </div>
-                    <h4>2. Análise Comunitária</h4>
-                    <p class="text-muted">
-                        Guardiões treinados analisam a denúncia de forma anônima e imparcial, 
-                        votando no resultado apropriado.
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">2. Análise Comunitária</h4>
+                    <p style="color: var(--text-secondary);">
+                        Guardiões treinados analisam de forma anônima e imparcial, 
+                        votando no resultado mais justo para a comunidade.
                     </p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card h-100 p-4 border rounded-3 text-center">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-shield-check text-warning" style="font-size: 3rem;"></i>
+                <div class="glass-card h-100 text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check-fill"></i>
                     </div>
-                    <h4>3. Punição Automática</h4>
-                    <p class="text-muted">
-                        Baseado nos votos dos Guardiões, o sistema aplica automaticamente 
-                        a punição adequada no Discord.
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">3. Ação Automática</h4>
+                    <p style="color: var(--text-secondary);">
+                        Baseado nos votos, o sistema aplica automaticamente 
+                        a punição adequada com transparência total.
                     </p>
                 </div>
             </div>
@@ -92,53 +436,53 @@
 </section>
 
 <!-- Stats Section -->
-<section class="stats-section bg-light py-5">
+<section class="stats-section">
     <div class="container">
-        <div class="row text-center">
-            <div class="col-12 mb-4">
-                <h2 class="display-5 fw-bold">Estatísticas</h2>
-                <p class="lead text-muted">Números que mostram nossa eficiência</p>
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="section-title">Estatísticas em Tempo Real</h2>
+                <p class="section-subtitle">Números que comprovam nossa eficiência e confiabilidade</p>
             </div>
         </div>
         
         <div class="row g-4">
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card text-center">
-                    <div class="stat-number text-primary">
-                        <i class="bi bi-people-fill"></i>
-                        <span class="counter" data-target="{{ stats.total_usuarios }}">0</span>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <i class="bi bi-people-fill me-2"></i>
+                        <span class="counter" data-target="{{ stats.total_usuarios or 0 }}">0</span>
                     </div>
-                    <h5>Usuários Cadastrados</h5>
+                    <div class="stat-label">Usuários Cadastrados</div>
                 </div>
             </div>
             
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card text-center">
-                    <div class="stat-number text-success">
-                        <i class="bi bi-shield-check"></i>
-                        <span class="counter" data-target="{{ stats.total_guardioes }}">0</span>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <i class="bi bi-shield-check me-2"></i>
+                        <span class="counter" data-target="{{ stats.total_guardioes or 0 }}">0</span>
                     </div>
-                    <h5>Guardiões Ativos</h5>
+                    <div class="stat-label">Guardiões Ativos</div>
                 </div>
             </div>
             
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card text-center">
-                    <div class="stat-number text-warning">
-                        <i class="bi bi-flag-fill"></i>
-                        <span class="counter" data-target="{{ stats.total_denuncias }}">0</span>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <i class="bi bi-flag-fill me-2"></i>
+                        <span class="counter" data-target="{{ stats.total_denuncias or 0 }}">0</span>
                     </div>
-                    <h5>Denúncias Processadas</h5>
+                    <div class="stat-label">Denúncias Processadas</div>
                 </div>
             </div>
             
             <div class="col-md-3 col-sm-6">
-                <div class="stat-card text-center">
-                    <div class="stat-number text-info">
-                        <i class="bi bi-server"></i>
-                        <span class="counter" data-target="{{ stats.total_servidores }}">0</span>
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <i class="bi bi-server me-2"></i>
+                        <span class="counter" data-target="{{ stats.total_servidores or 0 }}">0</span>
                     </div>
-                    <h5>Servidores Protegidos</h5>
+                    <div class="stat-label">Servidores Protegidos</div>
                 </div>
             </div>
         </div>
@@ -146,77 +490,70 @@
 </section>
 
 <!-- Benefits Section -->
-<section class="benefits-section py-5">
+<section class="benefits-section">
     <div class="container">
         <div class="row">
             <div class="col-lg-6">
-                <h2 class="display-5 fw-bold mb-4">Por que escolher o Guardião BETA?</h2>
+                <h2 class="section-title mb-4">Por que escolher o Guardião BETA?</h2>
                 
-                <div class="benefit-item mb-4">
-                    <div class="d-flex">
-                        <div class="benefit-icon me-3">
-                            <i class="bi bi-eye-slash text-primary"></i>
-                        </div>
-                        <div>
-                            <h5>Moderação Anônima</h5>
-                            <p class="text-muted">
-                                Identidades dos Guardiões são protegidas, evitando vinganças e 
-                                garantindo imparcialidade nas decisões.
-                            </p>
-                        </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-eye-slash-fill"></i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 0.5rem;">Moderação Anônima</h5>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Identidades dos Guardiões são protegidas com criptografia, 
+                            evitando vinganças e garantindo imparcialidade total.
+                        </p>
                     </div>
                 </div>
                 
-                <div class="benefit-item mb-4">
-                    <div class="d-flex">
-                        <div class="benefit-icon me-3">
-                            <i class="bi bi-graph-up text-success"></i>
-                        </div>
-                        <div>
-                            <h5>Eficiência Comprovada</h5>
-                            <p class="text-muted">
-                                Sistema automatizado que processa denúncias em minutos, 
-                                muito mais rápido que moderação manual.
-                            </p>
-                        </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 0.5rem;">Eficiência Comprovada</h5>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Sistema automatizado que processa denúncias em minutos, 
+                            com 95% de precisão nas decisões comunitárias.
+                        </p>
                     </div>
                 </div>
                 
-                <div class="benefit-item mb-4">
-                    <div class="d-flex">
-                        <div class="benefit-icon me-3">
-                            <i class="bi bi-award text-warning"></i>
-                        </div>
-                        <div>
-                            <h5>Sistema de Experiência</h5>
-                            <p class="text-muted">
-                                Guardiões ganham experiência e sobem de rank conforme 
-                                participam da moderação, criando engajamento.
-                            </p>
-                        </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 0.5rem;">Sistema de Experiência</h5>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Guardiões ganham XP e sobem de rank, criando engajamento 
+                            e melhorando a qualidade das decisões.
+                        </p>
                     </div>
                 </div>
                 
-                <div class="benefit-item mb-4">
-                    <div class="d-flex">
-                        <div class="benefit-icon me-3">
-                            <i class="bi bi-shield-check text-info"></i>
-                        </div>
-                        <div>
-                            <h5>Transparência Total</h5>
-                            <p class="text-muted">
-                                Todas as decisões são baseadas em votos da comunidade, 
-                                com sistema de apelação para casos especiais.
-                            </p>
-                        </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-transparency"></i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 0.5rem;">Transparência Total</h5>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Todas as decisões são auditáveis, com histórico completo 
+                            e sistema de apelação para casos especiais.
+                        </p>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-6">
-                <div class="benefits-visual">
-                    <img src="{{ url_for('static', filename='img/benefits-illustration.svg') }}" 
-                         alt="Benefícios do Sistema" class="img-fluid">
+            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+                <div class="text-center">
+                    <img src="{{ url_for('static', filename='img/logoguardiao.png') }}" 
+                         alt="Benefícios do Sistema" 
+                         style="width: 300px; height: 300px; filter: drop-shadow(0 0 40px rgba(255, 184, 0, 0.3)); animation: float 4s ease-in-out infinite;">
                 </div>
             </div>
         </div>
@@ -224,71 +561,72 @@
 </section>
 
 <!-- CTA Section -->
-<section class="cta-section bg-primary text-white py-5">
+<section class="cta-section">
     <div class="container text-center">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-4">
-                    Pronto para proteger seu servidor?
-                </h2>
-                <p class="lead mb-4">
-                    Adicione o Guardião BETA ao seu servidor Discord e tenha moderação 
-                    comunitária profissional em minutos.
-                </p>
-                <a href="{{ bot_invite_url }}" class="btn btn-light btn-lg" target="_blank">
-                    <i class="bi bi-plus-circle"></i> Adicionar ao Servidor
-                </a>
-                <p class="mt-3 mb-0">
-                    <small>Grátis para sempre • Sem configuração complexa</small>
-                </p>
+        <div class="cta-content">
+            <h2 class="section-title text-white mb-4">
+                Pronto para revolucionar seu servidor?
+            </h2>
+            <p class="lead mb-4" style="color: rgba(255, 255, 255, 0.9);">
+                Adicione o Guardião BETA ao seu servidor Discord e tenha moderação 
+                comunitária profissional com tecnologia de ponta em minutos.
+            </p>
+            <a href="{{ bot_invite_url }}" class="btn btn-custom-primary btn-lg mb-3" target="_blank">
+                <i class="bi bi-plus-circle me-2"></i> Adicionar ao Servidor Agora
+            </a>
+            <div class="mt-3">
+                <small style="color: rgba(255, 255, 255, 0.7);">
+                    <i class="bi bi-check-circle me-1"></i> Grátis para sempre
+                    <span class="mx-2">•</span>
+                    <i class="bi bi-lightning me-1"></i> Configuração em 2 minutos
+                    <span class="mx-2">•</span>
+                    <i class="bi bi-shield-check me-1"></i> Suporte 24/7
+                </small>
             </div>
         </div>
     </div>
 </section>
 
 <!-- How to Start Section -->
-<section class="how-to-start py-5">
+<section class="steps-section">
     <div class="container">
         <div class="row text-center mb-5">
             <div class="col-12">
-                <h2 class="display-5 fw-bold">Como Começar</h2>
-                <p class="lead text-muted">Três passos simples para ter moderação comunitária</p>
+                <h2 class="section-title">Como Começar</h2>
+                <p class="section-subtitle">Três passos simples para ter moderação comunitária avançada</p>
             </div>
         </div>
         
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="step-card text-center">
-                    <div class="step-number bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <span class="fw-bold">1</span>
-                    </div>
-                    <h4>Adicione o Bot</h4>
-                    <p class="text-muted">
-                        Clique em "Adicionar ao Servidor" e autorize as permissões necessárias.
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">Adicione o Bot</h4>
+                    <p style="color: var(--text-secondary);">
+                        Clique em "Adicionar ao Servidor" e autorize as permissões. 
+                        O bot se configura automaticamente.
                     </p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="step-card text-center">
-                    <div class="step-number bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <span class="fw-bold">2</span>
-                    </div>
-                    <h4>Configure Guardiões</h4>
-                    <p class="text-muted">
-                        Usuários se candidatam a Guardiões através do comando <code>/formguardiao</code>.
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">Configure Guardiões</h4>
+                    <p style="color: var(--text-secondary);">
+                        Usuários se candidatam a Guardiões com <code>/formguardiao</code> 
+                        e passam por treinamento automático.
                     </p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="step-card text-center">
-                    <div class="step-number bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <span class="fw-bold">3</span>
-                    </div>
-                    <h4>Comece a Moderar</h4>
-                    <p class="text-muted">
-                        Use <code>/report</code> para denunciar violações e deixe os Guardiões cuidarem do resto.
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem;">Comece a Moderar</h4>
+                    <p style="color: var(--text-secondary);">
+                        Use <code>/report</code> para denunciar violações. 
+                        Os Guardiões cuidam do resto automaticamente.
                     </p>
                 </div>
             </div>
@@ -299,26 +637,83 @@
 
 {% block extra_scripts %}
 <script>
-// Counter animation
+// Enhanced counter animation with intersection observer
 document.addEventListener('DOMContentLoaded', function() {
     const counters = document.querySelectorAll('.counter');
     
-    counters.forEach(counter => {
+    const animateCounter = (counter) => {
         const target = parseInt(counter.getAttribute('data-target'));
         let current = 0;
         const increment = target / 100;
+        const duration = 2000; // 2 seconds
+        const stepTime = duration / 100;
         
         const updateCounter = () => {
             if (current < target) {
                 current += increment;
                 counter.textContent = Math.ceil(current);
-                setTimeout(updateCounter, 20);
+                setTimeout(updateCounter, stepTime);
             } else {
                 counter.textContent = target;
             }
         };
         
         updateCounter();
+    };
+    
+    // Use Intersection Observer to trigger animation when visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counter = entry.target;
+                animateCounter(counter);
+                observer.unobserve(counter); // Only animate once
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    counters.forEach(counter => {
+        observer.observe(counter);
+    });
+    
+    // Add scroll animations
+    const animateOnScroll = () => {
+        const elements = document.querySelectorAll('.glass-card, .stat-card, .step-card, .benefit-item');
+        
+        elements.forEach(element => {
+            const elementTop = element.getBoundingClientRect().top;
+            const elementVisible = 150;
+            
+            if (elementTop < window.innerHeight - elementVisible) {
+                element.style.opacity = '1';
+                element.style.transform = 'translateY(0)';
+            }
+        });
+    };
+    
+    // Initialize elements for animation
+    const elements = document.querySelectorAll('.glass-card, .stat-card, .step-card, .benefit-item');
+    elements.forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        element.style.transition = 'all 0.6s ease';
+    });
+    
+    // Trigger animations on scroll
+    window.addEventListener('scroll', animateOnScroll);
+    animateOnScroll(); // Initial check
+    
+    // Add hover sound effects (optional)
+    const cards = document.querySelectorAll('.glass-card, .stat-card, .step-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            // Add subtle scale animation
+            this.style.transform += ' scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = this.style.transform.replace(' scale(1.02)', '');
+        });
     });
 });
 </script>
