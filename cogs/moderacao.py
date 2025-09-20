@@ -745,8 +745,15 @@ class ModeracaoCog(commands.Cog):
             # Busca mensagens das últimas 24 horas (usando timezone UTC correto)
             now_utc = datetime.now(timezone.utc)
             cutoff_time = now_utc - timedelta(hours=24)
+            
+            # Converte para horário de Brasília para logs
+            now_brasilia = now_utc - timedelta(hours=3)
+            cutoff_brasilia = cutoff_time - timedelta(hours=3)
+            
             logger.info(f"Horário atual UTC: {now_utc}")
-            logger.info(f"Capturando mensagens do canal desde {cutoff_time}")
+            logger.info(f"Horário atual Brasília: {now_brasilia}")
+            logger.info(f"Capturando mensagens do canal desde {cutoff_time} (UTC)")
+            logger.info(f"Capturando mensagens do canal desde {cutoff_brasilia} (Brasília)")
             logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
             logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
             
