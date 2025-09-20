@@ -108,6 +108,7 @@ class ReportView(ui.View):
                 ORDER BY timestamp_mensagem
             """
             mensagens = db_manager.execute_query_sync(mensagens_query, denuncia['id'])
+            logger.info(f"Busca de mensagens para denúncia ID {denuncia['id']}: encontradas {len(mensagens) if mensagens else 0}")
             
             # Cria o embed com os detalhes da denúncia
             embed = discord.Embed(
@@ -713,7 +714,7 @@ class ModeracaoCog(commands.Cog):
                     """
                     db_manager.execute_command_sync(
                         mensagem_query, denuncia_id, message.author.id, 
-                        message.content, ",".join(attachment_urls), message.created_at
+                        message.content, ",".join(attachment_urls), message.created_at.replace(tzinfo=None)
                     )
                     
                     messages_captured += 1
