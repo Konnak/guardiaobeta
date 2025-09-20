@@ -29,7 +29,7 @@ class StatsCog(commands.Cog):
         name="stats",
         description="Exibe suas estatísticas no Sistema Guardião BETA"
     )
-    async def stats(self, ctx: discord.ApplicationContext):
+    async def stats(self, ctx):
         """
         Comando de estatísticas - Apenas em DM
         
@@ -217,7 +217,7 @@ class StatsCog(commands.Cog):
         return "\n".join(cooldowns) if cooldowns else "Nenhum cooldown ativo"
     
     @stats.error
-    async def stats_error(self, ctx: discord.ApplicationContext, error):
+    async def stats_error(self, ctx, error):
         """Tratamento de erros do comando stats"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(

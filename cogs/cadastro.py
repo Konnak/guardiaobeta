@@ -202,7 +202,7 @@ class CadastroCog(commands.Cog):
         name="cadastro",
         description="Cadastre-se no Sistema Guardião BETA"
     )
-    async def cadastro(self, ctx: discord.ApplicationContext):
+    async def cadastro(self, ctx):
         """
         Comando de cadastro - Apenas em DM
         
@@ -228,7 +228,7 @@ class CadastroCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
     
     @cadastro.error
-    async def cadastro_error(self, ctx: discord.ApplicationContext, error):
+    async def cadastro_error(self, ctx, error):
         """Tratamento de erros do comando cadastro"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(

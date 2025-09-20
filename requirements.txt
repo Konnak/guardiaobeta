@@ -1,6 +1,5 @@
 # Discord Bot - py-cord para slash commands nativos (Python 3.13+ compatível)
 py-cord>=2.4.0
-discord.py>=2.3.0
 
 # Database
 asyncpg>=0.29.0

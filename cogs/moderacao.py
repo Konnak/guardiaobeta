@@ -514,7 +514,7 @@ class ModeracaoCog(commands.Cog):
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
-    async def report(self, ctx: discord.ApplicationContext, usuario: discord.Member, motivo: str):
+    async def report(self, ctx, usuario: discord.Member, motivo: str):
         """
         Comando para denunciar usuários
         
