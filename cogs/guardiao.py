@@ -508,8 +508,8 @@ class GuardiaoCog(commands.Cog):
                 return
             
             # Verifica cooldown da prova
-            if user_data['cooldown_prova'] and user_data['cooldown_prova'] > datetime.now(timezone.utc):
-                time_left = user_data['cooldown_prova'] - datetime.now(timezone.utc)
+            if user_data['cooldown_prova'] and user_data['cooldown_prova'] > datetime.utcnow():
+                time_left = user_data['cooldown_prova'] - datetime.utcnow()
                 hours = time_left.seconds // 3600
                 minutes = (time_left.seconds % 3600) // 60
                 
