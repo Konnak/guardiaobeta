@@ -27,6 +27,9 @@ class TrainingView(ui.View):
         self.quiz_answers = []
         self.correct_answers = 0
         self.current_question = 0
+        
+        # Inicializa os botões para a primeira etapa
+        self._update_buttons()
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """Verifica se o usuário pode interagir com a view"""
