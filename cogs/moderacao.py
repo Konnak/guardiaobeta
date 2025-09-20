@@ -678,7 +678,21 @@ class ModeracaoCog(commands.Cog):
                 interaction.user.id, usuario.id, motivo, is_premium
             )
             
-            # Captura mensagens do histórico
+            # Resposta imediata para evitar timeout
+            embed_loading = discord.Embed(
+                title="🔄 Processando Denúncia...",
+                description=f"Capturando mensagens e criando denúncia...\n\n**Denunciado:** {usuario.display_name}\n**Motivo:** {motivo}",
+                color=0xffa500
+            )
+            embed_loading.set_footer(text="Aguarde alguns segundos...")
+            
+            # Envia resposta imediata
+            try:
+                await interaction.response.send_message(embed=embed_loading, ephemeral=True)
+            except discord.NotFound:
+                await interaction.followup.send(embed=embed_loading, ephemeral=True)
+            
+            # Captura mensagens do histórico (processo demorado)
             await self._capture_messages(interaction, usuario, denuncia_id)
             
             # Conta guardiões em serviço
@@ -688,7 +702,7 @@ class ModeracaoCog(commands.Cog):
             """
             guardians_count = db_manager.execute_scalar_sync(guardians_query)
             
-            # Resposta de confirmação
+            # Resposta de confirmação final
             embed = discord.Embed(
                 title="✅ Denúncia Registrada!",
                 description="Sua denúncia foi registrada e será analisada pelos Guardiões.",
@@ -721,11 +735,14 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
+            # Atualiza a mensagem original
             try:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.edit_original_response(embed=embed)
             except discord.NotFound:
-                # Se a interação expirou, tenta enviar como followup
-                await interaction.followup.send(embed=embed, ephemeral=True)
+                try:
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                except discord.NotFound:
+                    pass
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
