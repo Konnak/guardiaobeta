@@ -30,6 +30,13 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = ['*', 'guardiaobeta.discloud.app', 'localhost', '127.0.0.1']  # Para produção
 
+# CSRF Trusted Origins - permite o domínio Discloud
+CSRF_TRUSTED_ORIGINS = [
+    'https://guardiaobeta.discloud.app',
+    'http://localhost:8001',
+    'http://127.0.0.1:8001',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
