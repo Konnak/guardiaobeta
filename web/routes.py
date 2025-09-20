@@ -425,9 +425,18 @@ def get_server_stats(server_id: int) -> dict:
     # ==================== ROTAS DO PAINEL ADMINISTRATIVO ====================
     
     @app.route('/admin')
-    @admin_required
     def admin_dashboard():
         """Painel administrativo principal"""
+        # Verificação manual de admin
+        if 'user' not in session:
+            flash("Você precisa fazer login para acessar esta página.", "warning")
+            return redirect(url_for('login'))
+        
+        user_id = session['user']['id']
+        if user_id != 1369940071246991380:
+            flash("Acesso negado. Você não tem permissões de administrador.", "error")
+            return redirect(url_for('dashboard'))
+        
         try:
             # Estatísticas gerais
             stats_query = """
@@ -470,9 +479,18 @@ def get_server_stats(server_id: int) -> dict:
             return redirect(url_for('dashboard'))
     
     @app.route('/admin/usuarios')
-    @admin_required
     def admin_usuarios():
         """Lista de todos os usuários"""
+        # Verificação manual de admin
+        if 'user' not in session:
+            flash("Você precisa fazer login para acessar esta página.", "warning")
+            return redirect(url_for('login'))
+        
+        user_id = session['user']['id']
+        if user_id != 1369940071246991380:
+            flash("Acesso negado. Você não tem permissões de administrador.", "error")
+            return redirect(url_for('dashboard'))
+        
         try:
             page = request.args.get('page', 1, type=int)
             per_page = 20
