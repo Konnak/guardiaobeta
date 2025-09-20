@@ -95,16 +95,25 @@
                         <div class="d-flex align-items-center">
                             <img src="{{ avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="64" height="64">
                             <div>
-                                <h1 class="h3 mb-0">Olá, {{ user.username }}!</h1>
+                                <h1 class="h3 mb-0">Olá, {{ user.first_name }}!</h1>
                                 <p class="text-muted mb-0">Bem-vindo ao seu dashboard</p>
                             </div>
                         </div>
                         
-                        <!-- Admin Button (only for authorized Discord ID) -->
-                        {% if user.id == '1369940071246991380' %}
-                        <div>
+                        <!-- Admin Button (only for admins) -->
+                        {% if user.is_superuser %}
+                        <div class="d-flex gap-2">
                             <a href="/admin/" class="btn-admin">
                                 <i class="bi bi-gear"></i> Admin Panel
+                            </a>
+                            <a href="/logout/" class="btn btn-outline-secondary">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </div>
+                        {% else %}
+                        <div>
+                            <a href="/logout/" class="btn btn-outline-secondary">
+                                <i class="bi bi-box-arrow-right"></i> Logout
                             </a>
                         </div>
                         {% endif %}
@@ -217,8 +226,8 @@
                         </h5>
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>ID Discord:</strong> {{ user.id }}</p>
-                                <p><strong>Username:</strong> {{ user.username }}</p>
+                                <p><strong>ID Discord:</strong> {{ user.username|slice:"8:" }}</p>
+                                <p><strong>Username:</strong> {{ user.first_name }}</p>
                                 {% if cadastrado %}
                                 <p><strong>Categoria:</strong> {{ db_user.2|default:"N/A" }}</p>
                                 <p><strong>Experiência:</strong> {{ db_user.6|default:0 }} XP</p>

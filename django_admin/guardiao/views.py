@@ -89,33 +89,37 @@ def discord_callback(request):
                 discord_id = user_data.get('id')
                 username = user_data.get('username')
                 
-                # Verifica se é admin autorizado
-                if _is_authorized_admin(discord_id):
-                    # Cria ou obtém usuário Django
-                    user, created = User.objects.get_or_create(
-                        username=f'discord_{discord_id}',
-                        defaults={
-                            'email': f'{username}@discord.local',
-                            'first_name': username,
-                            'is_staff': True,
-                            'is_superuser': True,
-                            'is_active': True
-                        }
-                    )
-                    
-                    if not created:
-                        user.email = f'{username}@discord.local'
-                        user.first_name = username
-                        user.is_active = True
-                        user.save()
-                    
-                    # Faz login do usuário
-                    login(request, user)
-                    logger.info(f"Login Discord bem-sucedido: {username} ({discord_id})")
+                # Cria ou obtém usuário Django
+                is_admin = _is_authorized_admin(discord_id)
+                
+                user, created = User.objects.get_or_create(
+                    username=f'discord_{discord_id}',
+                    defaults={
+                        'email': f'{username}@discord.local',
+                        'first_name': username,
+                        'is_staff': is_admin,
+                        'is_superuser': is_admin,
+                        'is_active': True
+                    }
+                )
+                
+                if not created:
+                    user.email = f'{username}@discord.local'
+                    user.first_name = username
+                    user.is_staff = is_admin
+                    user.is_superuser = is_admin
+                    user.is_active = True
+                    user.save()
+                
+                # Faz login do usuário
+                login(request, user)
+                logger.info(f"Login Discord bem-sucedido: {username} ({discord_id}) - Admin: {is_admin}")
+                
+                # Redireciona baseado no tipo de usuário
+                if is_admin:
                     return redirect('/admin/')
                 else:
-                    messages.error(request, f'Usuário {username} não está autorizado como administrador.')
-                    return redirect('/admin/')
+                    return redirect('/dashboard/')
             else:
                 messages.error(request, 'Erro ao obter informações do usuário Discord.')
                 return redirect('/admin/')
@@ -166,7 +170,7 @@ def dashboard(request):
             if not db_user:
                 # Usuário não cadastrado
                 return render(request, 'guardiao/dashboard.html', {
-                    'user': {'id': discord_id, 'username': request.user.first_name},
+                    'user': request.user,  # Passa o objeto user do Django
                     'cadastrado': False,
                     'avatar_url': get_user_avatar_url(discord_id, None, None)
                 })
@@ -205,7 +209,7 @@ def dashboard(request):
                     ultima_atividade = "Agora mesmo"
             
             return render(request, 'guardiao/dashboard.html', {
-                'user': {'id': discord_id, 'username': db_user[1]},
+                'user': request.user,  # Passa o objeto user do Django
                 'cadastrado': True,
                 'db_user': db_user,
                 'stats': stats,
@@ -256,7 +260,7 @@ def servers(request):
                 })
         
         return render(request, 'guardiao/servers.html', {
-            'user': {'id': discord_id, 'username': request.user.first_name},
+            'user': request.user,  # Passa o objeto user do Django
             'servers': servers_info,
             'avatar_url': get_user_avatar_url(discord_id, None, None)
         })
@@ -315,7 +319,7 @@ def server_panel(request, server_id):
                 server_config = cursor.fetchone()
         
         return render(request, 'guardiao/server_panel.html', {
-            'user': {'id': discord_id, 'username': request.user.first_name},
+            'user': request.user,  # Passa o objeto user do Django
             'guild': guild,
             'server_id': server_id,
             'stats': server_stats,
