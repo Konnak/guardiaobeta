@@ -233,7 +233,11 @@ class TrainingView(ui.View):
         self.add_item(self.answer_c)
         self.add_item(self.answer_d)
         
-        await interaction.edit_original_response(embed=embed, view=self)
+        try:
+            await interaction.response.defer()
+            await interaction.followup.edit_message(interaction.message.id, embed=embed, view=self)
+        except:
+            await interaction.edit_original_response(embed=embed, view=self)
     
     async def _handle_quiz_answer(self, interaction: discord.Interaction, answer: str):
         """Processa uma resposta do quiz"""
@@ -249,7 +253,10 @@ class TrainingView(ui.View):
                 )
                 self.current_step = 3
                 self.clear_items()
-                self.add_item(self.next_step)
+                # Cria um botão próximo
+                next_button = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️")
+                next_button.callback = lambda interaction: self.next_step(interaction, next_button)
+                self.add_item(next_button)
             else:
                 embed = discord.Embed(
                     title="❌ Resposta Incorreta",
@@ -262,7 +269,10 @@ class TrainingView(ui.View):
                     inline=False
                 )
                 self.clear_items()
-                self.add_item(self.next_step)
+                # Cria um botão próximo
+                next_button = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️")
+                next_button.callback = lambda interaction: self.next_step(interaction, next_button)
+                self.add_item(next_button)
             
             await interaction.response.edit_message(embed=embed, view=self)
             
@@ -278,7 +288,10 @@ class TrainingView(ui.View):
                 )
                 self.current_step = 4
                 self.clear_items()
-                self.add_item(self.next_step)
+                # Cria um botão próximo
+                next_button = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️")
+                next_button.callback = lambda interaction: self.next_step(interaction, next_button)
+                self.add_item(next_button)
             else:
                 embed = discord.Embed(
                     title="❌ Resposta Incorreta",
@@ -291,7 +304,10 @@ class TrainingView(ui.View):
                     inline=False
                 )
                 self.clear_items()
-                self.add_item(self.next_step)
+                # Cria um botão próximo
+                next_button = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️")
+                next_button.callback = lambda interaction: self.next_step(interaction, next_button)
+                self.add_item(next_button)
             
             await interaction.response.edit_message(embed=embed, view=self)
             
