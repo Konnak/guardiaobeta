@@ -678,8 +678,6 @@ class ModeracaoCog(commands.Cog):
         try:
             messages_captured = 0
             total_messages_checked = 0
-            target_user_messages = 0
-            denunciante_messages = 0
             
             # Busca mensagens das últimas 24 horas
             cutoff_time = datetime.utcnow() - timedelta(hours=24)
@@ -690,68 +688,79 @@ class ModeracaoCog(commands.Cog):
             async for message in interaction.channel.history(limit=100, after=cutoff_time):
                 total_messages_checked += 1
                 
-                # Log para debug
+                # Log para debug das primeiras mensagens
                 if total_messages_checked <= 10:
                     logger.info(f"Mensagem {total_messages_checked}: autor={message.author.id}, criada={message.created_at}, conteúdo='{message.content[:50]}...'")
                 
-                # Captura mensagens do usuário denunciado OU do denunciante
-                if message.author.id == target_user.id or message.author.id == interaction.user.id:
-                    if message.author.id == target_user.id:
-                        target_user_messages += 1
-                    else:
-                        denunciante_messages += 1
-                    
-                    # Prepara URLs dos anexos
-                    attachment_urls = []
-                    for attachment in message.attachments:
-                        attachment_urls.append(attachment.url)
-                    
-                    # Insere a mensagem no banco
-                    mensagem_query = """
-                        INSERT INTO mensagens_capturadas (
-                            id_denuncia, id_autor, conteudo, anexos_urls, timestamp_mensagem
-                        ) VALUES ($1, $2, $3, $4, $5)
-                    """
-                    db_manager.execute_command_sync(
-                        mensagem_query, denuncia_id, message.author.id, 
-                        message.content, ",".join(attachment_urls), message.created_at.replace(tzinfo=None)
-                    )
-                    
-                    messages_captured += 1
-                    
-                    if messages_captured >= 20:  # Limita a 20 mensagens
-                        break
+                # Captura mensagens de TODOS os usuários (não apenas denunciado/denunciante)
+                # Prepara URLs dos anexos
+                attachment_urls = []
+                for attachment in message.attachments:
+                    attachment_urls.append(attachment.url)
+                
+                # Insere a mensagem no banco
+                mensagem_query = """
+                    INSERT INTO mensagens_capturadas (
+                        id_denuncia, id_autor, conteudo, anexos_urls, timestamp_mensagem
+                    ) VALUES ($1, $2, $3, $4, $5)
+                """
+                db_manager.execute_command_sync(
+                    mensagem_query, denuncia_id, message.author.id, 
+                    message.content, ",".join(attachment_urls), message.created_at.replace(tzinfo=None)
+                )
+                
+                messages_captured += 1
+                
+                # Limita a 50 mensagens para não sobrecarregar a interface
+                if messages_captured >= 50:
+                    break
             
             logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
-            logger.info(f"Total verificadas: {total_messages_checked}, do denunciado: {target_user_messages}, do denunciante: {denunciante_messages}")
+            logger.info(f"Total verificadas: {total_messages_checked}")
             
         except Exception as e:
             logger.error(f"Erro ao capturar mensagens: {e}")
     
     def _anonymize_messages(self, mensagens: List[Dict], id_denunciado: int) -> str:
-        """Anonimiza mensagens para exibição"""
+        """Anonimiza mensagens para exibição com horário de Brasília"""
         try:
             if not mensagens:
                 return "Nenhuma mensagem encontrada."
             
+            # Mapeia usuários únicos para nomes anônimos
+            usuarios_unicos = {}
+            contador_usuario = 1
+            
+            # Primeiro, identifica todos os usuários únicos
+            for msg in mensagens:
+                if msg['id_autor'] not in usuarios_unicos:
+                    if msg['id_autor'] == id_denunciado:
+                        usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
+                    else:
+                        usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
+                        contador_usuario += 1
+            
             result = []
-            for msg in mensagens[:10]:  # Limita a 10 mensagens para não exceder o limite do Discord
-                timestamp = msg['timestamp_mensagem'].strftime('%d/%m às %H:%M')
+            for msg in mensagens[:15]:  # Limita a 15 mensagens para não exceder o limite do Discord
+                # Converte para horário de Brasília (UTC-3)
+                timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
+                timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
                 
-                # Anonimiza o autor (mostra como "Denunciado" se for o usuário denunciado)
-                if msg['id_autor'] == id_denunciado:
-                    autor = "🔴 **Denunciado**"
-                else:
-                    autor = "📝 **Denunciante**"
+                # Pega o nome anônimo do autor
+                autor = usuarios_unicos[msg['id_autor']]
                 
                 # Limita o conteúdo da mensagem
-                conteudo = msg['conteudo'][:200] + "..." if len(msg['conteudo']) > 200 else msg['conteudo']
+                conteudo = msg['conteudo'][:150] + "..." if len(msg['conteudo']) > 150 else msg['conteudo']
                 
-                result.append(f"{autor} ({timestamp}): {conteudo}")
+                # Destaque especial para o denunciado
+                if msg['id_autor'] == id_denunciado:
+                    result.append(f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**")
+                else:
+                    result.append(f"{autor} ({timestamp_formatado}): {conteudo}")
                 
                 # Adiciona anexos se existirem
                 if msg['anexos_urls']:
-                    result.append(f"📎 {msg['anexos_urls']}")
+                    result.append(f"📎 Anexos: {msg['anexos_urls']}")
             
             return "\n\n".join(result)
             
