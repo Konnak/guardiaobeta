@@ -254,6 +254,6 @@ class CadastroCog(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(CadastroCog(bot))
+    await bot.add_cog(CadastroCog(bot))

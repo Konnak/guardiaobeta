@@ -5,7 +5,7 @@ Implementa o sistema completo de denúncias, distribuição, votação e puniç�
 
 import discord
 from discord.ext import commands, tasks
-from discord import ui
+from discord import ui, app_commands
 import logging
 import asyncio
 import hashlib
@@ -510,11 +510,12 @@ class ModeracaoCog(commands.Cog):
         self.distribution_loop.start()
         self.inactivity_check.start()
     
-    @commands.slash_command(
+    @app_commands.command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
-    async def report(self, ctx, usuario: discord.Member, motivo: str):
+    @app_commands.describe(usuario="Usuário a ser denunciado", motivo="Motivo da denúncia")
+    async def report(self, interaction: discord.Interaction, usuario: discord.Member, motivo: str):
         """
         Comando para denunciar usuários
         
@@ -528,7 +529,7 @@ class ModeracaoCog(commands.Cog):
                     description="Use: `!report @usuario motivo da denúncia`",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se o banco de dados está disponível
@@ -536,28 +537,28 @@ class ModeracaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica se o usuário está cadastrado
-            user_data = get_user_by_discord_id(ctx.author.id)
+            user_data = get_user_by_discord_id(interaction.user.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
                     description="Você precisa se cadastrar primeiro usando `!cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se não está denunciando a si mesmo
-            if ctx.author.id == usuario.id:
+            if interaction.user.id == usuario.id:
                 embed = discord.Embed(
                     title="❌ Denúncia Inválida",
                     description="Você não pode denunciar a si mesmo.",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Gera hash único para a denúncia
-            hash_input = f"{ctx.author.id}{usuario.id}{ctx.guild.id}{datetime.utcnow().isoformat()}"
+            hash_input = f"{interaction.user.id}{usuario.id}{interaction.guild.id}{datetime.utcnow().isoformat()}"
             hash_denuncia = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
             
             # Verifica se o servidor é premium
@@ -565,7 +566,7 @@ class ModeracaoCog(commands.Cog):
                 SELECT id_servidor FROM servidores_premium 
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
-            is_premium = db_manager.execute_scalar_sync(premium_query, ctx.guild.id) is not None
+            is_premium = db_manager.execute_scalar_sync(premium_query, interaction.guild.id) is not None
             
             # Insere a denúncia no banco
             denuncia_query = """
@@ -576,8 +577,8 @@ class ModeracaoCog(commands.Cog):
                 RETURNING id
             """
             denuncia_id = db_manager.execute_scalar_sync(
-                denuncia_query, hash_denuncia, ctx.guild.id, ctx.channel.id,
-                ctx.author.id, usuario.id, motivo, is_premium
+                denuncia_query, hash_denuncia, interaction.guild.id, interaction.channel.id,
+                interaction.user.id, usuario.id, motivo, is_premium
             )
             
             # Captura mensagens do histórico
@@ -623,7 +624,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -632,13 +633,13 @@ class ModeracaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
     
     async def _capture_messages(self, ctx: commands.Context, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""
         try:
             messages_captured = 0
-            async for message in ctx.channel.history(limit=100, after=datetime.utcnow() - timedelta(hours=24)):
+            async for message in interaction.channel.history(limit=100, after=datetime.utcnow() - timedelta(hours=24)):
                 # Filtra apenas mensagens do usuário denunciado
                 if message.author.id == target_user.id:
                     # Prepara URLs dos anexos
@@ -780,6 +781,6 @@ class ModeracaoCog(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(ModeracaoCog(bot))
+    await bot.add_cog(ModeracaoCog(bot))

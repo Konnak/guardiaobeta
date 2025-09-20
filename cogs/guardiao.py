@@ -5,7 +5,7 @@ Implementa os comandos /formguardiao e /turno com sistema de treinamento
 
 import discord
 from discord.ext import commands, tasks
-from discord import ui
+from discord import ui, app_commands
 import logging
 import asyncio
 from datetime import datetime, timedelta
@@ -390,11 +390,11 @@ class GuardiaoCog(commands.Cog):
         self.bot = bot
         self.points_loop.start()
     
-    @commands.slash_command(
+    @app_commands.command(
         name="formguardiao",
         description="Torne-se um Guardião do Sistema Guardião BETA"
     )
-    async def formguardiao(self, ctx):
+    async def formguardiao(self, interaction: discord.Interaction):
         """
         Comando para se tornar um Guardião
         
@@ -406,7 +406,7 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica a idade da conta (mínimo 3 meses)
-            account_age = datetime.utcnow() - ctx.author.created_at
+            account_age = datetime.utcnow() - interaction.user.created_at
             if account_age.days < (GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30):
                 embed = discord.Embed(
                     title="❌ Conta Muito Nova",
@@ -415,23 +415,23 @@ class GuardiaoCog(commands.Cog):
                 )
                 embed.add_field(
                     name="Informações da Sua Conta",
-                    value=f"**Criada em:** {ctx.author.created_at.strftime('%d/%m/%Y')}\n"
+                    value=f"**Criada em:** {interaction.user.created_at.strftime('%d/%m/%Y')}\n"
                           f"**Dias de idade:** {account_age.days} dias\n"
                           f"**Dias necessários:** {GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30} dias",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se o usuário está cadastrado
-            user_data = get_user_by_discord_id_sync(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(interaction.user.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se já é Guardião ou superior
@@ -448,7 +448,7 @@ class GuardiaoCog(commands.Cog):
                           "• `/report` - Denunciar usuários",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica cooldown da prova
@@ -472,7 +472,7 @@ class GuardiaoCog(commands.Cog):
                     value=user_data['cooldown_prova'].strftime('%d/%m/%Y às %H:%M'),
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Inicia o treinamento
@@ -506,23 +506,23 @@ class GuardiaoCog(commands.Cog):
                 inline=False
             )
             
-            view = TrainingView(self.bot, ctx.author.id)
+            view = TrainingView(self.bot, interaction.user.id)
             await ctx.respond(embed=embed, view=view, ephemeral=True)
             
         except Exception as e:
-            logger.error(f"Erro no comando formguardiao para usuário {ctx.author.id}: {e}")
+            logger.error(f"Erro no comando formguardiao para usuário {interaction.user.id}: {e}")
             embed = discord.Embed(
                 title="❌ Erro no Sistema",
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    @commands.slash_command(
+    @app_commands.command(
         name="turno",
         description="Entre ou saia de serviço como Guardião"
     )
-    async def turno(self, ctx):
+    async def turno(self, interaction: discord.Interaction):
         """
         Comando para entrar/sair de serviço
         
@@ -534,14 +534,14 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = get_user_by_discord_id_sync(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(interaction.user.id)
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se é Guardião ou superior
@@ -556,7 +556,7 @@ class GuardiaoCog(commands.Cog):
                     value="Use o comando `/formguardiao` para iniciar o treinamento.",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Verifica se está em cooldown
@@ -574,7 +574,7 @@ class GuardiaoCog(commands.Cog):
                     value=f"**{minutes} minutos**",
                     inline=False
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             if user_data['em_servico']:
@@ -585,13 +585,13 @@ class GuardiaoCog(commands.Cog):
                 await self._enter_service(ctx, user_data)
                 
         except Exception as e:
-            logger.error(f"Erro no comando turno para usuário {ctx.author.id}: {e}")
+            logger.error(f"Erro no comando turno para usuário {interaction.user.id}: {e}")
             embed = discord.Embed(
                 title="❌ Erro no Sistema",
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
     
     async def _enter_service(self, ctx, user_data: dict):
         """Entra em serviço"""
@@ -602,7 +602,7 @@ class GuardiaoCog(commands.Cog):
                 SET em_servico = TRUE, ultimo_turno_inicio = $1 
                 WHERE id_discord = $2
             """
-            db_manager.execute_command(query, now, ctx.author.id)
+            db_manager.execute_command(query, now, interaction.user.id)
             
             embed = discord.Embed(
                 title="🟢 Você Entrou em Serviço!",
@@ -624,10 +624,10 @@ class GuardiaoCog(commands.Cog):
                 inline=False
             )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
-            logger.error(f"Erro ao entrar em serviço para usuário {ctx.author.id}: {e}")
+            logger.error(f"Erro ao entrar em serviço para usuário {interaction.user.id}: {e}")
             raise
     
     async def _exit_service(self, ctx, user_data: dict):
@@ -649,7 +649,7 @@ class GuardiaoCog(commands.Cog):
                         pontos = pontos + $1 
                     WHERE id_discord = $2
                 """
-                db_manager.execute_command(query, pontos_ganhos, ctx.author.id)
+                db_manager.execute_command(query, pontos_ganhos, interaction.user.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -666,7 +666,7 @@ class GuardiaoCog(commands.Cog):
             else:
                 # Sai de serviço sem calcular pontos
                 query = "UPDATE usuarios SET em_servico = FALSE, ultimo_turno_inicio = NULL WHERE id_discord = $1"
-                db_manager.execute_command(query, ctx.author.id)
+                db_manager.execute_command(query, interaction.user.id)
                 
                 embed = discord.Embed(
                     title="🔴 Você Saiu de Serviço!",
@@ -674,10 +674,10 @@ class GuardiaoCog(commands.Cog):
                     color=0xff6600
                 )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
-            logger.error(f"Erro ao sair de serviço para usuário {ctx.author.id}: {e}")
+            logger.error(f"Erro ao sair de serviço para usuário {interaction.user.id}: {e}")
             raise
     
     @tasks.loop(hours=1)
@@ -713,7 +713,7 @@ class GuardiaoCog(commands.Cog):
                 description="Este comando só pode ser usado em mensagens privadas (DM)!",
                 color=0xffa500
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             logger.error(f"Erro não tratado no comando formguardiao: {error}")
     
@@ -726,11 +726,11 @@ class GuardiaoCog(commands.Cog):
                 description="Este comando só pode ser usado em mensagens privadas (DM)!",
                 color=0xffa500
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             logger.error(f"Erro não tratado no comando turno: {error}")
 
 
-def setup(bot):
+async def setup(bot):
     """Função para carregar o cog"""
-    bot.add_cog(GuardiaoCog(bot))
+    await bot.add_cog(GuardiaoCog(bot))
