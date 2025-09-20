@@ -56,21 +56,27 @@ class TrainingView(ui.View):
                 self.add_item(btn)
                 
         elif self.current_step == 3:
-            # Etapa 3: Botões de resposta A, B, C, D
+            # Etapa 3: Botão "Próximo" para ir para o próximo quiz
+            next_btn = ui.Button(label="Próximo", style=discord.ButtonStyle.primary, emoji="➡️", row=0)
+            next_btn.callback = self._next_step_callback
+            self.add_item(next_btn)
+                
+        elif self.current_step == 4:
+            # Etapa 4: Quiz de utilização (botões A, B, C, D)
             for letter in ["A", "B", "C", "D"]:
                 btn = ui.Button(label=letter, style=discord.ButtonStyle.secondary, row=0)
                 async def callback(interaction, letter=letter):
                     await self._handle_quiz_answer(interaction, letter)
                 btn.callback = callback
                 self.add_item(btn)
-                
-        elif self.current_step == 4:
+            
+        elif self.current_step == 5:
             # Prova final: Botão "Começar Prova"
             start_btn = ui.Button(label="Começar Prova", style=discord.ButtonStyle.success, emoji="🚀", row=0)
             start_btn.callback = self._start_exam_callback
             self.add_item(start_btn)
             
-        elif self.current_step == 5:
+        elif self.current_step == 6:
             # Durante a prova: Botões de resposta A, B, C, D
             for letter in ["A", "B", "C", "D"]:
                 btn = ui.Button(label=letter, style=discord.ButtonStyle.secondary, row=0)
@@ -88,6 +94,8 @@ class TrainingView(ui.View):
         elif self.current_step == 2:
             await self._show_theory_step3(interaction)
         elif self.current_step == 3:
+            await self._show_theory_step3(interaction)
+        elif self.current_step == 4:
             await self._show_final_exam(interaction)
         else:
             await interaction.followup.send("Treinamento concluído!", ephemeral=True)
@@ -144,7 +152,7 @@ class TrainingView(ui.View):
     
     async def _show_theory_step3(self, interaction: discord.Interaction):
         """Mostra a terceira etapa do treinamento"""
-        self.current_step = 3
+        self.current_step = 4
         self._update_buttons()
         
         embed = discord.Embed(
@@ -188,7 +196,7 @@ class TrainingView(ui.View):
     
     async def _show_final_exam(self, interaction: discord.Interaction):
         """Mostra a prova final"""
-        self.current_step = 4
+        self.current_step = 5
         self._update_buttons()
         
         embed = discord.Embed(
@@ -242,7 +250,7 @@ class TrainingView(ui.View):
         self.quiz_questions = questions
         self.current_question = 0
         self.correct_answers = 0
-        self.current_step = 5
+        self.current_step = 6
         self._update_buttons()
         
         await self._show_question(interaction)
@@ -307,7 +315,7 @@ class TrainingView(ui.View):
             
             await interaction.response.edit_message(embed=embed, view=self)
             
-        elif self.current_step == 3:  # Quiz de utilização
+        elif self.current_step == 4:  # Quiz de utilização
             correct_answer = "B"
             is_correct = answer == correct_answer
             
@@ -317,7 +325,7 @@ class TrainingView(ui.View):
                     description="Excelente! Analisar cuidadosamente todas as evidências é fundamental para uma moderação justa.",
                     color=0x00ff00
                 )
-                self.current_step = 4
+                self.current_step = 5
                 self._update_buttons()
             else:
                 embed = discord.Embed(
@@ -334,7 +342,7 @@ class TrainingView(ui.View):
             
             await interaction.response.edit_message(embed=embed, view=self)
             
-        elif self.current_step == 4:  # Prova final
+        elif self.current_step == 6:  # Prova final
             question = self.quiz_questions[self.current_question]
             is_correct = answer == question["correct"]
             
