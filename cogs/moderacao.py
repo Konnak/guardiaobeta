@@ -32,11 +32,11 @@ class ReportView(ui.View):
         self.hash_denuncia = hash_denuncia
     
     @ui.button(label="Atender", style=discord.ButtonStyle.success, emoji="✅")
-    async def atender_denuncia(self, interaction: discord.Interaction):
+    async def atender_denuncia(self, view, interaction: discord.Interaction, item):
         await self._handle_atender(interaction)
     
     @ui.button(label="Dispensar", style=discord.ButtonStyle.secondary, emoji="❌")
-    async def dispensar_denuncia(self, interaction: discord.Interaction):
+    async def dispensar_denuncia(self, view, interaction: discord.Interaction, item):
         await self._handle_dispensar(interaction)
     
     async def _handle_atender(self, interaction: discord.Interaction):
@@ -214,15 +214,15 @@ class VoteView(ui.View):
         self.guardiao_id = guardiao_id
     
     @ui.button(label="OK!", style=discord.ButtonStyle.success, emoji="✅")
-    async def vote_ok(self, interaction: discord.Interaction):
+    async def vote_ok(self, view, interaction: discord.Interaction, item):
         await self._process_vote(interaction, "OK!")
     
     @ui.button(label="Intimidou", style=discord.ButtonStyle.secondary, emoji="⚠️")
-    async def vote_intimidou(self, interaction: discord.Interaction):
+    async def vote_intimidou(self, view, interaction: discord.Interaction, item):
         await self._process_vote(interaction, "Intimidou")
     
     @ui.button(label="Grave", style=discord.ButtonStyle.danger, emoji="🚨")
-    async def vote_grave(self, interaction: discord.Interaction):
+    async def vote_grave(self, view, interaction: discord.Interaction, item):
         await self._process_vote(interaction, "Grave")
     
     async def _process_vote(self, interaction: discord.Interaction, voto: str):
@@ -476,7 +476,7 @@ class AppealView(ui.View):
         self.hash_denuncia = hash_denuncia
     
     @ui.button(label="Apelar", style=discord.ButtonStyle.danger, emoji="⚖️")
-    async def appeal_punishment(self, interaction: discord.Interaction):
+    async def appeal_punishment(self, view, interaction: discord.Interaction, item):
         try:
             # Altera o status da denúncia para "Apelada"
             query = "UPDATE denuncias SET status = 'Apelada' WHERE hash_denuncia = $1"
