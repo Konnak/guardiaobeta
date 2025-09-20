@@ -64,6 +64,11 @@
                                 <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">
                                     <i class="bi bi-person"></i> Meu Perfil
                                 </a></li>
+                                {% if session.user.id == 1369940071246991380 %}
+                                <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                    <i class="bi bi-shield-check"></i> Admin
+                                </a></li>
+                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('logout') }}">
                                     <i class="bi bi-box-arrow-right"></i> Sair

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Denúncias - Painel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-flag"></i> Gerenciar Denúncias</h1>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar ao Painel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Filtrar por Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Todos os Status</option>
+                                <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
+                                <option value="resolvida" {% if status_filter == 'resolvida' %}selected{% endif %}>Resolvida</option>
+                                <option value="dispensada" {% if status_filter == 'dispensada' %}selected{% endif %}>Dispensada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-funnel"></i> Filtrar
+                            </button>
+                            <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-x"></i> Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Lista de Denúncias ({{ total_denuncias }} total)</h5>
+                </div>
+                <div class="card-body">
+                    {% if denuncias %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Denunciado</th>
+                                        <th>Motivo</th>
+                                        <th>Status</th>
+                                        <th>Data de Criação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for denuncia in denuncias %}
+                                    <tr>
+                                        <td>
+                                            <strong>#{{ denuncia.id }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if denuncia.denunciado_username %}
+                                                <strong>{{ denuncia.denunciado_username }}</strong>
+                                                <br>
+                                                <code>{{ denuncia.id_denunciado }}</code>
+                                            {% else %}
+                                                <code>{{ denuncia.id_denunciado }}</code>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div style="max-width: 300px;">
+                                                <p class="mb-0">{{ denuncia.motivo[:100] }}{% if denuncia.motivo|length > 100 %}...{% endif %}</p>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %} fs-6">
+                                                {{ denuncia.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" 
+                                               class="btn btn-outline-primary btn-sm" title="Ver Detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginação -->
+                        {% if total_pages > 1 %}
+                        <nav aria-label="Navegação de denúncias">
+                            <ul class="pagination justify-content-center">
+                                {% if page > 1 %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_denuncias', page=page-1, status=status_filter) }}">Anterior</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for p in range(1, total_pages + 1) %}
+                                    {% if p == page %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ p }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin_denuncias', page=p, status=status_filter) }}">{{ p }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page < total_pages %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_denuncias', page=page+1, status=status_filter) }}">Próximo</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-flag text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Nenhuma denúncia encontrada</h5>
+                            <p class="text-muted">
+                                {% if status_filter %}
+                                    Não há denúncias com status "{{ status_filter }}".
+                                {% else %}
+                                    Não há denúncias cadastradas no sistema.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

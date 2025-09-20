@@ -299,10 +299,13 @@ def admin_required(f):
             flash("Você precisa fazer login para acessar esta página.", "warning")
             return redirect(url_for('login'))
         
-        user_category = session['user'].get('categoria', '')
-        if user_category not in ['Moderador', 'Administrador']:
-            flash("Você não tem permissão para acessar esta página.", "error")
+        # Verifica se o usuário tem permissões de administrador pelo ID
+        user_id = session['user']['id']
+        if user_id != 1369940071246991380:  # ID do administrador
+            flash("Acesso negado. Você não tem permissões de administrador.", "error")
             return redirect(url_for('dashboard'))
+        
+        logger.info(f"Admin acessando painel: {session['user']['username']} ({user_id})")
         
         return f(*args, **kwargs)
     return decorated_function

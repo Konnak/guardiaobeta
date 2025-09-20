@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}{{ usuario.display_name or usuario.username }} - Detalhes do Usuário{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-person"></i> Detalhes do Usuário</h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar à Lista
+                    </a>
+                    <a href="{{ url_for('admin_usuario_editar', user_id=usuario.id_discord) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações do Usuário -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-info-circle"></i> Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>ID Discord:</strong></td>
+                            <td><code>{{ usuario.id_discord }}</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Username:</strong></td>
+                            <td>{{ usuario.username }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Display Name:</strong></td>
+                            <td>{{ usuario.display_name or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nome Completo:</strong></td>
+                            <td>{{ usuario.nome_completo or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Idade:</strong></td>
+                            <td>{{ usuario.idade or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ usuario.email or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Telefone:</strong></td>
+                            <td>{{ usuario.telefone or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data de Registro:</strong></td>
+                            <td>{{ usuario.data_criacao_registro.strftime('%d/%m/%Y %H:%M') if usuario.data_criacao_registro else 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas do Usuário -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Categoria:</strong></td>
+                            <td>
+                                <span class="badge bg-{% if usuario.categoria == 'Guardião' %}success{% elif usuario.categoria == 'Administrador' %}danger{% else %}secondary{% endif %} fs-6">
+                                    {{ usuario.categoria }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pontos:</strong></td>
+                            <td>
+                                <span class="badge bg-primary fs-6">{{ usuario.pontos or 0 }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Experiência:</strong></td>
+                            <td>
+                                <span class="badge bg-info fs-6">{{ usuario.experiencia or 0 }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Em Serviço:</strong></td>
+                            <td>
+                                {% if usuario.em_servico %}
+                                    <span class="badge bg-success fs-6">Sim</span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">Não</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Último Turno:</strong></td>
+                            <td>
+                                {% if usuario.ultimo_turno_inicio %}
+                                    {{ usuario.ultimo_turno_inicio.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cooldown Prova:</strong></td>
+                            <td>
+                                {% if usuario.cooldown_prova %}
+                                    {{ usuario.cooldown_prova.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">Disponível</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cooldown Dispensa:</strong></td>
+                            <td>
+                                {% if usuario.cooldown_dispensa %}
+                                    {{ usuario.cooldown_dispensa.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">Disponível</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Denúncias do Usuário -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-flag"></i> Denúncias ({{ denuncias|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if denuncias %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Motivo</th>
+                                        <th>Status</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for denuncia in denuncias %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" class="text-decoration-none">
+                                                #{{ denuncia.id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <small>{{ denuncia.motivo[:50] }}{% if denuncia.motivo|length > 50 %}...{% endif %}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %}">
+                                                {{ denuncia.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y') if denuncia.data_criacao else 'N/A' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhuma denúncia encontrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Votos do Usuário (se for guardião) -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-hand-thumbs-up"></i> Votos ({{ votos|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if votos %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Denúncia</th>
+                                        <th>Voto</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for voto in votos %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=voto.id) }}" class="text-decoration-none">
+                                                #{{ voto.id }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ voto.motivo[:30] }}{% if voto.motivo|length > 30 %}...{% endif %}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if voto.voto == 'culpado' %}danger{% elif voto.voto == 'inocente' %}success{% else %}warning{% endif %}">
+                                                {{ voto.voto }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhum voto encontrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

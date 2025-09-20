@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Administrativo - Sistema Guardião BETA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-shield-check"></i> Painel Administrativo</h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-people"></i> Usuários
+                    </a>
+                    <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-flag"></i> Denúncias
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Gerais -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total_usuarios or 0 }}</h3>
+                    <p class="mb-0">Total Usuários</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total_guardioes or 0 }}</h3>
+                    <p class="mb-0">Guardiões</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total_denuncias or 0 }}</h3>
+                    <p class="mb-0">Total Denúncias</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.denuncias_pendentes or 0 }}</h3>
+                    <p class="mb-0">Pendentes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.denuncias_resolvidas or 0 }}</h3>
+                    <p class="mb-0">Resolvidas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total_votos or 0 }}</h3>
+                    <p class="mb-0">Total Votos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Usuários Recentes -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-people"></i> Usuários Recentes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_users %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Categoria</th>
+                                        <th>Registro</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in recent_users %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('admin_usuario_detalhes', user_id=user.id_discord) }}" class="text-decoration-none">
+                                                {{ user.display_name or user.username }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if user.categoria == 'Guardião' %}success{% elif user.categoria == 'Administrador' %}danger{% else %}secondary{% endif %}">
+                                                {{ user.categoria }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-sm btn-outline-primary">
+                                Ver Todos os Usuários
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhum usuário encontrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Denúncias Recentes -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-flag"></i> Denúncias Recentes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_denuncias %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Denunciado</th>
+                                        <th>Status</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for denuncia in recent_denuncias %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" class="text-decoration-none">
+                                                #{{ denuncia.id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <code>{{ denuncia.id_denunciado }}</code>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %}">
+                                                {{ denuncia.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="{{ url_for('admin_denuncias') }}" class="btn btn-sm btn-outline-danger">
+                                Ver Todas as Denúncias
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhuma denúncia encontrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

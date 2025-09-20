@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Denúncia #{{ denuncia.id }} - Detalhes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-flag"></i> Denúncia #{{ denuncia.id }}</h1>
+                <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações da Denúncia -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-info-circle"></i> Informações da Denúncia</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>ID:</strong></td>
+                            <td><code>#{{ denuncia.id }}</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Denunciado:</strong></td>
+                            <td>
+                                {% if denuncia.denunciado_username %}
+                                    <strong>{{ denuncia.denunciado_username }}</strong>
+                                    <br>
+                                    <code>{{ denuncia.id_denunciado }}</code>
+                                {% else %}
+                                    <code>{{ denuncia.id_denunciado }}</code>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %} fs-6">
+                                    {{ denuncia.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data de Criação:</strong></td>
+                            <td>{{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}</td>
+                        </tr>
+                        {% if denuncia.data_resolucao %}
+                        <tr>
+                            <td><strong>Data de Resolução:</strong></td>
+                            <td>{{ denuncia.data_resolucao.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if denuncia.punicao_aplicada %}
+                        <tr>
+                            <td><strong>Punição:</strong></td>
+                            <td>
+                                <span class="badge bg-danger">{{ denuncia.punicao_aplicada }}</span>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Motivo da Denúncia -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="bi bi-chat-text"></i> Motivo da Denúncia</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ denuncia.motivo }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Votos dos Guardiões -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-hand-thumbs-up"></i> Votos dos Guardiões ({{ votos|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if votos %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Guardião</th>
+                                        <th>Voto</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for voto in votos %}
+                                    <tr>
+                                        <td>
+                                            {% if voto.guardiao_username %}
+                                                <strong>{{ voto.guardiao_username }}</strong>
+                                                <br>
+                                                <code>{{ voto.id_guardiao }}</code>
+                                            {% else %}
+                                                <code>{{ voto.id_guardiao }}</code>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if voto.voto == 'culpado' %}danger{% elif voto.voto == 'inocente' %}success{% else %}warning{% endif %}">
+                                                {{ voto.voto }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhum voto encontrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens Capturadas -->
+    {% if mensagens %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-chat-dots"></i> Mensagens Capturadas ({{ mensagens|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Mensagem</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for msg in mensagens %}
+                                <tr {% if msg.id_usuario == denuncia.id_denunciado %}class="table-danger"{% endif %}>
+                                    <td>
+                                        {% if msg.id_usuario == denuncia.id_denunciado %}
+                                            <strong class="text-danger">🔴 Denunciado</strong>
+                                        {% else %}
+                                            Usuário {{ loop.index }}
+                                        {% endif %}
+                                        <br>
+                                        <code>{{ msg.id_usuario }}</code>
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 400px;">
+                                            {{ msg.conteudo_mensagem }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ msg.timestamp_mensagem.strftime('%d/%m/%Y %H:%M') if msg.timestamp_mensagem else 'N/A' }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

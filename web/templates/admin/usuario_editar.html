@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ usuario.display_name or usuario.username }} - Painel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-pencil"></i> Editar Usuário</h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin_usuario_detalhes', user_id=usuario.id_discord) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Informações do Usuário</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" value="{{ usuario.username }}" readonly>
+                                    <div class="form-text">Username não pode ser alterado</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="display_name" class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" id="display_name" value="{{ usuario.display_name or '' }}" readonly>
+                                    <div class="form-text">Display Name não pode ser alterado</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="categoria" class="form-label">Categoria</label>
+                                    <select class="form-select" id="categoria" name="categoria" required>
+                                        <option value="Usuário" {% if usuario.categoria == 'Usuário' %}selected{% endif %}>Usuário</option>
+                                        <option value="Guardião" {% if usuario.categoria == 'Guardião' %}selected{% endif %}>Guardião</option>
+                                        <option value="Moderador" {% if usuario.categoria == 'Moderador' %}selected{% endif %}>Moderador</option>
+                                        <option value="Administrador" {% if usuario.categoria == 'Administrador' %}selected{% endif %}>Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="em_servico" class="form-label">Status</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="em_servico" name="em_servico" {% if usuario.em_servico %}checked{% endif %}>
+                                        <label class="form-check-label" for="em_servico">
+                                            Em Serviço
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="pontos" class="form-label">Pontos</label>
+                                    <input type="number" class="form-control" id="pontos" name="pontos" value="{{ usuario.pontos or 0 }}" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="experiencia" class="form-label">Experiência</label>
+                                    <input type="number" class="form-control" id="experiencia" name="experiencia" value="{{ usuario.experiencia or 0 }}" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_usuario_detalhes', user_id=usuario.id_discord) }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Informações Atuais</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>ID Discord:</strong></td>
+                            <td><code>{{ usuario.id_discord }}</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nome Completo:</strong></td>
+                            <td>{{ usuario.nome_completo or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Idade:</strong></td>
+                            <td>{{ usuario.idade or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ usuario.email or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Telefone:</strong></td>
+                            <td>{{ usuario.telefone or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registro:</strong></td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ usuario.data_criacao_registro.strftime('%d/%m/%Y %H:%M') if usuario.data_criacao_registro else 'N/A' }}
+                                </small>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Cooldowns</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>Último Turno:</strong></td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if usuario.ultimo_turno_inicio %}
+                                        {{ usuario.ultimo_turno_inicio.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        Nunca
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cooldown Prova:</strong></td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if usuario.cooldown_prova %}
+                                        {{ usuario.cooldown_prova.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        Disponível
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cooldown Dispensa:</strong></td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if usuario.cooldown_dispensa %}
+                                        {{ usuario.cooldown_dispensa.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        Disponível
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

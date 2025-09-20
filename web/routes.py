@@ -421,3 +421,265 @@ def get_server_stats(server_id: int) -> dict:
             'period': [],
             'top_denunciados': []
         }
+
+    # ==================== ROTAS DO PAINEL ADMINISTRATIVO ====================
+    
+    @app.route('/admin')
+    @admin_required
+    def admin_dashboard():
+        """Painel administrativo principal"""
+        try:
+            # Estatísticas gerais
+            stats_query = """
+                SELECT 
+                    (SELECT COUNT(*) FROM usuarios) as total_usuarios,
+                    (SELECT COUNT(*) FROM usuarios WHERE categoria = 'Guardião') as total_guardioes,
+                    (SELECT COUNT(*) FROM denuncias) as total_denuncias,
+                    (SELECT COUNT(*) FROM denuncias WHERE status = 'pendente') as denuncias_pendentes,
+                    (SELECT COUNT(*) FROM denuncias WHERE status = 'resolvida') as denuncias_resolvidas,
+                    (SELECT COUNT(*) FROM votos_guardioes) as total_votos
+            """
+            stats = db_manager.execute_one_sync(stats_query)
+            
+            # Usuários recentes
+            recent_users_query = """
+                SELECT id_discord, username, display_name, categoria, data_criacao_registro 
+                FROM usuarios 
+                ORDER BY data_criacao_registro DESC 
+                LIMIT 10
+            """
+            recent_users = db_manager.execute_all_sync(recent_users_query)
+            
+            # Denúncias recentes
+            recent_denuncias_query = """
+                SELECT id, id_denunciado, motivo, status, data_criacao 
+                FROM denuncias 
+                ORDER BY data_criacao DESC 
+                LIMIT 10
+            """
+            recent_denuncias = db_manager.execute_all_sync(recent_denuncias_query)
+            
+            return render_template('admin/dashboard.html',
+                                 stats=stats,
+                                 recent_users=recent_users,
+                                 recent_denuncias=recent_denuncias)
+            
+        except Exception as e:
+            logger.error(f"Erro no painel admin: {e}")
+            flash("Erro ao carregar painel administrativo.", "error")
+            return redirect(url_for('dashboard'))
+    
+    @app.route('/admin/usuarios')
+    @admin_required
+    def admin_usuarios():
+        """Lista de todos os usuários"""
+        try:
+            page = request.args.get('page', 1, type=int)
+            per_page = 20
+            offset = (page - 1) * per_page
+            
+            # Busca usuários com paginação
+            usuarios_query = """
+                SELECT id_discord, username, display_name, nome_completo, categoria, 
+                       pontos, experiencia, em_servico, data_criacao_registro
+                FROM usuarios 
+                ORDER BY data_criacao_registro DESC 
+                LIMIT $1 OFFSET $2
+            """
+            usuarios = db_manager.execute_all_sync(usuarios_query, per_page, offset)
+            
+            # Conta total de usuários
+            total_query = "SELECT COUNT(*) as total FROM usuarios"
+            total = db_manager.execute_one_sync(total_query)
+            total_usuarios = total['total'] if total else 0
+            
+            total_pages = (total_usuarios + per_page - 1) // per_page
+            
+            return render_template('admin/usuarios.html',
+                                 usuarios=usuarios,
+                                 page=page,
+                                 total_pages=total_pages,
+                                 total_usuarios=total_usuarios)
+            
+        except Exception as e:
+            logger.error(f"Erro ao listar usuários: {e}")
+            flash("Erro ao carregar lista de usuários.", "error")
+            return redirect(url_for('admin_dashboard'))
+    
+    @app.route('/admin/usuarios/<int:user_id>')
+    @admin_required
+    def admin_usuario_detalhes(user_id):
+        """Detalhes de um usuário específico"""
+        try:
+            # Busca dados do usuário
+            usuario_query = "SELECT * FROM usuarios WHERE id_discord = $1"
+            usuario = db_manager.execute_one_sync(usuario_query, user_id)
+            
+            if not usuario:
+                flash("Usuário não encontrado.", "error")
+                return redirect(url_for('admin_usuarios'))
+            
+            # Busca denúncias do usuário
+            denuncias_query = """
+                SELECT id, motivo, status, data_criacao 
+                FROM denuncias 
+                WHERE id_denunciado = $1 
+                ORDER BY data_criacao DESC
+            """
+            denuncias = db_manager.execute_all_sync(denuncias_query, user_id)
+            
+            # Busca votos do usuário (se for guardião)
+            votos_query = """
+                SELECT v.id, v.voto, v.data_voto, d.motivo, d.status
+                FROM votos_guardioes v
+                JOIN denuncias d ON v.id_denuncia = d.id
+                WHERE v.id_guardiao = $1
+                ORDER BY v.data_voto DESC
+                LIMIT 20
+            """
+            votos = db_manager.execute_all_sync(votos_query, user_id)
+            
+            return render_template('admin/usuario_detalhes.html',
+                                 usuario=usuario,
+                                 denuncias=denuncias,
+                                 votos=votos)
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar detalhes do usuário: {e}")
+            flash("Erro ao carregar detalhes do usuário.", "error")
+            return redirect(url_for('admin_usuarios'))
+    
+    @app.route('/admin/usuarios/<int:user_id>/editar', methods=['GET', 'POST'])
+    @admin_required
+    def admin_usuario_editar(user_id):
+        """Editar dados de um usuário"""
+        try:
+            if request.method == 'POST':
+                categoria = request.form.get('categoria')
+                pontos = request.form.get('pontos', type=int)
+                experiencia = request.form.get('experiencia', type=int)
+                em_servico = request.form.get('em_servico') == 'on'
+                
+                # Atualiza dados do usuário
+                update_query = """
+                    UPDATE usuarios 
+                    SET categoria = $1, pontos = $2, experiencia = $3, em_servico = $4
+                    WHERE id_discord = $5
+                """
+                db_manager.execute_command_sync(update_query, categoria, pontos, experiencia, em_servico, user_id)
+                
+                flash("Dados do usuário atualizados com sucesso!", "success")
+                return redirect(url_for('admin_usuario_detalhes', user_id=user_id))
+            
+            # Busca dados do usuário
+            usuario_query = "SELECT * FROM usuarios WHERE id_discord = $1"
+            usuario = db_manager.execute_one_sync(usuario_query, user_id)
+            
+            if not usuario:
+                flash("Usuário não encontrado.", "error")
+                return redirect(url_for('admin_usuarios'))
+            
+            return render_template('admin/usuario_editar.html', usuario=usuario)
+            
+        except Exception as e:
+            logger.error(f"Erro ao editar usuário: {e}")
+            flash("Erro ao editar usuário.", "error")
+            return redirect(url_for('admin_usuario_detalhes', user_id=user_id))
+    
+    @app.route('/admin/denuncias')
+    @admin_required
+    def admin_denuncias():
+        """Lista de todas as denúncias"""
+        try:
+            page = request.args.get('page', 1, type=int)
+            status_filter = request.args.get('status', '')
+            per_page = 20
+            offset = (page - 1) * per_page
+            
+            # Constrói query base
+            base_query = """
+                SELECT d.id, d.id_denunciado, d.motivo, d.status, d.data_criacao,
+                       u.username as denunciado_username
+                FROM denuncias d
+                LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
+            """
+            
+            where_clause = ""
+            params = []
+            
+            if status_filter:
+                where_clause = " WHERE d.status = $1"
+                params.append(status_filter)
+            
+            # Busca denúncias com filtros
+            denuncias_query = base_query + where_clause + " ORDER BY d.data_criacao DESC LIMIT $" + str(len(params) + 1) + " OFFSET $" + str(len(params) + 2)
+            params.extend([per_page, offset])
+            
+            denuncias = db_manager.execute_all_sync(denuncias_query, *params)
+            
+            # Conta total de denúncias
+            count_query = "SELECT COUNT(*) as total FROM denuncias d" + where_clause
+            count_params = params[:-2]  # Remove per_page e offset
+            total = db_manager.execute_one_sync(count_query, *count_params)
+            total_denuncias = total['total'] if total else 0
+            
+            total_pages = (total_denuncias + per_page - 1) // per_page
+            
+            return render_template('admin/denuncias.html',
+                                 denuncias=denuncias,
+                                 page=page,
+                                 total_pages=total_pages,
+                                 total_denuncias=total_denuncias,
+                                 status_filter=status_filter)
+            
+        except Exception as e:
+            logger.error(f"Erro ao listar denúncias: {e}")
+            flash("Erro ao carregar lista de denúncias.", "error")
+            return redirect(url_for('admin_dashboard'))
+    
+    @app.route('/admin/denuncias/<int:denuncia_id>')
+    @admin_required
+    def admin_denuncia_detalhes(denuncia_id):
+        """Detalhes de uma denúncia específica"""
+        try:
+            # Busca dados da denúncia
+            denuncia_query = """
+                SELECT d.*, u.username as denunciado_username, u.display_name as denunciado_display_name
+                FROM denuncias d
+                LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
+                WHERE d.id = $1
+            """
+            denuncia = db_manager.execute_one_sync(denuncia_query, denuncia_id)
+            
+            if not denuncia:
+                flash("Denúncia não encontrada.", "error")
+                return redirect(url_for('admin_denuncias'))
+            
+            # Busca votos da denúncia
+            votos_query = """
+                SELECT v.*, u.username as guardiao_username
+                FROM votos_guardioes v
+                LEFT JOIN usuarios u ON v.id_guardiao = u.id_discord
+                WHERE v.id_denuncia = $1
+                ORDER BY v.data_voto
+            """
+            votos = db_manager.execute_all_sync(votos_query, denuncia_id)
+            
+            # Busca mensagens capturadas
+            mensagens_query = """
+                SELECT * FROM mensagens_capturadas 
+                WHERE id_denuncia = $1 
+                ORDER BY timestamp_mensagem DESC
+                LIMIT 100
+            """
+            mensagens = db_manager.execute_all_sync(mensagens_query, denuncia_id)
+            
+            return render_template('admin/denuncia_detalhes.html',
+                                 denuncia=denuncia,
+                                 votos=votos,
+                                 mensagens=mensagens)
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar detalhes da denúncia: {e}")
+            flash("Erro ao carregar detalhes da denúncia.", "error")
+            return redirect(url_for('admin_denuncias'))

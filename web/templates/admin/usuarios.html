@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários - Painel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-people"></i> Gerenciar Usuários</h1>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar ao Painel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Lista de Usuários ({{ total_usuarios }} total)</h5>
+                </div>
+                <div class="card-body">
+                    {% if usuarios %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID Discord</th>
+                                        <th>Usuário</th>
+                                        <th>Nome Completo</th>
+                                        <th>Categoria</th>
+                                        <th>Pontos</th>
+                                        <th>Experiência</th>
+                                        <th>Em Serviço</th>
+                                        <th>Registro</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in usuarios %}
+                                    <tr>
+                                        <td>
+                                            <code>{{ user.id_discord }}</code>
+                                        </td>
+                                        <td>
+                                            <strong>{{ user.display_name or user.username }}</strong>
+                                            <br>
+                                            <small class="text-muted">@{{ user.username }}</small>
+                                        </td>
+                                        <td>{{ user.nome_completo or 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if user.categoria == 'Guardião' %}success{% elif user.categoria == 'Administrador' %}danger{% else %}secondary{% endif %}">
+                                                {{ user.categoria }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ user.pontos or 0 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ user.experiencia or 0 }}</span>
+                                        </td>
+                                        <td>
+                                            {% if user.em_servico %}
+                                                <span class="badge bg-success">Sim</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Não</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('admin_usuario_detalhes', user_id=user.id_discord) }}" 
+                                                   class="btn btn-outline-primary" title="Ver Detalhes">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('admin_usuario_editar', user_id=user.id_discord) }}" 
+                                                   class="btn btn-outline-warning" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginação -->
+                        {% if total_pages > 1 %}
+                        <nav aria-label="Navegação de usuários">
+                            <ul class="pagination justify-content-center">
+                                {% if page > 1 %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_usuarios', page=page-1) }}">Anterior</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for p in range(1, total_pages + 1) %}
+                                    {% if p == page %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ p }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin_usuarios', page=p) }}">{{ p }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page < total_pages %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_usuarios', page=page+1) }}">Próximo</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Nenhum usuário encontrado</h5>
+                            <p class="text-muted">Não há usuários cadastrados no sistema.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
