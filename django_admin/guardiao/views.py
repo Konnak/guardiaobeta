@@ -22,7 +22,13 @@ def discord_login(request):
     
     # Parâmetros OAuth2 Discord
     client_id = getattr(settings, 'DISCORD_CLIENT_ID', '')
-    redirect_uri = f"{request.scheme}://{request.get_host()}/discord-admin/discord-callback/"
+    
+    # Usa o domínio correto em vez de localhost
+    host = request.get_host()
+    if 'localhost' in host or '127.0.0.1' in host:
+        host = 'guardiaobeta.discloud.app'
+    
+    redirect_uri = f"https://{host}/discord-admin/discord-callback/"
     
     # URL de autorização Discord
     discord_auth_url = (
@@ -55,7 +61,7 @@ def discord_callback(request):
             'client_secret': getattr(settings, 'DISCORD_CLIENT_SECRET', ''),
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': f"{request.scheme}://{request.get_host()}/discord-admin/discord-callback/"
+            'redirect_uri': f"https://{host}/discord-admin/discord-callback/"
         }
         
         response = requests.post('https://discord.com/api/oauth2/token', data=token_data)
