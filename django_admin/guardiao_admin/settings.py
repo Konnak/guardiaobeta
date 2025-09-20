@@ -38,13 +38,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Configurações de cookies para funcionar com proxy
-# Comentado temporariamente para debug
-# CSRF_COOKIE_DOMAIN = '.guardiaobeta.discloud.app'
-# SESSION_COOKIE_DOMAIN = '.guardiaobeta.discloud.app'
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SAMESITE = 'Lax'
-# SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = 'guardiaobeta.discloud.app'
+SESSION_COOKIE_DOMAIN = 'guardiaobeta.discloud.app'
+CSRF_COOKIE_SECURE = False  # Desabilitado para debug
+SESSION_COOKIE_SECURE = False  # Desabilitado para debug
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Application definition
 INSTALLED_APPS = [

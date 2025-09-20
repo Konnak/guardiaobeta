@@ -389,14 +389,13 @@ class GuardiaoBot:
                     response_headers.pop('Content-Encoding', None)
                     response_headers.pop('Transfer-Encoding', None)
                     
-                    # Comentado temporariamente para debug
                     # Corrige cookies para usar o domínio correto
-                    # if 'Set-Cookie' in response_headers:
-                    #     cookies = response_headers['Set-Cookie']
-                    #     # Remove domínio localhost e ajusta para o domínio correto
-                    #     cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
-                    #     cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
-                    #     response_headers['Set-Cookie'] = cookies
+                    if 'Set-Cookie' in response_headers:
+                        cookies = response_headers['Set-Cookie']
+                        # Remove domínio localhost e ajusta para o domínio correto
+                        cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
+                        cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
+                        response_headers['Set-Cookie'] = cookies
                     
                     # Log para debug de autenticação
                     if request.method == 'POST' and 'login' in path:
