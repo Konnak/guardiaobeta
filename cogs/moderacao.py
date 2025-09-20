@@ -10,7 +10,7 @@ import logging
 import asyncio
 import hashlib
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Tuple
 from database.connection import db_manager, get_user_by_discord_id
 from utils.experience_system import calculate_experience_reward
@@ -742,8 +742,10 @@ class ModeracaoCog(commands.Cog):
             messages_captured = 0
             total_messages_checked = 0
             
-            # Busca mensagens das últimas 24 horas
-            cutoff_time = datetime.utcnow() - timedelta(hours=24)
+            # Busca mensagens das últimas 24 horas (usando timezone UTC correto)
+            now_utc = datetime.now(timezone.utc)
+            cutoff_time = now_utc - timedelta(hours=24)
+            logger.info(f"Horário atual UTC: {now_utc}")
             logger.info(f"Capturando mensagens do canal desde {cutoff_time}")
             logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
             logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
