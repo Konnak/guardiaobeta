@@ -3,7 +3,21 @@ Django settings for guardiao_admin project.
 """
 
 import os
+import sys
 from pathlib import Path
+
+# Adiciona o diretório pai ao path para importar config
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
+try:
+    from config import POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT
+except ImportError:
+    # Fallback para variáveis de ambiente
+    POSTGRES_DB = os.getenv('POSTGRES_DB', 'guardiaobeta')
+    POSTGRES_USER = os.getenv('POSTGRES_USER', 'userguardiaobeta')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'SUA_SENHA_AQUI')
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'guardiaobeta')
+    POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,11 +75,11 @@ WSGI_APPLICATION = 'guardiao_admin.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'guardiaobeta'),
-        'USER': os.getenv('POSTGRES_USER', 'userguardiaobeta'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'SUA_SENHA_AQUI'),
-        'HOST': os.getenv('POSTGRES_HOST', 'guardiaobeta'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        'NAME': POSTGRES_DB,
+        'USER': POSTGRES_USER,
+        'PASSWORD': POSTGRES_PASSWORD,
+        'HOST': POSTGRES_HOST,
+        'PORT': POSTGRES_PORT,
     }
 }
 

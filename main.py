@@ -345,8 +345,8 @@ class GuardiaoBot:
             def django_admin():
                 """Redireciona para o Django Admin Panel"""
                 from flask import redirect
-                # Usa o mesmo domínio da aplicação Flask
-                return redirect('http://guardiaobeta.discloud.app:8001/admin/', code=302)
+                # Redireciona para a porta 8001 do Django
+                return redirect('http://localhost:8001/admin/', code=302)
             
             logger.info("Aplicação web configurada com sucesso")
             
@@ -355,8 +355,11 @@ class GuardiaoBot:
             raise
     
     def run_web_app(self):
-        """Executa a aplicação web em thread separada"""
+        """Executa a aplicação web em thread separada com Django Admin integrado"""
         try:
+            # Inicia Django Admin em thread separada
+            self.start_django_admin()
+            
             port = int(WEB_PORT)
             host = '0.0.0.0'  # Para funcionar na Discloud
             
@@ -366,6 +369,33 @@ class GuardiaoBot:
         except Exception as e:
             logger.error(f"Erro ao executar aplicação web: {e}")
             raise
+    
+    def start_django_admin(self):
+        """Inicia o Django Admin Panel em thread separada"""
+        import threading
+        import subprocess
+        import sys
+        
+        def run_django():
+            try:
+                django_dir = os.path.join(os.path.dirname(__file__), 'django_admin')
+                if os.path.exists(django_dir):
+                    logger.info("Iniciando Django Admin Panel...")
+                    # Executa migrações primeiro
+                    subprocess.run([
+                        sys.executable, 'manage.py', 'migrate', '--run-syncdb'
+                    ], cwd=django_dir, check=False)
+                    # Inicia servidor
+                    subprocess.run([
+                        sys.executable, 'manage.py', 'runserver', '0.0.0.0:8001'
+                    ], cwd=django_dir, check=False)
+            except Exception as e:
+                logger.warning(f"Django Admin não pôde ser iniciado: {e}")
+        
+        # Inicia Django em thread separada
+        django_thread = threading.Thread(target=run_django, daemon=True)
+        django_thread.start()
+        logger.info("Django Admin Panel será iniciado em http://localhost:8001/admin/")
     
     async def run(self):
         """Executa o sistema completo"""
