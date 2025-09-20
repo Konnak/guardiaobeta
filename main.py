@@ -389,6 +389,12 @@ class GuardiaoBot:
                     response_headers.pop('Content-Encoding', None)
                     response_headers.pop('Transfer-Encoding', None)
                     
+                    # Log para debug de autenticação
+                    if request.method == 'POST' and 'login' in path:
+                        logger.info(f"Login POST - Status: {django_response.status_code}")
+                        logger.info(f"Login POST - Headers: {dict(django_response.headers)}")
+                        logger.info(f"Login POST - Cookies: {django_response.cookies}")
+                    
                     # Retorna resposta do Django
                     return Response(
                         django_response.content,
