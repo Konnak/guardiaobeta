@@ -112,26 +112,34 @@ def setup_auth(app: Flask):
             guilds_data = get_user_guilds(token_data['access_token'])
             
             # Salva informações na sessão
-            # Salva informações essenciais do usuário na sessão (otimizado)
+            # Salva apenas dados essenciais do usuário na sessão (ultra otimizado)
             session['user'] = {
                 'id': int(user_data['id']),
                 'username': user_data['username'],
                 'discriminator': user_data.get('discriminator', '0'),
                 'avatar': user_data.get('avatar'),
-                'email': user_data.get('email'),
-                'verified': user_data.get('verified', False),
                 'login_time': datetime.utcnow().isoformat(),
                 'access_token': token_data['access_token'],
                 'expires_at': (datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))).isoformat()
             }
             
-            # Salva guilds separadamente para reduzir tamanho do cookie
-            if guilds_data:
-                session['user_guilds'] = guilds_data
+            # Salva guilds apenas se necessário (máximo 10 servidores admin)
+            admin_guilds = []
+            for guild in guilds_data or []:
+                permissions = int(guild.get('permissions', 0))
+                if permissions & 0x8:  # Administrator permission
+                    admin_guilds.append({
+                        'id': guild['id'],
+                        'name': guild['name'],
+                        'icon': guild.get('icon')
+                    })
+            
+            if admin_guilds:
+                session['admin_guilds'] = admin_guilds[:10]  # Máximo 10 servidores
             
             # Verifica se o usuário está cadastrado no sistema
             user_db = db_manager.execute_one_sync(
-                "SELECT * FROM usuarios WHERE id_discord = $1", (int(user_data['id']),)
+                "SELECT * FROM usuarios WHERE id_discord = $1", int(user_data['id'])
             )
             
             if user_db:
@@ -273,8 +281,10 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
+            logger.warning("Usuário não logado, redirecionando para login")
             flash("Você precisa fazer login para acessar esta página.", "warning")
             return redirect(url_for('login'))
+        logger.debug(f"Usuário logado: {session['user']['username']}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -304,16 +314,8 @@ def get_user_guilds_admin():
         if 'user' not in session:
             return []
         
-        guilds = session.get('user_guilds', [])
-        admin_guilds = []
-        
-        for guild in guilds:
-            # Verifica se o usuário tem permissões de administrador
-            permissions = int(guild.get('permissions', 0))
-            if permissions & 0x8:  # 0x8 = Administrator permission
-                admin_guilds.append(guild)
-        
-        return admin_guilds
+        # Retorna servidores admin já filtrados da sessão
+        return session.get('admin_guilds', [])
         
     except Exception as e:
         logger.error(f"Erro ao obter servidores de admin: {e}")
