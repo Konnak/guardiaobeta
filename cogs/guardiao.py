@@ -445,7 +445,9 @@ class GuardiaoCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Verifica a idade da conta (mínimo 3 meses)
-            account_age = datetime.utcnow() - interaction.user.created_at
+            # Converte created_at para timezone-naive para compatibilidade
+            created_at_naive = interaction.user.created_at.replace(tzinfo=None)
+            account_age = datetime.utcnow() - created_at_naive
             if account_age.days < (GUARDIAO_MIN_ACCOUNT_AGE_MONTHS * 30):
                 embed = discord.Embed(
                     title="❌ Conta Muito Nova",
