@@ -424,6 +424,11 @@ def get_server_stats(server_id: int) -> dict:
 
     # ==================== ROTAS DO PAINEL ADMINISTRATIVO ====================
     
+    @app.route('/admin-test')
+    def admin_test():
+        """Rota de teste para verificar se as rotas admin funcionam"""
+        return "Rota admin funcionando!"
+    
     @app.route('/admin')
     def admin_dashboard():
         """Painel administrativo principal"""
