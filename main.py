@@ -355,21 +355,32 @@ class GuardiaoBot:
                     if request.query_string:
                         django_url += f'?{request.query_string.decode()}'
                     
+                    # Headers para o Django (remove alguns headers problemáticos)
+                    headers = dict(request.headers)
+                    headers.pop('Host', None)  # Remove Host header
+                    headers.pop('Content-Length', None)  # Remove Content-Length
+                    
                     # Faz requisição para o Django
                     django_response = requests.request(
                         method=request.method,
                         url=django_url,
-                        headers=dict(request.headers),
+                        headers=headers,
                         data=request.get_data(),
                         cookies=request.cookies,
-                        allow_redirects=False
+                        allow_redirects=False,
+                        timeout=30
                     )
+                    
+                    # Headers da resposta (remove alguns headers problemáticos)
+                    response_headers = dict(django_response.headers)
+                    response_headers.pop('Content-Encoding', None)
+                    response_headers.pop('Transfer-Encoding', None)
                     
                     # Retorna resposta do Django
                     return Response(
                         django_response.content,
                         status=django_response.status_code,
-                        headers=dict(django_response.headers)
+                        headers=response_headers
                     )
                     
                 except requests.exceptions.ConnectionError:
@@ -384,6 +395,29 @@ class GuardiaoBot:
                         </body>
                     </html>
                     ''', 503
+                except Exception as e:
+                    logger.error(f"Erro no proxy Django: {e}")
+                    return f"Erro no Django Admin: {e}", 500
+            
+            # Adiciona rota para arquivos estáticos do Django Admin
+            @self.web_app.route('/static/admin/<path:filename>')
+            def django_static(filename):
+                """Proxy para arquivos estáticos do Django Admin"""
+                import requests
+                from flask import request, Response
+                
+                try:
+                    django_url = f'http://localhost:8001/static/admin/{filename}'
+                    django_response = requests.get(django_url, timeout=10)
+                    
+                    return Response(
+                        django_response.content,
+                        status=django_response.status_code,
+                        headers=dict(django_response.headers)
+                    )
+                except Exception as e:
+                    logger.warning(f"Arquivo estático não encontrado: {filename}")
+                    return "Arquivo não encontrado", 404
             
             logger.info("Aplicação web configurada com sucesso")
             
