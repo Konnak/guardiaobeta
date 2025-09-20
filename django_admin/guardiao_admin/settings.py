@@ -40,16 +40,24 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Configurações de cookies para funcionar com proxy
-CSRF_COOKIE_DOMAIN = 'guardiaobeta.discloud.app'
-SESSION_COOKIE_DOMAIN = 'guardiaobeta.discloud.app'
+# Removido domínio específico para funcionar com proxy
 CSRF_COOKIE_SECURE = False  # Desabilitado para debug
 SESSION_COOKIE_SECURE = False  # Desabilitado para debug
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+# Cookies funcionam melhor sem domínio específico em proxy
+CSRF_COOKIE_DOMAIN = None
+SESSION_COOKIE_DOMAIN = None
 
 # Configurações Discord OAuth2
 DISCORD_CLIENT_ID = DISCORD_CLIENT_ID
 DISCORD_CLIENT_SECRET = DISCORD_CLIENT_SECRET
+
+# Backend de autenticação customizado
+AUTHENTICATION_BACKENDS = [
+    'guardiao.backends.DiscordAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Application definition
 INSTALLED_APPS = [

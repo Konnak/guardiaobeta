@@ -15,7 +15,18 @@ class DiscordAuthBackend:
     Backend de autenticação via Discord
     """
     
-    def authenticate(self, request, discord_token=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        """Autentica usuário tradicional"""
+        if username and password:
+            try:
+                user = User.objects.get(username=username)
+                if user.check_password(password) and user.is_active:
+                    return user
+            except User.DoesNotExist:
+                return None
+        return None
+    
+    def authenticate_discord(self, request, discord_token=None, **kwargs):
         """Autentica usuário via token Discord"""
         if not discord_token:
             return None

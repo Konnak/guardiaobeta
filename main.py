@@ -364,6 +364,9 @@ class GuardiaoBot:
                     headers = dict(request.headers)
                     headers.pop('Host', None)  # Remove Host header
                     headers.pop('Content-Length', None)  # Remove Content-Length
+                    # Adiciona headers para funcionar com proxy
+                    headers['X-Forwarded-Proto'] = 'https'
+                    headers['X-Forwarded-For'] = request.remote_addr or '127.0.0.1'
                     
                     # Prepara dados para requisição
                     if request.method == 'POST':
@@ -397,6 +400,9 @@ class GuardiaoBot:
                         # Remove domínio localhost e ajusta para o domínio correto
                         cookies = cookies.replace('localhost.local', 'guardiaobeta.discloud.app')
                         cookies = cookies.replace('localhost', 'guardiaobeta.discloud.app')
+                        # Remove configurações de domínio específico para funcionar com proxy
+                        cookies = cookies.replace('Domain=guardiaobeta.discloud.app;', '')
+                        cookies = cookies.replace('Domain=localhost;', '')
                         response_headers['Set-Cookie'] = cookies
                     
                     # Log para debug de autenticação
@@ -537,11 +543,32 @@ class GuardiaoBot:
                 django_dir = os.path.join(os.path.dirname(__file__), 'django_admin')
                 if os.path.exists(django_dir):
                     logger.info("Iniciando Django Admin Panel...")
-                    # Executa migrações primeiro
-                    subprocess.run([
-                        sys.executable, 'manage.py', 'migrate', '--run-syncdb'
-                    ], cwd=django_dir, check=False)
+                    
+                    # Executa script de inicialização do servidor
+                    init_script = os.path.join(django_dir, 'init_server.py')
+                    if os.path.exists(init_script):
+                        logger.info("Executando inicialização do servidor...")
+                        result = subprocess.run([
+                            sys.executable, init_script
+                        ], cwd=django_dir, capture_output=True, text=True, timeout=120)
+                        
+                        if result.returncode == 0:
+                            logger.info("✅ Inicialização do Django Admin concluída!")
+                            logger.info(result.stdout)
+                        else:
+                            logger.warning(f"⚠️ Avisos na inicialização: {result.stderr}")
+                    else:
+                        # Fallback para inicialização manual
+                        logger.info("Executando inicialização manual...")
+                        subprocess.run([
+                            sys.executable, 'manage.py', 'migrate', '--run-syncdb'
+                        ], cwd=django_dir, check=False)
+                        subprocess.run([
+                            sys.executable, 'manage.py', 'create_admin'
+                        ], cwd=django_dir, check=False)
+                    
                     # Inicia servidor Django
+                    logger.info("Iniciando servidor Django na porta 8001...")
                     subprocess.run([
                         sys.executable, 'manage.py', 'runserver', '0.0.0.0:8001'
                     ], cwd=django_dir, check=False)
