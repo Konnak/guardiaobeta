@@ -12,6 +12,22 @@ import secrets
 from datetime import datetime, timedelta
 from database.connection import db_manager
 from config import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, FLASK_SECRET_KEY
+import time
+
+# Cache simples para evitar rate limits
+_token_cache = {}
+_cache_ttl = 300  # 5 minutos
+_rate_limit_until = 0  # Timestamp até quando o rate limit está ativo
+
+def is_rate_limited():
+    """Verifica se estamos em rate limit"""
+    return time.time() < _rate_limit_until
+
+def set_rate_limit(duration_seconds=60):
+    """Define rate limit por um período"""
+    global _rate_limit_until
+    _rate_limit_until = time.time() + duration_seconds
+    logger.warning(f"Rate limit ativado por {duration_seconds} segundos")
 
 # Configuração de logging
 logger = logging.getLogger(__name__)
@@ -50,6 +66,12 @@ def setup_auth(app: Flask):
     def login():
         """Inicia o processo de login OAuth2"""
         try:
+            # Verifica se estamos em rate limit
+            if is_rate_limited():
+                flash("Rate limit ativo. Aguarde alguns minutos antes de tentar novamente.", "warning")
+                logger.warning("Tentativa de login bloqueada por rate limit")
+                return redirect(url_for('index'))
+            
             # Gera um state aleatório para segurança
             state = secrets.token_urlsafe(32)
             session['oauth_state'] = state
@@ -98,7 +120,8 @@ def setup_auth(app: Flask):
             token_data = exchange_code_for_token(code)
             
             if not token_data:
-                flash("Falha ao obter token de acesso.", "error")
+                flash("Rate limit do Discord atingido. Aguarde alguns minutos e tente novamente.", "error")
+                logger.warning("Falha ao obter token - possivelmente rate limit")
                 return redirect(url_for('index'))
             
             # Obtém informações do usuário
@@ -199,34 +222,66 @@ def setup_auth(app: Flask):
 
 
 def exchange_code_for_token(code: str) -> dict:
-    """Troca o código de autorização por um token de acesso"""
-    try:
-        data = {
-            'client_id': DISCORD_CLIENT_ID,
-            'client_secret': DISCORD_CLIENT_SECRET,
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': url_for('callback', _external=True)
-        }
-        
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        
-        import requests
-        response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers)
-        if response.status_code == 200:
-            token_data = response.json()
-            logger.info("Token de acesso obtido com sucesso")
-            return token_data
-        else:
-            error_text = response.text
-            logger.error(f"Erro ao obter token: {response.status_code} - {error_text}")
+    """Troca o código de autorização por um token de acesso com retry automático"""
+    import time
+    import random
+    
+    max_retries = 3
+    base_delay = 2  # segundos
+    
+    for attempt in range(max_retries):
+        try:
+            data = {
+                'client_id': DISCORD_CLIENT_ID,
+                'client_secret': DISCORD_CLIENT_SECRET,
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': url_for('callback', _external=True)
+            }
+            
+            headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'GuardiãoBETA/1.0'
+            }
+            
+            import requests
+            response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                logger.info("Token de acesso obtido com sucesso")
+                return token_data
+            elif response.status_code == 429:  # Rate limited
+                # Ativa rate limit global
+                set_rate_limit(300)  # 5 minutos
+                if attempt < max_retries - 1:
+                    # Backoff exponencial com jitter
+                    delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+                    logger.warning(f"Rate limit atingido. Tentando novamente em {delay:.1f}s (tentativa {attempt + 1}/{max_retries})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    logger.error("Rate limit persistente após múltiplas tentativas")
+                    return None
+            else:
+                error_text = response.text
+                logger.error(f"Erro ao obter token: {response.status_code} - {error_text}")
+                return None
+                        
+        except requests.exceptions.Timeout:
+            if attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                logger.warning(f"Timeout na requisição. Tentando novamente em {delay}s")
+                time.sleep(delay)
+                continue
+            else:
+                logger.error("Timeout persistente após múltiplas tentativas")
+                return None
+        except Exception as e:
+            logger.error(f"Erro ao trocar código por token: {e}")
             return None
-                    
-    except Exception as e:
-        logger.error(f"Erro ao trocar código por token: {e}")
-        return None
+    
+    return None
 
 
 def get_user_info(access_token: str) -> dict:
