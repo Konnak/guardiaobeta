@@ -227,7 +227,7 @@ class TrainingView(ui.View):
     
     async def _start_final_exam(self, interaction: discord.Interaction):
         """Inicia a prova final"""
-        # Simulação da prova final (em um sistema real, isso seria mais elaborado)
+        # Prova final com 10 perguntas conforme especificado no SISTEMA_GUARDIÃO.md
         questions = [
             {
                 "question": "Qual é o princípio mais importante na moderação?",
@@ -243,8 +243,42 @@ class TrainingView(ui.View):
                 "question": "O que fazer ao receber uma denúncia de alguém que você conhece?",
                 "options": ["A) Ser mais rigoroso", "B) Ser mais brando", "C) Analisar normalmente", "D) Recusar"],
                 "correct": "C"
+            },
+            {
+                "question": "Qual é o tempo limite para votar em uma denúncia após atender?",
+                "options": ["A) 3 minutos", "B) 5 minutos", "C) 10 minutos", "D) 15 minutos"],
+                "correct": "B"
+            },
+            {
+                "question": "O que acontece se um guardião não votar dentro do prazo?",
+                "options": ["A) Nada", "B) Perde 5 pontos", "C) Ganha cooldown de 1 hora", "D) B e C"],
+                "correct": "D"
+            },
+            {
+                "question": "Quantos guardiões recebem cada denúncia para análise?",
+                "options": ["A) 3", "B) 5", "C) 7", "D) Até 10"],
+                "correct": "D"
+            },
+            {
+                "question": "Qual é a punição para 3 votos 'Intimidou'?",
+                "options": ["A) Mute de 30 minutos", "B) Mute de 1 hora", "C) Mute de 6 horas", "D) Ban de 24 horas"],
+                "correct": "B"
+            },
+            {
+                "question": "Qual é a punição para 4+ votos 'Grave'?",
+                "options": ["A) Mute de 12 horas", "B) Ban de 12 horas", "C) Ban de 24 horas", "D) Ban permanente"],
+                "correct": "C"
+            },
+            {
+                "question": "O que acontece se o resultado da apelação for o mesmo da punição original?",
+                "options": ["A) Nada", "B) Remove a punição", "C) Multiplica a punição por 2", "D) Ban permanente"],
+                "correct": "C"
+            },
+            {
+                "question": "Qual é o cooldown após dispensar uma denúncia?",
+                "options": ["A) 5 minutos", "B) 10 minutos", "C) 30 minutos", "D) 1 hora"],
+                "correct": "B"
             }
-            # Adicione mais perguntas conforme necessário
         ]
         
         self.quiz_questions = questions
