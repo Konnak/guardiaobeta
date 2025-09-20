@@ -781,6 +781,10 @@ class ModeracaoCog(commands.Cog):
                         break
                 logger.info(f"Encontradas {len(today_messages)} mensagens de ontem")
             
+            # Inverte a ordem para mostrar da mais recente para a mais antiga
+            today_messages.reverse()
+            logger.info(f"Mensagens ordenadas da mais recente para a mais antiga")
+            
             # Processa as mensagens encontradas
             for message in today_messages:
                 total_messages_checked += 1
