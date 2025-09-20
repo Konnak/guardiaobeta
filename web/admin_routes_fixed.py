@@ -10,6 +10,13 @@ logger = logging.getLogger(__name__)
 def setup_admin_routes_fixed(app):
     """Configura rotas admin sem dependências do banco de dados"""
     
+    # Rota /admin principal (backup)
+    @app.route('/admin', methods=['GET'])
+    def admin_main():
+        """Rota /admin principal como backup"""
+        logger.info("🎯 Rota /admin (backup) acessada!")
+        return admin_fixed()
+    
     @app.route('/admin-fixed')
     def admin_fixed():
         """Rota admin fixa para teste"""
