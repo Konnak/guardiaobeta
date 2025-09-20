@@ -32,6 +32,7 @@ from config import (
 from database.connection import db_manager
 from web.auth import setup_auth
 from web.routes import setup_routes
+from web.admin_routes import setup_admin_routes
 
 # Configuração de logging
 logging.basicConfig(
@@ -306,6 +307,9 @@ class GuardiaoBot:
             
             # Configura rotas
             setup_routes(self.web_app)
+            
+            # Configura rotas admin separadas para teste
+            setup_admin_routes(self.web_app)
             
             # Adiciona rota para status do bot
             @self.web_app.route('/api/bot/status')
