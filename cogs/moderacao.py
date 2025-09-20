@@ -758,7 +758,31 @@ class ModeracaoCog(commands.Cog):
             logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
             logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
             
-            async for message in interaction.channel.history(limit=100, after=cutoff_time):
+            # Primeiro, tenta capturar mensagens de hoje (20/09)
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            today_messages = []
+            
+            logger.info(f"Buscando mensagens de hoje desde: {today_start}")
+            
+            # Coleta todas as mensagens de hoje
+            async for message in interaction.channel.history(limit=100, after=today_start):
+                today_messages.append(message)
+                if len(today_messages) >= 100:
+                    break
+            
+            logger.info(f"Encontradas {len(today_messages)} mensagens de hoje")
+            
+            # Se não há mensagens de hoje, busca mensagens de ontem
+            if not today_messages:
+                logger.info("Nenhuma mensagem de hoje encontrada, buscando mensagens de ontem...")
+                async for message in interaction.channel.history(limit=100, after=cutoff_time):
+                    today_messages.append(message)
+                    if len(today_messages) >= 100:
+                        break
+                logger.info(f"Encontradas {len(today_messages)} mensagens de ontem")
+            
+            # Processa as mensagens encontradas
+            for message in today_messages:
                 total_messages_checked += 1
                 
                 # Log para debug das primeiras mensagens
@@ -784,10 +808,6 @@ class ModeracaoCog(commands.Cog):
                 )
                 
                 messages_captured += 1
-                
-                # Limita a 100 mensagens para não sobrecarregar a interface
-                if messages_captured >= 100:
-                    break
             
             logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
             logger.info(f"Total verificadas: {total_messages_checked}")
