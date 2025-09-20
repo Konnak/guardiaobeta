@@ -447,52 +447,7 @@ def get_server_stats(server_id: int) -> dict:
         """Rota de teste para verificar se as rotas admin funcionam"""
         return "Rota admin funcionando!"
     
-    logger.info("🔧 Registrando rota /admin...")
-    
-    @app.route('/admin')
-    def admin_dashboard():
-        """Painel administrativo principal - VERSÃO SIMPLES"""
-        logger.info("🔧 Rota /admin acessada!")
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>🛡️ Painel Admin - Sistema Guardião</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
-                .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 25px; border-radius: 8px; margin-bottom: 30px; }
-                .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0; }
-                .btn { background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 5px; }
-                .btn:hover { background: #2980b9; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🛡️ Painel Administrativo</h1>
-                    <p>Sistema Guardião BETA - Funcionando!</p>
-                </div>
-                
-                <div class="success">
-                    <h3>✅ SUCESSO!</h3>
-                    <p>A rota /admin está funcionando perfeitamente!</p>
-                    <p><strong>Problema resolvido:</strong> Rota registrada com sucesso no Flask.</p>
-                </div>
-                
-                <div style="margin-top: 30px;">
-                    <h3>🎯 Navegação</h3>
-                    <a href="/dashboard" class="btn">📊 Dashboard</a>
-                    <a href="/admin-simple" class="btn">🔧 Admin Simples</a>
-                    <a href="/admin-fixed" class="btn">✅ Admin Fixo</a>
-                    <a href="/" class="btn">🏠 Início</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-    
-    logger.info("✅ Rota /admin registrada com sucesso!")
+    # Rota /admin movida para o final para evitar problemas de ordem
     
     @app.route('/admin/usuarios')
     def admin_usuarios():
@@ -718,4 +673,51 @@ def get_server_stats(server_id: int) -> dict:
             flash("Erro ao carregar detalhes da denúncia.", "error")
             return redirect(url_for('admin_denuncias'))
     
+    # ==================== ROTA /ADMIN NO FINAL ====================
+    logger.info("🔧 Registrando rota /admin no final...")
+    
+    @app.route('/admin')
+    def admin_dashboard():
+        """Painel administrativo principal - VERSÃO SIMPLES"""
+        logger.info("🔧 Rota /admin acessada!")
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>🛡️ Painel Admin - Sistema Guardião</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
+                .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 25px; border-radius: 8px; margin-bottom: 30px; }
+                .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                .btn { background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 5px; }
+                .btn:hover { background: #2980b9; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🛡️ Painel Administrativo</h1>
+                    <p>Sistema Guardião BETA - Funcionando!</p>
+                </div>
+                
+                <div class="success">
+                    <h3>✅ SUCESSO!</h3>
+                    <p>A rota /admin está funcionando perfeitamente!</p>
+                    <p><strong>Problema resolvido:</strong> Rota registrada com sucesso no Flask.</p>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3>🎯 Navegação</h3>
+                    <a href="/dashboard" class="btn">📊 Dashboard</a>
+                    <a href="/admin-simple" class="btn">🔧 Admin Simples</a>
+                    <a href="/admin-fixed" class="btn">✅ Admin Fixo</a>
+                    <a href="/" class="btn">🏠 Início</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    
+    logger.info("✅ Rota /admin registrada com sucesso no final!")
     logger.info("✅ Configuração de rotas concluída com sucesso!")
