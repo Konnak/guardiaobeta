@@ -754,6 +754,7 @@ class ModeracaoCog(commands.Cog):
             logger.info(f"Horário atual Brasília: {now_brasilia}")
             logger.info(f"Capturando mensagens do canal desde {cutoff_time} (UTC)")
             logger.info(f"Capturando mensagens do canal desde {cutoff_brasilia} (Brasília)")
+            logger.info(f"Data atual: {now_brasilia.date()}, Data cutoff: {cutoff_brasilia.date()}")
             logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
             logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
             
