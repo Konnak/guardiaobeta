@@ -22,7 +22,7 @@ def discord_login(request):
     
     # Parâmetros OAuth2 Discord
     client_id = getattr(settings, 'DISCORD_CLIENT_ID', '')
-    redirect_uri = f"{request.scheme}://{request.get_host()}/admin/discord-callback/"
+    redirect_uri = f"{request.scheme}://{request.get_host()}/discord-admin/discord-callback/"
     
     # URL de autorização Discord
     discord_auth_url = (
@@ -55,7 +55,7 @@ def discord_callback(request):
             'client_secret': getattr(settings, 'DISCORD_CLIENT_SECRET', ''),
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': f"{request.scheme}://{request.get_host()}/admin/discord-callback/"
+            'redirect_uri': f"{request.scheme}://{request.get_host()}/discord-admin/discord-callback/"
         }
         
         response = requests.post('https://discord.com/api/oauth2/token', data=token_data)
