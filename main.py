@@ -341,15 +341,18 @@ class GuardiaoBot:
                     return {'error': 'Internal server error'}, 500
             
             # Adiciona rota para Django Admin Panel
-            @self.web_app.route('/admin')
-            @self.web_app.route('/admin/')
-            @self.web_app.route('/admin/<path:path>')
+            @self.web_app.route('/admin', methods=['GET', 'POST'])
+            @self.web_app.route('/admin/', methods=['GET', 'POST'])
+            @self.web_app.route('/admin/<path:path>', methods=['GET', 'POST'])
             def django_admin(path=''):
                 """Proxy para o Django Admin Panel"""
                 import requests
                 from flask import request, Response
                 
                 try:
+                    # Log para debug
+                    logger.info(f"Django Admin proxy: {request.method} {path}")
+                    
                     # Constrói URL do Django Admin
                     django_url = f'http://localhost:8001/admin/{path}'
                     if request.query_string:
@@ -360,12 +363,22 @@ class GuardiaoBot:
                     headers.pop('Host', None)  # Remove Host header
                     headers.pop('Content-Length', None)  # Remove Content-Length
                     
+                    # Prepara dados para requisição
+                    if request.method == 'POST':
+                        # Para POST, usa form data ou JSON
+                        if request.form:
+                            data = request.form
+                        else:
+                            data = request.get_data()
+                    else:
+                        data = request.get_data()
+                    
                     # Faz requisição para o Django
                     django_response = requests.request(
                         method=request.method,
                         url=django_url,
                         headers=headers,
-                        data=request.get_data(),
+                        data=data,
                         cookies=request.cookies,
                         allow_redirects=False,
                         timeout=30
