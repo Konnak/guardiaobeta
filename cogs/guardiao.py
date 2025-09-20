@@ -270,7 +270,7 @@ class TrainingView(ui.View):
             await interaction.followup.edit_message(interaction.message.id, embed=embed, view=self)
         except:
             try:
-            await interaction.edit_original_response(embed=embed, view=self)
+                await interaction.edit_original_response(embed=embed, view=self)
         except discord.NotFound:
             # Se a resposta original não existir mais, envia uma nova mensagem
             await interaction.followup.send(embed=embed, view=self, ephemeral=True)
