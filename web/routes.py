@@ -6,16 +6,34 @@ Implementa todas as rotas principais do site
 import logging
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
-from database.connection import db_manager
-from utils.experience_system import get_experience_rank, get_rank_emoji, format_experience_display
-from web.auth import login_required, admin_required, get_user_guilds_admin, get_bot_invite_url, get_user_avatar_url, get_guild_icon_url
 
 # Configuração de logging
 logger = logging.getLogger(__name__)
 
+# Importações com tratamento de erro
+try:
+    from database.connection import db_manager
+    logger.info("✅ db_manager importado com sucesso")
+except Exception as e:
+    logger.error(f"❌ Erro ao importar db_manager: {e}")
+    db_manager = None
+
+try:
+    from utils.experience_system import get_experience_rank, get_rank_emoji, format_experience_display
+    logger.info("✅ utils.experience_system importado com sucesso")
+except Exception as e:
+    logger.error(f"❌ Erro ao importar utils.experience_system: {e}")
+
+try:
+    from web.auth import login_required, admin_required, get_user_guilds_admin, get_bot_invite_url, get_user_avatar_url, get_guild_icon_url
+    logger.info("✅ web.auth importado com sucesso")
+except Exception as e:
+    logger.error(f"❌ Erro ao importar web.auth: {e}")
+
 
 def setup_routes(app):
     """Configura todas as rotas da aplicação"""
+    logger.info("🚀 Iniciando configuração de rotas...")
     
     @app.route('/')
     def index():
@@ -432,15 +450,23 @@ def get_server_stats(server_id: int) -> dict:
     @app.route('/admin')
     def admin_dashboard():
         """Painel administrativo principal - VERSÃO FUNCIONAL"""
+        logger.info("🔧 Rota /admin acessada!")
+        
         # Verificação de segurança (sem dependências do banco)
         if 'user' not in session:
+            logger.warning("❌ Usuário não logado tentando acessar /admin")
             flash("Você precisa fazer login para acessar esta página.", "warning")
             return redirect(url_for('login'))
         
         user_id = session['user']['id']
+        logger.info(f"👤 Usuário {user_id} tentando acessar /admin")
+        
         if user_id != 1369940071246991380:
+            logger.warning(f"❌ Usuário {user_id} não autorizado para /admin")
             flash("Acesso negado. Você não tem permissões de administrador.", "error")
             return redirect(url_for('dashboard'))
+        
+        logger.info(f"✅ Usuário {user_id} autorizado para /admin")
         
         try:
             return """
@@ -862,3 +888,5 @@ def get_server_stats(server_id: int) -> dict:
             logger.error(f"Erro ao buscar detalhes da denúncia: {e}")
             flash("Erro ao carregar detalhes da denúncia.", "error")
             return redirect(url_for('admin_denuncias'))
+    
+    logger.info("✅ Configuração de rotas concluída com sucesso!")

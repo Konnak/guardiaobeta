@@ -307,13 +307,33 @@ class GuardiaoBot:
             setup_auth(self.web_app)
             
             # Configura rotas
-            setup_routes(self.web_app)
+            logger.info("🔧 Configurando rotas principais...")
+            try:
+                setup_routes(self.web_app)
+                logger.info("✅ Rotas principais configuradas")
+            except Exception as e:
+                logger.error(f"❌ Erro ao configurar rotas principais: {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
             
             # Configura rotas admin separadas para teste
+            logger.info("🔧 Configurando rotas admin separadas...")
             setup_admin_routes(self.web_app)
+            logger.info("✅ Rotas admin separadas configuradas")
             
             # Configura rotas admin fixas (sem dependências)
+            logger.info("🔧 Configurando rotas admin fixas...")
             setup_admin_routes_fixed(self.web_app)
+            logger.info("✅ Rotas admin fixas configuradas")
+            
+            # Lista todas as rotas registradas
+            with self.web_app.app_context():
+                all_routes = [str(rule) for rule in self.web_app.url_map.iter_rules()]
+                admin_routes = [route for route in all_routes if '/admin' in route]
+                logger.info(f"📋 Total de rotas registradas: {len(all_routes)}")
+                logger.info(f"📋 Rotas admin registradas: {len(admin_routes)}")
+                for route in admin_routes:
+                    logger.info(f"  - {route}")
             
             # Adiciona rota para status do bot
             @self.web_app.route('/api/bot/status')
