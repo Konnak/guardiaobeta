@@ -11,9 +11,10 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 
-# Discord Bot - py-cord
+# Discord Bot - discord.py com app_commands
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 # Web Application
 from flask import Flask
@@ -123,6 +124,13 @@ class GuardiaoBot:
             """Evento quando o bot está pronto"""
             logger.info(f'Bot logado como {self.bot.user} (ID: {self.bot.user.id})')
             logger.info(f'Conectado a {len(self.bot.guilds)} servidores')
+            
+            # Sincroniza comandos slash
+            try:
+                synced = await self.bot.tree.sync()
+                logger.info(f'Sincronizados {len(synced)} comandos slash.')
+            except Exception as e:
+                logger.error(f'Erro ao sincronizar comandos slash: {e}')
             
             # Atualiza status do bot
             activity = discord.Activity(

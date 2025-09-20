@@ -5,6 +5,7 @@ Implementa o comando /stats para exibir informações do usuário
 
 import discord
 from discord.ext import commands
+from discord import app_commands
 import logging
 from datetime import datetime
 from database.connection import db_manager, get_user_by_discord_id_sync
@@ -25,11 +26,11 @@ class StatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.slash_command(
+    @app_commands.command(
         name="stats",
         description="Exibe suas estatísticas no Sistema Guardião BETA"
     )
-    async def stats(self, ctx):
+    async def stats(self, interaction: discord.Interaction):
         """
         Comando de estatísticas - Apenas em DM
         
@@ -45,7 +46,7 @@ class StatsCog(commands.Cog):
                 db_manager.initialize_pool()
             
             # Busca os dados do usuário
-            user_data = get_user_by_discord_id_sync(ctx.author.id)
+            user_data = get_user_by_discord_id_sync(interaction.user.id)
             
             if not user_data:
                 embed = discord.Embed(
@@ -53,7 +54,7 @@ class StatsCog(commands.Cog):
                     description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 return
             
             # Busca estatísticas adicionais
@@ -66,7 +67,7 @@ class StatsCog(commands.Cog):
             )
             
             # Avatar do usuário
-            embed.set_thumbnail(url=ctx.author.display_avatar.url)
+            embed.set_thumbnail(url=interaction.user.display_avatar.url)
             
             # Informações pessoais
             embed.add_field(
@@ -124,20 +125,20 @@ class StatsCog(commands.Cog):
             
             # Footer com informações do sistema
             embed.set_footer(
-                text=f"Sistema Guardião BETA • ID: {ctx.author.id}",
+                text=f"Sistema Guardião BETA • ID: {interaction.user.id}",
                 icon_url=self.bot.user.display_avatar.url
             )
             
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
-            logger.error(f"Erro no comando stats para usuário {ctx.author.id}: {e}")
+            logger.error(f"Erro no comando stats para usuário {interaction.user.id}: {e}")
             embed = discord.Embed(
                 title="❌ Erro no Sistema",
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
     
     async def _get_user_stats(self, user_id: int) -> dict:
         """Busca estatísticas adicionais do usuário"""
@@ -217,7 +218,7 @@ class StatsCog(commands.Cog):
         return "\n".join(cooldowns) if cooldowns else "Nenhum cooldown ativo"
     
     @stats.error
-    async def stats_error(self, ctx, error):
+    async def stats_error(self, interaction: discord.Interaction, error):
         """Tratamento de erros do comando stats"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -231,7 +232,7 @@ class StatsCog(commands.Cog):
                       "2. Use o comando `/stats`",
                 inline=False
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             logger.error(f"Erro não tratado no comando stats: {error}")
             embed = discord.Embed(
@@ -239,7 +240,7 @@ class StatsCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 def setup(bot):

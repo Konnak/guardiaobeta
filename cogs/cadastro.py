@@ -5,7 +5,7 @@ Implementa o comando /cadastro com Modal para registro de usuários
 
 import discord
 from discord.ext import commands
-from discord import ui
+from discord import ui, app_commands
 import re
 import asyncio
 import logging
@@ -198,11 +198,11 @@ class CadastroCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.slash_command(
+    @app_commands.command(
         name="cadastro",
         description="Cadastre-se no Sistema Guardião BETA"
     )
-    async def cadastro(self, ctx):
+    async def cadastro(self, interaction: discord.Interaction):
         """
         Comando de cadastro - Apenas em DM
         
@@ -216,7 +216,7 @@ class CadastroCog(commands.Cog):
             
             # Cria e envia o modal
             modal = CadastroModal()
-            await ctx.send_modal(modal)
+            await interaction.response.send_modal(modal)
             
         except Exception as e:
             logger.error(f"Erro no comando cadastro: {e}")
@@ -225,10 +225,10 @@ class CadastroCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
     
     @cadastro.error
-    async def cadastro_error(self, ctx, error):
+    async def cadastro_error(self, interaction: discord.Interaction, error):
         """Tratamento de erros do comando cadastro"""
         if isinstance(error, commands.PrivateMessageOnly):
             embed = discord.Embed(
@@ -243,7 +243,7 @@ class CadastroCog(commands.Cog):
                       "3. Preencha o formulário",
                 inline=False
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             logger.error(f"Erro não tratado no comando cadastro: {error}")
             embed = discord.Embed(
@@ -251,7 +251,7 @@ class CadastroCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await ctx.respond(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 def setup(bot):
