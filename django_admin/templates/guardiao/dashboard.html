@@ -1,0 +1,131 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Guardião BETA{% endblock %}
+
+{% block extrahead %}
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #007cba;
+    }
+    
+    .stat-card h3 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .stat-card .number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #007cba;
+    }
+    
+    .recent-activity {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .activity-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .status-em-analise { background: #fff3cd; color: #856404; }
+    .status-aprovada { background: #d4edda; color: #155724; }
+    .status-rejeitada { background: #f8d7da; color: #721c24; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>🛡️ Dashboard Guardião BETA</h1>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Total de Usuários</h3>
+            <div class="number">{{ total_usuarios }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Total de Denúncias</h3>
+            <div class="number">{{ total_denuncias }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Denúncias em Análise</h3>
+            <div class="number">{{ denuncias_em_analise }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Guardiões em Serviço</h3>
+            <div class="number">{{ guardioes_servico }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Denúncias (7 dias)</h3>
+            <div class="number">{{ denuncias_recentes }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Novos Usuários (7 dias)</h3>
+            <div class="number">{{ usuarios_recentes }}</div>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="recent-activity">
+            <h2>🏆 Top Guardiões por Atividade</h2>
+            {% for guardiao in top_guardioes %}
+            <div class="activity-item">
+                <strong>{{ guardiao.username }}</strong> - {{ guardiao.total_votos }} votos
+            </div>
+            {% empty %}
+            <p>Nenhum guardião encontrado.</p>
+            {% endfor %}
+        </div>
+        
+        <div class="recent-activity">
+            <h2>📋 Denúncias Recentes</h2>
+            {% for denuncia in denuncias_recentes_list %}
+            <div class="activity-item">
+                <strong>{{ denuncia.hash_denuncia|slice:":8" }}...</strong> 
+                <span class="status-badge status-{{ denuncia.status|lower|cut:' ' }}">{{ denuncia.status }}</span><br>
+                <small>Por: {{ denuncia.id_denunciante.username }} - {{ denuncia.data_criacao|date:"d/m/Y H:i" }}</small>
+            </div>
+            {% empty %}
+            <p>Nenhuma denúncia recente.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="{% url 'guardiao:estatisticas' %}" class="btn btn-primary">📊 Ver Estatísticas Detalhadas</a>
+    </div>
+</div>
+{% endblock %}
