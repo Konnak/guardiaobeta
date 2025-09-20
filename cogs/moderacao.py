@@ -128,9 +128,12 @@ class ReportView(ui.View):
             # Adiciona as mensagens capturadas (anonimizadas)
             if mensagens:
                 logger.info(f"Exibindo {len(mensagens)} mensagens capturadas")
+                logger.info(f"Chamando _anonymize_messages com denunciado ID: {denuncia['id_denunciado']}")
+                mensagens_anonimizadas = self._anonymize_messages(mensagens, denuncia['id_denunciado'])
+                logger.info(f"Resultado da anonimização: {mensagens_anonimizadas[:200]}...")
                 embed.add_field(
                     name="💬 Mensagens Capturadas",
-                    value=self._anonymize_messages(mensagens, denuncia['id_denunciado']),
+                    value=mensagens_anonimizadas,
                     inline=False
                 )
             else:
@@ -662,7 +665,11 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            try:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except discord.NotFound:
+                # Se a interação expirou, tenta enviar como followup
+                await interaction.followup.send(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
