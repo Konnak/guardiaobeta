@@ -101,11 +101,11 @@ class ReportView(ui.View):
                     await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
                     return
             
-            # Busca as mensagens capturadas
+            # Busca as mensagens capturadas (ordenadas do mais recente ao mais antigo)
             mensagens_query = """
                 SELECT * FROM mensagens_capturadas 
                 WHERE id_denuncia = $1 
-                ORDER BY timestamp_mensagem
+                ORDER BY timestamp_mensagem DESC
             """
             mensagens = db_manager.execute_query_sync(mensagens_query, denuncia['id'])
             logger.info(f"Busca de mensagens para denúncia ID {denuncia['id']}: encontradas {len(mensagens) if mensagens else 0}")
