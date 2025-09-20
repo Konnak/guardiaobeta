@@ -157,6 +157,18 @@ class MensagemCapturadaAdmin(admin.ModelAdmin):
         url = reverse('admin:guardiao_denuncia_change', args=[obj.id_denuncia.id])
         return format_html('<a href="{}">{}</a>', url, obj.id_denuncia.hash_denuncia[:8])
     denuncia_link.short_description = 'Denúncia'
+    
+    def conteudo_resumido(self, obj):
+        if obj.conteudo:
+            return obj.conteudo[:50] + "..." if len(obj.conteudo) > 50 else obj.conteudo
+        return "Sem conteúdo"
+    conteudo_resumido.short_description = 'Conteúdo'
+    
+    def autor_username(self, obj):
+        if obj.id_autor:
+            return obj.id_autor.username
+        return "Usuário Desconhecido"
+    autor_username.short_description = 'Autor'
 
 
 @admin.register(VotoGuardiao)

@@ -665,18 +665,21 @@ class ModeracaoCog(commands.Cog):
             """
             is_premium = db_manager.execute_scalar_sync(premium_query, interaction.guild.id) is not None
             
-            # Insere a denúncia no banco
+            # Insere a denúncia no banco com commit explícito para garantir persistência
             denuncia_query = """
                 INSERT INTO denuncias (
                     hash_denuncia, id_servidor, id_canal, id_denunciante, 
-                    id_denunciado, motivo, e_premium
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    id_denunciado, motivo, e_premium, data_criacao
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 RETURNING id
             """
             denuncia_id = db_manager.execute_scalar_sync(
                 denuncia_query, hash_denuncia, interaction.guild.id, interaction.channel.id,
                 interaction.user.id, usuario.id, motivo, is_premium
             )
+            
+            # Commit explícito para garantir persistência
+            db_manager.execute_sync("COMMIT")
             
             # Resposta imediata para evitar timeout
             embed_loading = discord.Embed(
