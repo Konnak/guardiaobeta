@@ -6,7 +6,7 @@ Implementa todas as rotas principais do site
 import logging
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
-from database.connection import db_manager, get_user_by_discord_id
+from database.connection import db_manager
 from utils.experience_system import get_experience_rank, get_rank_emoji, format_experience_display
 from web.auth import login_required, admin_required, get_user_guilds_admin, get_bot_invite_url, get_user_avatar_url, get_guild_icon_url
 
@@ -64,7 +64,9 @@ def setup_routes(app):
             user_id = user_data['id']
             
             # Busca dados do usuário no banco
-            db_user = get_user_by_discord_id(user_id)
+            db_user = db_manager.execute_one_sync(
+                "SELECT * FROM usuarios WHERE discord_id = $1", (user_id,)
+            )
             
             if not db_user:
                 # Usuário não cadastrado
@@ -176,6 +178,7 @@ def setup_routes(app):
             return redirect(url_for('dashboard'))
     
     @app.route('/servers')
+    @app.route('/servers/')
     @login_required
     def servers():
         """Lista de servidores do usuário"""

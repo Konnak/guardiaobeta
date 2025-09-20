@@ -10,7 +10,7 @@ from flask import Flask, session, redirect, request, url_for, flash, jsonify
 from urllib.parse import urlencode
 import secrets
 from datetime import datetime, timedelta
-from database.connection import db_manager, get_user_by_discord_id
+from database.connection import db_manager
 from config import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, FLASK_SECRET_KEY
 
 # Configuração de logging
@@ -47,7 +47,7 @@ def setup_auth(app: Flask):
     app.secret_key = FLASK_SECRET_KEY or secrets.token_hex(32)
     
     @app.route('/login')
-    async def login():
+    def login():
         """Inicia o processo de login OAuth2"""
         try:
             # Gera um state aleatório para segurança
@@ -127,7 +127,9 @@ def setup_auth(app: Flask):
             }
             
             # Verifica se o usuário está cadastrado no sistema
-            user_db = get_user_by_discord_id(int(user_data['id']))
+            user_db = db_manager.execute_one_sync(
+                "SELECT * FROM usuarios WHERE discord_id = $1", (int(user_data['id']),)
+            )
             
             if user_db:
                 session['user']['cadastrado'] = True
