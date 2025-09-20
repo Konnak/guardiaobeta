@@ -89,10 +89,13 @@ class ReportView(ui.View):
                         simple_denuncia['id_denunciado']
                     )
                     
+                    logger.info(f"Denunciante {simple_denuncia['id_denunciante']}: {denunciante}")
+                    logger.info(f"Denunciado {simple_denuncia['id_denunciado']}: {denunciado}")
+                    
                     # Cria o objeto denúncia manualmente
                     denuncia = simple_denuncia.copy()
-                    denuncia['denunciante_name'] = denunciante['username'] if denunciante else 'Usuário não encontrado'
-                    denuncia['denunciado_name'] = denunciado['username'] if denunciado else 'Usuário não encontrado'
+                    denuncia['denunciante_name'] = denunciante['username'] if denunciante else f'Usuário {simple_denuncia["id_denunciante"]}'
+                    denuncia['denunciado_name'] = denunciado['username'] if denunciado else f'Usuário {simple_denuncia["id_denunciado"]}'
                 else:
                     logger.error(f"Denúncia com hash {self.hash_denuncia} não encontrada no banco")
                     await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
@@ -123,9 +126,17 @@ class ReportView(ui.View):
             
             # Adiciona as mensagens capturadas (anonimizadas)
             if mensagens:
+                logger.info(f"Exibindo {len(mensagens)} mensagens capturadas")
                 embed.add_field(
                     name="💬 Mensagens Capturadas",
                     value=self._anonymize_messages(mensagens, denuncia['id_denunciado']),
+                    inline=False
+                )
+            else:
+                logger.info("Nenhuma mensagem capturada encontrada")
+                embed.add_field(
+                    name="💬 Mensagens Capturadas",
+                    value="Nenhuma mensagem foi encontrada no histórico das últimas 24 horas.",
                     inline=False
                 )
             
@@ -665,9 +676,24 @@ class ModeracaoCog(commands.Cog):
         """Captura mensagens do histórico do canal"""
         try:
             messages_captured = 0
-            async for message in interaction.channel.history(limit=100, after=datetime.utcnow() - timedelta(hours=24)):
+            total_messages_checked = 0
+            target_user_messages = 0
+            
+            # Busca mensagens das últimas 24 horas
+            cutoff_time = datetime.utcnow() - timedelta(hours=24)
+            logger.info(f"Capturando mensagens do usuário {target_user.id} ({target_user.display_name}) desde {cutoff_time}")
+            
+            async for message in interaction.channel.history(limit=100, after=cutoff_time):
+                total_messages_checked += 1
+                
+                # Log para debug
+                if total_messages_checked <= 5:
+                    logger.info(f"Mensagem {total_messages_checked}: autor={message.author.id}, criada={message.created_at}, conteúdo='{message.content[:50]}...'")
+                
                 # Filtra apenas mensagens do usuário denunciado
                 if message.author.id == target_user.id:
+                    target_user_messages += 1
+                    
                     # Prepara URLs dos anexos
                     attachment_urls = []
                     for attachment in message.attachments:
@@ -689,10 +715,41 @@ class ModeracaoCog(commands.Cog):
                     if messages_captured >= 20:  # Limita a 20 mensagens
                         break
             
-            logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
+            logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id} (total verificadas: {total_messages_checked}, do usuário: {target_user_messages})")
             
         except Exception as e:
             logger.error(f"Erro ao capturar mensagens: {e}")
+    
+    def _anonymize_messages(self, mensagens: List[Dict], id_denunciado: int) -> str:
+        """Anonimiza mensagens para exibição"""
+        try:
+            if not mensagens:
+                return "Nenhuma mensagem encontrada."
+            
+            result = []
+            for msg in mensagens[:10]:  # Limita a 10 mensagens para não exceder o limite do Discord
+                timestamp = msg['timestamp_mensagem'].strftime('%d/%m às %H:%M')
+                
+                # Anonimiza o autor (mostra como "Denunciado" se for o usuário denunciado)
+                if msg['id_autor'] == id_denunciado:
+                    autor = "🔴 **Denunciado**"
+                else:
+                    autor = "👤 **Usuário**"
+                
+                # Limita o conteúdo da mensagem
+                conteudo = msg['conteudo'][:200] + "..." if len(msg['conteudo']) > 200 else msg['conteudo']
+                
+                result.append(f"{autor} ({timestamp}): {conteudo}")
+                
+                # Adiciona anexos se existirem
+                if msg['anexos_urls']:
+                    result.append(f"📎 {msg['anexos_urls']}")
+            
+            return "\n\n".join(result)
+            
+        except Exception as e:
+            logger.error(f"Erro ao anonimizar mensagens: {e}")
+            return "Erro ao processar mensagens."
     
     @tasks.loop(seconds=10)
     async def distribution_loop(self):
