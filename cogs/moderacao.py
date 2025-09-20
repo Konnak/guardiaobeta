@@ -751,8 +751,12 @@ class ModeracaoCog(commands.Cog):
                         logger.info(f"Usuário {msg['id_autor']} mapeado como Usuário {contador_usuario}")
                         contador_usuario += 1
             
+            logger.info(f"Mapeamento de usuários: {usuarios_unicos}")
+            
             result = []
-            for msg in mensagens[:15]:  # Limita a 15 mensagens para não exceder o limite do Discord
+            for i, msg in enumerate(mensagens[:15]):  # Limita a 15 mensagens para não exceder o limite do Discord
+                logger.info(f"Processando mensagem {i+1}: {msg}")
+                
                 # Converte para horário de Brasília (UTC-3)
                 timestamp_original = msg['timestamp_mensagem']
                 timestamp_brasilia = timestamp_original - timedelta(hours=3)
@@ -786,6 +790,8 @@ class ModeracaoCog(commands.Cog):
             
         except Exception as e:
             logger.error(f"Erro ao anonimizar mensagens: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return "Erro ao processar mensagens."
     
     @tasks.loop(seconds=10)
