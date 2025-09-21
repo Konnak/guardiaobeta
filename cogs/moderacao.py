@@ -991,21 +991,21 @@ class ModeracaoCog(commands.Cog):
                 db_manager.execute_command_sync(
                     insert_query, denuncia['id'], guardian_id, message.id, timeout_time
                 )
-             else:
-                 # Registra no cache temporário para evitar spam
-                 current_time = datetime.utcnow()
-                 if denuncia['id'] not in self.temp_message_cache:
-                     self.temp_message_cache[denuncia['id']] = {}
-                 self.temp_message_cache[denuncia['id']][guardian_id] = current_time
-                 
-                 # Registra também no tracking para poder deletar depois (timeout de 5 minutos)
-                 if denuncia['id'] not in self.temp_message_tracking:
-                     self.temp_message_tracking[denuncia['id']] = {}
-                 self.temp_message_tracking[denuncia['id']][guardian_id] = {
-                     'message_id': message.id,
-                     'timestamp': current_time,
-                     'user_id': guardian_id
-                 }
+            else:
+                # Registra no cache temporário para evitar spam
+                current_time = datetime.utcnow()
+                if denuncia['id'] not in self.temp_message_cache:
+                    self.temp_message_cache[denuncia['id']] = {}
+                self.temp_message_cache[denuncia['id']][guardian_id] = current_time
+                
+                # Registra também no tracking para poder deletar depois (timeout de 5 minutos)
+                if denuncia['id'] not in self.temp_message_tracking:
+                    self.temp_message_tracking[denuncia['id']] = {}
+                self.temp_message_tracking[denuncia['id']][guardian_id] = {
+                    'message_id': message.id,
+                    'timestamp': current_time,
+                    'user_id': guardian_id
+                }
             
         except Exception as e:
             logger.error(f"Erro ao enviar denúncia para guardião {guardian_id}: {e}")
