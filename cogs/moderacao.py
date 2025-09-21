@@ -795,11 +795,20 @@ class ModeracaoCog(commands.Cog):
         except Exception as e:
             logger.error(f"Erro ao capturar mensagens: {e}")
     
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=30)
     async def distribution_loop(self):
         """Loop que distribui denúncias para Guardiões em serviço"""
         try:
             if not db_manager.pool:
+                return
+            
+            # Verifica quantos guardiões estão em serviço
+            guardians_count_query = "SELECT COUNT(*) FROM usuarios WHERE em_servico = TRUE AND categoria = 'Guardião'"
+            total_guardians = db_manager.execute_scalar_sync(guardians_count_query)
+            logger.debug(f"Total de guardiões em serviço: {total_guardians}")
+            
+            if total_guardians == 0:
+                logger.warning("Nenhum guardião está em serviço!")
                 return
             
             # Verifica se a tabela mensagens_guardioes existe
@@ -860,13 +869,18 @@ class ModeracaoCog(commands.Cog):
                     denuncia['mensagens_ativas'] = 0  # Assume 0 mensagens ativas
             
             if not denuncia:
+                logger.debug("Nenhuma denúncia encontrada para distribuição")
                 return
             
             # Calcula quantos guardiões ainda precisamos
             votos_necessarios = REQUIRED_VOTES_FOR_DECISION - denuncia['votos_atuais']
             mensagens_necessarias = min(votos_necessarios, MAX_GUARDIANS_PER_REPORT - denuncia['mensagens_ativas'])
             
+            logger.info(f"Denúncia {denuncia['hash_denuncia']}: {denuncia['votos_atuais']}/{REQUIRED_VOTES_FOR_DECISION} votos, "
+                       f"{denuncia['mensagens_ativas']} mensagens ativas, precisa de {mensagens_necessarias} guardiões")
+            
             if mensagens_necessarias <= 0:
+                logger.debug(f"Denúncia {denuncia['hash_denuncia']} não precisa de mais guardiões")
                 return
             
             # Busca guardiões disponíveis
@@ -921,13 +935,17 @@ class ModeracaoCog(commands.Cog):
                         if len(guardians) >= mensagens_necessarias:
                             break
             
+            logger.info(f"Encontrados {len(guardians) if guardians else 0} guardiões disponíveis para denúncia {denuncia['hash_denuncia']}")
+            
             if not guardians:
+                logger.warning(f"Nenhum guardião disponível para denúncia {denuncia['hash_denuncia']}")
                 return
             
             # Muda o status para "Em Análise" se ainda estiver pendente
             if denuncia['status'] == 'Pendente':
                 update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
                 db_manager.execute_command_sync(update_query, denuncia['id'])
+                logger.info(f"Status da denúncia {denuncia['hash_denuncia']} alterado para 'Em Análise'")
             
             # Envia para cada guardião
             for guardian_data in guardians:
