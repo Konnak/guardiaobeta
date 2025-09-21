@@ -316,6 +316,18 @@ class VoteView(ui.View):
             """
             db_manager.execute_command_sync(vote_query, self.guardiao_id, voto, self.hash_denuncia)
             
+            # Remove do cache temporário se existir
+            denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
+            denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
+            
+            # Acessa o cog para limpar o cache
+            from main import bot
+            moderacao_cog = bot.get_cog('ModeracaoCog')
+            if moderacao_cog and denuncia_id in moderacao_cog.temp_message_cache:
+                moderacao_cog.temp_message_cache[denuncia_id].pop(self.guardiao_id, None)
+                if not moderacao_cog.temp_message_cache[denuncia_id]:
+                    moderacao_cog.temp_message_cache.pop(denuncia_id, None)
+            
             # Confirma o voto
             embed = discord.Embed(
                 title="✅ Voto Computado!",
@@ -581,6 +593,8 @@ class ModeracaoCog(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
+        # Cache temporário para controlar spam quando tabela não existe
+        self.temp_message_cache = {}  # {denuncia_id: {guardiao_id: timestamp}}
         self.distribution_loop.start()
         self.timeout_check.start()
         self.inactivity_check.start()
@@ -846,7 +860,7 @@ class ModeracaoCog(commands.Cog):
                 """
                 guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
             else:
-                # Versão simplificada sem verificar mensagens_guardioes
+                # Versão simplificada usando cache temporário para evitar spam
                 guardians_query = """
                     SELECT id_discord FROM usuarios 
                     WHERE em_servico = TRUE 
@@ -860,7 +874,22 @@ class ModeracaoCog(commands.Cog):
                     ORDER BY RANDOM()
                     LIMIT $2
                 """
-                guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
+                all_guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
+                
+                # Filtra guardiões que já receberam mensagens recentemente (cache temporário)
+                guardians = []
+                current_time = datetime.utcnow()
+                denuncia_cache = self.temp_message_cache.get(denuncia['id'], {})
+                
+                for guardian_data in all_guardians:
+                    guardian_id = guardian_data['id_discord']
+                    last_sent = denuncia_cache.get(guardian_id)
+                    
+                    # Se nunca enviou ou já passaram 5 minutos, pode enviar
+                    if not last_sent or (current_time - last_sent).total_seconds() > 300:  # 5 minutos
+                        guardians.append(guardian_data)
+                        if len(guardians) >= mensagens_necessarias:
+                            break
             
             if not guardians:
                 return
@@ -932,6 +961,12 @@ class ModeracaoCog(commands.Cog):
                 db_manager.execute_command_sync(
                     insert_query, denuncia['id'], guardian_id, message.id, timeout_time
                 )
+            else:
+                # Registra no cache temporário para evitar spam
+                current_time = datetime.utcnow()
+                if denuncia['id'] not in self.temp_message_cache:
+                    self.temp_message_cache[denuncia['id']] = {}
+                self.temp_message_cache[denuncia['id']][guardian_id] = current_time
             
         except Exception as e:
             logger.error(f"Erro ao enviar denúncia para guardião {guardian_id}: {e}")
@@ -996,6 +1031,23 @@ class ModeracaoCog(commands.Cog):
             if expired_messages:
                 logger.info(f"Processadas {len(expired_messages)} mensagens expiradas")
             
+            # Limpa cache temporário se tabela não existir
+            if not table_exists and self.temp_message_cache:
+                current_time = datetime.utcnow()
+                cleaned_cache = {}
+                
+                for denuncia_id, guardians in self.temp_message_cache.items():
+                    cleaned_guardians = {}
+                    for guardian_id, timestamp in guardians.items():
+                        # Mantém apenas mensagens dos últimos 10 minutos
+                        if (current_time - timestamp).total_seconds() < 600:  # 10 minutos
+                            cleaned_guardians[guardian_id] = timestamp
+                    
+                    if cleaned_guardians:
+                        cleaned_cache[denuncia_id] = cleaned_guardians
+                
+                self.temp_message_cache = cleaned_cache
+                
         except Exception as e:
             logger.error(f"Erro na verificação de timeout: {e}")
     
