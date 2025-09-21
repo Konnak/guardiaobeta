@@ -46,6 +46,20 @@ def setup_auth(app: Flask):
     # Configura a chave secreta da sessão
     app.secret_key = FLASK_SECRET_KEY or secrets.token_hex(32)
     
+    # Context processor para disponibilizar user_avatar_url globalmente
+    @app.context_processor
+    def inject_user_avatar():
+        """Injeta user_avatar_url em todos os templates"""
+        if 'user' in session:
+            user_data = session['user']
+            avatar_url = get_user_avatar_url(
+                str(user_data['id']), 
+                user_data.get('avatar'), 
+                user_data.get('discriminator')
+            )
+            return {'user_avatar_url': avatar_url}
+        return {'user_avatar_url': '/static/img/default-avatar.png'}
+    
     @app.route('/login')
     def login():
         """Inicia o processo de login OAuth2"""

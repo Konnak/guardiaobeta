@@ -356,6 +356,7 @@ def setup_routes(app):
             return jsonify({'error': 'Erro interno'}), 500
     
     @app.route('/api/user/stats')
+    @app.route('/api/user/stats/')
     @login_required
     def api_user_stats():
         """API para estatísticas do usuário"""
