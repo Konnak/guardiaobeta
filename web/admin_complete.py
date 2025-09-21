@@ -364,7 +364,7 @@ def setup_admin_complete(app):
             count_params = params[:-2]
             total = db_manager.execute_one_sync(count_query, *count_params) if db_manager else {'total': 0}
             total_reports = total['total']
-            total_pages = (total_reports + per_page - 1) // per_page
+            total_pages = max(1, (total_reports + per_page - 1) // per_page)
             
             return render_template('admin/reports_list.html',
                                  reports=reports,

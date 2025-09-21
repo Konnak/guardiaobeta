@@ -366,7 +366,7 @@
                 <a href="?page={{ page - 1 }}&status={{ filters.status }}&periodo={{ filters.periodo }}">‹ Anterior</a>
             {% endif %}
             
-            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+            {% for p in range(([1, page - 2]|max), ([total_pages + 1, page + 3]|min)) %}
                 {% if p == page %}
                     <span class="current">{{ p }}</span>
                 {% else %}
