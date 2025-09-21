@@ -44,15 +44,25 @@ class ReportView(ui.View):
         try:
             logger.info(f"Guardian {interaction.user.id} tentando atender denúncia {self.hash_denuncia}")
             
-            # Atualiza o status da mensagem para "Atendida"
-            update_msg_query = """
-                UPDATE mensagens_guardioes 
-                SET status = 'Atendida' 
-                WHERE id_guardiao = $1 AND id_denuncia = (
-                    SELECT id FROM denuncias WHERE hash_denuncia = $2
-                ) AND status = 'Enviada'
+            # Atualiza o status da mensagem para "Atendida" (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
             """
-            db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                update_msg_query = """
+                    UPDATE mensagens_guardioes 
+                    SET status = 'Atendida' 
+                    WHERE id_guardiao = $1 AND id_denuncia = (
+                        SELECT id FROM denuncias WHERE hash_denuncia = $2
+                    ) AND status = 'Enviada'
+                """
+                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
             
             # Verifica se ainda há vagas para esta denúncia
             count_query = """
@@ -157,15 +167,25 @@ class ReportView(ui.View):
     async def _handle_dispensar(self, interaction: discord.Interaction):
         """Processa a dispensa de uma denúncia"""
         try:
-            # Atualiza o status da mensagem para "Dispensada"
-            update_msg_query = """
-                UPDATE mensagens_guardioes 
-                SET status = 'Dispensada' 
-                WHERE id_guardiao = $1 AND id_denuncia = (
-                    SELECT id FROM denuncias WHERE hash_denuncia = $2
-                ) AND status = 'Enviada'
+            # Atualiza o status da mensagem para "Dispensada" (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
             """
-            db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                update_msg_query = """
+                    UPDATE mensagens_guardioes 
+                    SET status = 'Dispensada' 
+                    WHERE id_guardiao = $1 AND id_denuncia = (
+                        SELECT id FROM denuncias WHERE hash_denuncia = $2
+                    ) AND status = 'Enviada'
+                """
+                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
             
             # Define o cooldown de dispensa
             cooldown_time = datetime.utcnow() + timedelta(minutes=DISPENSE_COOLDOWN_MINUTES)
@@ -738,32 +758,62 @@ class ModeracaoCog(commands.Cog):
             if not db_manager.pool:
                 return
             
-            # Busca denúncias que precisam de mais votos (incluindo "Em Análise")
-            denuncias_query = """
-                SELECT d.*, 
-                       COALESCE(v.votos_count, 0) as votos_atuais,
-                       COALESCE(m.mensagens_ativas, 0) as mensagens_ativas
-                FROM denuncias d
-                LEFT JOIN (
-                    SELECT id_denuncia, COUNT(*) as votos_count 
-                    FROM votos_guardioes 
-                    GROUP BY id_denuncia
-                ) v ON d.id = v.id_denuncia
-                LEFT JOIN (
-                    SELECT id_denuncia, COUNT(*) as mensagens_ativas 
-                    FROM mensagens_guardioes 
-                    WHERE status = 'Enviada' AND timeout_expira > NOW()
-                    GROUP BY id_denuncia
-                ) m ON d.id = m.id_denuncia
-                WHERE d.status IN ('Pendente', 'Em Análise', 'Apelada')
-                  AND COALESCE(v.votos_count, 0) < $1
-                  AND COALESCE(m.mensagens_ativas, 0) < $2
-                ORDER BY d.e_premium DESC, d.data_criacao ASC
-                LIMIT 1
+            # Verifica se a tabela mensagens_guardioes existe
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
             """
-            denuncia = db_manager.execute_one_sync(
-                denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
-            )
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                # Versão completa com rastreamento de mensagens
+                denuncias_query = """
+                    SELECT d.*, 
+                           COALESCE(v.votos_count, 0) as votos_atuais,
+                           COALESCE(m.mensagens_ativas, 0) as mensagens_ativas
+                    FROM denuncias d
+                    LEFT JOIN (
+                        SELECT id_denuncia, COUNT(*) as votos_count 
+                        FROM votos_guardioes 
+                        GROUP BY id_denuncia
+                    ) v ON d.id = v.id_denuncia
+                    LEFT JOIN (
+                        SELECT id_denuncia, COUNT(*) as mensagens_ativas 
+                        FROM mensagens_guardioes 
+                        WHERE status = 'Enviada' AND timeout_expira > NOW()
+                        GROUP BY id_denuncia
+                    ) m ON d.id = m.id_denuncia
+                    WHERE d.status IN ('Pendente', 'Em Análise', 'Apelada')
+                      AND COALESCE(v.votos_count, 0) < $1
+                      AND COALESCE(m.mensagens_ativas, 0) < $2
+                    ORDER BY d.e_premium DESC, d.data_criacao ASC
+                    LIMIT 1
+                """
+                denuncia = db_manager.execute_one_sync(
+                    denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
+                )
+            else:
+                # Versão simplificada sem rastreamento de mensagens
+                logger.warning("Tabela mensagens_guardioes não existe. Execute a migração: database/migrate_add_mensagens_guardioes.sql")
+                denuncias_query = """
+                    SELECT d.*, COALESCE(v.votos_count, 0) as votos_atuais
+                    FROM denuncias d
+                    LEFT JOIN (
+                        SELECT id_denuncia, COUNT(*) as votos_count 
+                        FROM votos_guardioes 
+                        GROUP BY id_denuncia
+                    ) v ON d.id = v.id_denuncia
+                    WHERE d.status IN ('Pendente', 'Em Análise', 'Apelada')
+                      AND COALESCE(v.votos_count, 0) < $1
+                    ORDER BY d.e_premium DESC, d.data_criacao ASC
+                    LIMIT 1
+                """
+                denuncia = db_manager.execute_one_sync(denuncias_query, REQUIRED_VOTES_FOR_DECISION)
+                if denuncia:
+                    denuncia['mensagens_ativas'] = 0  # Assume 0 mensagens ativas
             
             if not denuncia:
                 return
@@ -776,24 +826,41 @@ class ModeracaoCog(commands.Cog):
                 return
             
             # Busca guardiões disponíveis
-            guardians_query = """
-                SELECT id_discord FROM usuarios 
-                WHERE em_servico = TRUE 
-                AND categoria = 'Guardião'
-                AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
-                AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
-                AND id_discord NOT IN (
-                    SELECT id_guardiao FROM votos_guardioes 
-                    WHERE id_denuncia = $1
-                )
-                AND id_discord NOT IN (
-                    SELECT id_guardiao FROM mensagens_guardioes 
-                    WHERE id_denuncia = $1 AND status = 'Enviada' AND timeout_expira > NOW()
-                )
-                ORDER BY RANDOM()
-                LIMIT $2
-            """
-            guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
+            if table_exists:
+                guardians_query = """
+                    SELECT id_discord FROM usuarios 
+                    WHERE em_servico = TRUE 
+                    AND categoria = 'Guardião'
+                    AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                    AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                    AND id_discord NOT IN (
+                        SELECT id_guardiao FROM votos_guardioes 
+                        WHERE id_denuncia = $1
+                    )
+                    AND id_discord NOT IN (
+                        SELECT id_guardiao FROM mensagens_guardioes 
+                        WHERE id_denuncia = $1 AND status = 'Enviada' AND timeout_expira > NOW()
+                    )
+                    ORDER BY RANDOM()
+                    LIMIT $2
+                """
+                guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
+            else:
+                # Versão simplificada sem verificar mensagens_guardioes
+                guardians_query = """
+                    SELECT id_discord FROM usuarios 
+                    WHERE em_servico = TRUE 
+                    AND categoria = 'Guardião'
+                    AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                    AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                    AND id_discord NOT IN (
+                        SELECT id_guardiao FROM votos_guardioes 
+                        WHERE id_denuncia = $1
+                    )
+                    ORDER BY RANDOM()
+                    LIMIT $2
+                """
+                guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
             
             if not guardians:
                 return
@@ -845,16 +912,26 @@ class ModeracaoCog(commands.Cog):
             view = ReportView(denuncia['hash_denuncia'])
             message = await user.send(embed=embed, view=view)
             
-            # Registra a mensagem enviada
-            timeout_time = datetime.utcnow() + timedelta(minutes=VOTE_TIMEOUT_MINUTES)
-            insert_query = """
-                INSERT INTO mensagens_guardioes (
-                    id_denuncia, id_guardiao, id_mensagem, timeout_expira
-                ) VALUES ($1, $2, $3, $4)
+            # Registra a mensagem enviada (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
             """
-            db_manager.execute_command_sync(
-                insert_query, denuncia['id'], guardian_id, message.id, timeout_time
-            )
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                timeout_time = datetime.utcnow() + timedelta(minutes=VOTE_TIMEOUT_MINUTES)
+                insert_query = """
+                    INSERT INTO mensagens_guardioes (
+                        id_denuncia, id_guardiao, id_mensagem, timeout_expira
+                    ) VALUES ($1, $2, $3, $4)
+                """
+                db_manager.execute_command_sync(
+                    insert_query, denuncia['id'], guardian_id, message.id, timeout_time
+                )
             
         except Exception as e:
             logger.error(f"Erro ao enviar denúncia para guardião {guardian_id}: {e}")
@@ -865,6 +942,19 @@ class ModeracaoCog(commands.Cog):
         try:
             if not db_manager.pool:
                 return
+            
+            # Verifica se a tabela mensagens_guardioes existe
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if not table_exists:
+                return  # Não faz nada se a tabela não existir
             
             # Busca mensagens expiradas
             expired_query = """
@@ -915,6 +1005,19 @@ class ModeracaoCog(commands.Cog):
         try:
             if not db_manager.pool:
                 return
+            
+            # Verifica se a tabela mensagens_guardioes existe
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if not table_exists:
+                return  # Não faz nada se a tabela não existir
             
             # Busca guardiões que atenderam mas não votaram em 5 minutos
             inactivity_query = """
