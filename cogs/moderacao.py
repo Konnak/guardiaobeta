@@ -44,25 +44,39 @@ class ReportView(ui.View):
         try:
             logger.info(f"Guardian {interaction.user.id} tentando atender denúncia {self.hash_denuncia}")
             
-            # Atualiza o status da mensagem para "Atendida" (se a tabela existir)
-            table_exists_query = """
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
-                    AND table_name = 'mensagens_guardioes'
-                )
-            """
-            table_exists = db_manager.execute_scalar_sync(table_exists_query)
-            
-            if table_exists:
-                update_msg_query = """
-                    UPDATE mensagens_guardioes 
-                    SET status = 'Atendida' 
-                    WHERE id_guardiao = $1 AND id_denuncia = (
-                        SELECT id FROM denuncias WHERE hash_denuncia = $2
-                    ) AND status = 'Enviada'
-                """
-                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+             # Atualiza o status da mensagem para "Atendida" (se a tabela existir)
+             table_exists_query = """
+                 SELECT EXISTS (
+                     SELECT FROM information_schema.tables 
+                     WHERE table_schema = 'public' 
+                     AND table_name = 'mensagens_guardioes'
+                 )
+             """
+             table_exists = db_manager.execute_scalar_sync(table_exists_query)
+             
+             if table_exists:
+                 update_msg_query = """
+                     UPDATE mensagens_guardioes 
+                     SET status = 'Atendida' 
+                     WHERE id_guardiao = $1 AND id_denuncia = (
+                         SELECT id FROM denuncias WHERE hash_denuncia = $2
+                     ) AND status = 'Enviada'
+                 """
+                 db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+             else:
+                 # Remove do cache temporário quando atende
+                 denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
+                 denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
+                 
+                 # Acessa o cog para limpar o cache
+                 from main import bot
+                 moderacao_cog = bot.get_cog('ModeracaoCog')
+                 if moderacao_cog and denuncia_id:
+                     # Remove do cache de tracking (para não tentar deletar depois)
+                     if denuncia_id in moderacao_cog.temp_message_tracking:
+                         moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
+                         if not moderacao_cog.temp_message_tracking[denuncia_id]:
+                             moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
             
             # Verifica se ainda há vagas para esta denúncia
             count_query = """
@@ -167,25 +181,39 @@ class ReportView(ui.View):
     async def _handle_dispensar(self, interaction: discord.Interaction):
         """Processa a dispensa de uma denúncia"""
         try:
-            # Atualiza o status da mensagem para "Dispensada" (se a tabela existir)
-            table_exists_query = """
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
-                    AND table_name = 'mensagens_guardioes'
-                )
-            """
-            table_exists = db_manager.execute_scalar_sync(table_exists_query)
-            
-            if table_exists:
-                update_msg_query = """
-                    UPDATE mensagens_guardioes 
-                    SET status = 'Dispensada' 
-                    WHERE id_guardiao = $1 AND id_denuncia = (
-                        SELECT id FROM denuncias WHERE hash_denuncia = $2
-                    ) AND status = 'Enviada'
-                """
-                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+             # Atualiza o status da mensagem para "Dispensada" (se a tabela existir)
+             table_exists_query = """
+                 SELECT EXISTS (
+                     SELECT FROM information_schema.tables 
+                     WHERE table_schema = 'public' 
+                     AND table_name = 'mensagens_guardioes'
+                 )
+             """
+             table_exists = db_manager.execute_scalar_sync(table_exists_query)
+             
+             if table_exists:
+                 update_msg_query = """
+                     UPDATE mensagens_guardioes 
+                     SET status = 'Dispensada' 
+                     WHERE id_guardiao = $1 AND id_denuncia = (
+                         SELECT id FROM denuncias WHERE hash_denuncia = $2
+                     ) AND status = 'Enviada'
+                 """
+                 db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+             else:
+                 # Remove do cache temporário quando dispensa
+                 denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
+                 denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
+                 
+                 # Acessa o cog para limpar o cache
+                 from main import bot
+                 moderacao_cog = bot.get_cog('ModeracaoCog')
+                 if moderacao_cog and denuncia_id:
+                     # Remove do cache de tracking (para não tentar deletar depois)
+                     if denuncia_id in moderacao_cog.temp_message_tracking:
+                         moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
+                         if not moderacao_cog.temp_message_tracking[denuncia_id]:
+                             moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
             
             # Define o cooldown de dispensa
             cooldown_time = datetime.utcnow() + timedelta(minutes=DISPENSE_COOLDOWN_MINUTES)
@@ -595,6 +623,8 @@ class ModeracaoCog(commands.Cog):
         self.bot = bot
         # Cache temporário para controlar spam quando tabela não existe
         self.temp_message_cache = {}  # {denuncia_id: {guardiao_id: timestamp}}
+        # Cache para rastrear mensagens enviadas e seus IDs para timeout
+        self.temp_message_tracking = {}  # {denuncia_id: {guardiao_id: {'message_id': int, 'timestamp': datetime, 'user_id': int}}}
         self.distribution_loop.start()
         self.timeout_check.start()
         self.inactivity_check.start()
@@ -961,15 +991,103 @@ class ModeracaoCog(commands.Cog):
                 db_manager.execute_command_sync(
                     insert_query, denuncia['id'], guardian_id, message.id, timeout_time
                 )
-            else:
-                # Registra no cache temporário para evitar spam
-                current_time = datetime.utcnow()
-                if denuncia['id'] not in self.temp_message_cache:
-                    self.temp_message_cache[denuncia['id']] = {}
-                self.temp_message_cache[denuncia['id']][guardian_id] = current_time
+             else:
+                 # Registra no cache temporário para evitar spam
+                 current_time = datetime.utcnow()
+                 if denuncia['id'] not in self.temp_message_cache:
+                     self.temp_message_cache[denuncia['id']] = {}
+                 self.temp_message_cache[denuncia['id']][guardian_id] = current_time
+                 
+                 # Registra também no tracking para poder deletar depois (timeout de 5 minutos)
+                 if denuncia['id'] not in self.temp_message_tracking:
+                     self.temp_message_tracking[denuncia['id']] = {}
+                 self.temp_message_tracking[denuncia['id']][guardian_id] = {
+                     'message_id': message.id,
+                     'timestamp': current_time,
+                     'user_id': guardian_id
+                 }
             
         except Exception as e:
             logger.error(f"Erro ao enviar denúncia para guardião {guardian_id}: {e}")
+    
+    async def _process_temp_timeout_messages(self):
+        """Processa mensagens que expiraram usando o cache temporário"""
+        try:
+            if not self.temp_message_tracking:
+                return
+            
+            current_time = datetime.utcnow()
+            expired_messages = []
+            
+            # Busca mensagens que expiraram (5 minutos)
+            for denuncia_id, guardians in self.temp_message_tracking.items():
+                for guardian_id, msg_data in guardians.items():
+                    time_diff = (current_time - msg_data['timestamp']).total_seconds()
+                    if time_diff > 300:  # 5 minutos em segundos
+                        expired_messages.append({
+                            'denuncia_id': denuncia_id,
+                            'guardian_id': guardian_id,
+                            'message_id': msg_data['message_id'],
+                            'user_id': msg_data['user_id']
+                        })
+            
+            # Processa mensagens expiradas
+            cleaned_tracking = {}
+            cleaned_cache = {}
+            
+            for msg_data in expired_messages:
+                try:
+                    # Tenta deletar a mensagem
+                    user = self.bot.get_user(msg_data['user_id'])
+                    if user:
+                        try:
+                            channel = user.dm_channel
+                            if not channel:
+                                channel = await user.create_dm()
+                            
+                            message = await channel.fetch_message(msg_data['message_id'])
+                            await message.delete()
+                            logger.info(f"Mensagem {msg_data['message_id']} deletada por timeout (guardião {msg_data['guardian_id']})")
+                            
+                        except discord.NotFound:
+                            pass  # Mensagem já foi deletada
+                        except Exception as e:
+                            logger.warning(f"Erro ao deletar mensagem {msg_data['message_id']}: {e}")
+                    
+                except Exception as e:
+                    logger.error(f"Erro ao processar mensagem expirada: {e}")
+            
+            # Limpa os caches removendo mensagens expiradas
+            for denuncia_id, guardians in self.temp_message_tracking.items():
+                cleaned_guardians = {}
+                for guardian_id, msg_data in guardians.items():
+                    time_diff = (current_time - msg_data['timestamp']).total_seconds()
+                    if time_diff <= 300:  # Mantém apenas mensagens não expiradas
+                        cleaned_guardians[guardian_id] = msg_data
+                
+                if cleaned_guardians:
+                    cleaned_tracking[denuncia_id] = cleaned_guardians
+            
+            # Limpa também o cache de spam
+            for denuncia_id, guardians in self.temp_message_cache.items():
+                cleaned_guardians = {}
+                for guardian_id, timestamp in guardians.items():
+                    time_diff = (current_time - timestamp).total_seconds()
+                    if time_diff <= 600:  # Mantém por 10 minutos para evitar spam
+                        cleaned_guardians[guardian_id] = timestamp
+                
+                if cleaned_guardians:
+                    cleaned_cache[denuncia_id] = cleaned_guardians
+            
+            # Atualiza os caches
+            self.temp_message_tracking = cleaned_tracking
+            self.temp_message_cache = cleaned_cache
+            
+            if expired_messages:
+                logger.info(f"Processadas {len(expired_messages)} mensagens expiradas do cache temporário")
+                
+        except Exception as e:
+            logger.error(f"Erro ao processar timeout de mensagens temporárias: {e}")
     
     @tasks.loop(minutes=1)
     async def timeout_check(self):
@@ -986,12 +1104,14 @@ class ModeracaoCog(commands.Cog):
                     AND table_name = 'mensagens_guardioes'
                 )
             """
-            table_exists = db_manager.execute_scalar_sync(table_exists_query)
-            
-            if not table_exists:
-                return  # Não faz nada se a tabela não existir
-            
-            # Busca mensagens expiradas
+             table_exists = db_manager.execute_scalar_sync(table_exists_query)
+             
+             if not table_exists:
+                 # Processa mensagens expiradas do cache temporário
+                 await self._process_temp_timeout_messages()
+                 return
+             
+             # Busca mensagens expiradas
             expired_query = """
                 SELECT * FROM mensagens_guardioes 
                 WHERE status = 'Enviada' AND timeout_expira <= NOW()
