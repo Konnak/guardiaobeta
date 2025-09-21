@@ -44,39 +44,39 @@ class ReportView(ui.View):
         try:
             logger.info(f"Guardian {interaction.user.id} tentando atender denúncia {self.hash_denuncia}")
             
-             # Atualiza o status da mensagem para "Atendida" (se a tabela existir)
-             table_exists_query = """
-                 SELECT EXISTS (
-                     SELECT FROM information_schema.tables 
-                     WHERE table_schema = 'public' 
-                     AND table_name = 'mensagens_guardioes'
-                 )
-             """
-             table_exists = db_manager.execute_scalar_sync(table_exists_query)
-             
-             if table_exists:
-                 update_msg_query = """
-                     UPDATE mensagens_guardioes 
-                     SET status = 'Atendida' 
-                     WHERE id_guardiao = $1 AND id_denuncia = (
-                         SELECT id FROM denuncias WHERE hash_denuncia = $2
-                     ) AND status = 'Enviada'
-                 """
-                 db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
-             else:
-                 # Remove do cache temporário quando atende
-                 denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
-                 denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
-                 
-                 # Acessa o cog para limpar o cache
-                 from main import bot
-                 moderacao_cog = bot.get_cog('ModeracaoCog')
-                 if moderacao_cog and denuncia_id:
-                     # Remove do cache de tracking (para não tentar deletar depois)
-                     if denuncia_id in moderacao_cog.temp_message_tracking:
-                         moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
-                         if not moderacao_cog.temp_message_tracking[denuncia_id]:
-                             moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
+            # Atualiza o status da mensagem para "Atendida" (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                update_msg_query = """
+                    UPDATE mensagens_guardioes 
+                    SET status = 'Atendida' 
+                    WHERE id_guardiao = $1 AND id_denuncia = (
+                        SELECT id FROM denuncias WHERE hash_denuncia = $2
+                    ) AND status = 'Enviada'
+                """
+                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            else:
+                # Remove do cache temporário quando atende
+                denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
+                denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
+                
+                # Acessa o cog para limpar o cache
+                from main import bot
+                moderacao_cog = bot.get_cog('ModeracaoCog')
+                if moderacao_cog and denuncia_id:
+                    # Remove do cache de tracking (para não tentar deletar depois)
+                    if denuncia_id in moderacao_cog.temp_message_tracking:
+                        moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
+                        if not moderacao_cog.temp_message_tracking[denuncia_id]:
+                            moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
             
             # Verifica se ainda há vagas para esta denúncia
             count_query = """
@@ -181,39 +181,39 @@ class ReportView(ui.View):
     async def _handle_dispensar(self, interaction: discord.Interaction):
         """Processa a dispensa de uma denúncia"""
         try:
-             # Atualiza o status da mensagem para "Dispensada" (se a tabela existir)
-             table_exists_query = """
-                 SELECT EXISTS (
-                     SELECT FROM information_schema.tables 
-                     WHERE table_schema = 'public' 
-                     AND table_name = 'mensagens_guardioes'
-                 )
-             """
-             table_exists = db_manager.execute_scalar_sync(table_exists_query)
-             
-             if table_exists:
-                 update_msg_query = """
-                     UPDATE mensagens_guardioes 
-                     SET status = 'Dispensada' 
-                     WHERE id_guardiao = $1 AND id_denuncia = (
-                         SELECT id FROM denuncias WHERE hash_denuncia = $2
-                     ) AND status = 'Enviada'
-                 """
-                 db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
-             else:
-                 # Remove do cache temporário quando dispensa
-                 denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
-                 denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
-                 
-                 # Acessa o cog para limpar o cache
-                 from main import bot
-                 moderacao_cog = bot.get_cog('ModeracaoCog')
-                 if moderacao_cog and denuncia_id:
-                     # Remove do cache de tracking (para não tentar deletar depois)
-                     if denuncia_id in moderacao_cog.temp_message_tracking:
-                         moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
-                         if not moderacao_cog.temp_message_tracking[denuncia_id]:
-                             moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
+            # Atualiza o status da mensagem para "Dispensada" (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                update_msg_query = """
+                    UPDATE mensagens_guardioes 
+                    SET status = 'Dispensada' 
+                    WHERE id_guardiao = $1 AND id_denuncia = (
+                        SELECT id FROM denuncias WHERE hash_denuncia = $2
+                    ) AND status = 'Enviada'
+                """
+                db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            else:
+                # Remove do cache temporário quando dispensa
+                denuncia_id_query = "SELECT id FROM denuncias WHERE hash_denuncia = $1"
+                denuncia_id = db_manager.execute_scalar_sync(denuncia_id_query, self.hash_denuncia)
+                
+                # Acessa o cog para limpar o cache
+                from main import bot
+                moderacao_cog = bot.get_cog('ModeracaoCog')
+                if moderacao_cog and denuncia_id:
+                    # Remove do cache de tracking (para não tentar deletar depois)
+                    if denuncia_id in moderacao_cog.temp_message_tracking:
+                        moderacao_cog.temp_message_tracking[denuncia_id].pop(interaction.user.id, None)
+                        if not moderacao_cog.temp_message_tracking[denuncia_id]:
+                            moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
             
             # Define o cooldown de dispensa
             cooldown_time = datetime.utcnow() + timedelta(minutes=DISPENSE_COOLDOWN_MINUTES)
