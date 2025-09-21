@@ -1104,14 +1104,14 @@ class ModeracaoCog(commands.Cog):
                     AND table_name = 'mensagens_guardioes'
                 )
             """
-             table_exists = db_manager.execute_scalar_sync(table_exists_query)
-             
-             if not table_exists:
-                 # Processa mensagens expiradas do cache temporário
-                 await self._process_temp_timeout_messages()
-                 return
-             
-             # Busca mensagens expiradas
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if not table_exists:
+                # Processa mensagens expiradas do cache temporário
+                await self._process_temp_timeout_messages()
+                return
+            
+            # Busca mensagens expiradas
             expired_query = """
                 SELECT * FROM mensagens_guardioes 
                 WHERE status = 'Enviada' AND timeout_expira <= NOW()
