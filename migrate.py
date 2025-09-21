@@ -9,6 +9,7 @@ import asyncpg
 import os
 import sys
 from datetime import datetime
+from config import POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
 
 # SQL da migração
 MIGRATION_SQL = """
@@ -36,17 +37,25 @@ COMMENT ON TABLE mensagens_guardioes IS 'Rastreamento de mensagens enviadas aos 
 async def run_migration():
     """Executa a migração da tabela mensagens_guardioes"""
     try:
-        # Pega a URL do banco das variáveis de ambiente
-        database_url = os.getenv('DATABASE_URL')
-        if not database_url:
-            print("❌ Erro: Variável DATABASE_URL não encontrada!")
+        # Verifica se as configurações estão disponíveis
+        if not all([POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB]):
+            print("❌ Erro: Configurações do banco de dados não encontradas!")
             print("Certifique-se de que as variáveis de ambiente estão configuradas.")
             return False
         
         print("🔄 Conectando ao banco de dados...")
+        print(f"   Host: {POSTGRES_HOST}:{POSTGRES_PORT}")
+        print(f"   Database: {POSTGRES_DB}")
+        print(f"   User: {POSTGRES_USER}")
         
-        # Conecta ao banco
-        conn = await asyncpg.connect(database_url)
+        # Conecta ao banco usando as configurações do sistema
+        conn = await asyncpg.connect(
+            host=POSTGRES_HOST,
+            port=int(POSTGRES_PORT),
+            database=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD
+        )
         
         print("✅ Conectado com sucesso!")
         print("🔄 Executando migração...")
