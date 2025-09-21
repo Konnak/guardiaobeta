@@ -74,6 +74,17 @@ CREATE TABLE IF NOT EXISTS configuracoes_servidor (
     duracao_grave_4plus INTEGER DEFAULT 24 NOT NULL
 );
 
+-- Tabela para rastrear mensagens enviadas aos guardiões
+CREATE TABLE IF NOT EXISTS mensagens_guardioes (
+    id SERIAL PRIMARY KEY,
+    id_denuncia INTEGER NOT NULL REFERENCES denuncias(id) ON DELETE CASCADE,
+    id_guardiao BIGINT NOT NULL REFERENCES usuarios(id_discord) ON DELETE CASCADE,
+    id_mensagem BIGINT NOT NULL,
+    data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    timeout_expira TIMESTAMP NOT NULL,
+    status VARCHAR(20) DEFAULT 'Enviada' NOT NULL
+);
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_usuarios_categoria ON usuarios(categoria);
 CREATE INDEX IF NOT EXISTS idx_usuarios_em_servico ON usuarios(em_servico);
@@ -84,6 +95,10 @@ CREATE INDEX IF NOT EXISTS idx_votos_denuncia ON votos_guardioes(id_denuncia);
 CREATE INDEX IF NOT EXISTS idx_votos_guardiao ON votos_guardioes(id_guardiao);
 CREATE INDEX IF NOT EXISTS idx_mensagens_denuncia ON mensagens_capturadas(id_denuncia);
 CREATE INDEX IF NOT EXISTS idx_servidores_premium_fim ON servidores_premium(data_fim);
+CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_denuncia ON mensagens_guardioes(id_denuncia);
+CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_guardiao ON mensagens_guardioes(id_guardiao);
+CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_timeout ON mensagens_guardioes(timeout_expira);
+CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_status ON mensagens_guardioes(status);
 
 -- Comentários nas tabelas
 COMMENT ON TABLE usuarios IS 'Tabela de usuários do sistema Guardião BETA';
@@ -92,6 +107,7 @@ COMMENT ON TABLE mensagens_capturadas IS 'Mensagens capturadas durante as denún
 COMMENT ON TABLE votos_guardioes IS 'Votos dos guardiões nas denúncias';
 COMMENT ON TABLE servidores_premium IS 'Servidores com assinatura premium';
 COMMENT ON TABLE configuracoes_servidor IS 'Configurações personalizadas dos servidores premium';
+COMMENT ON TABLE mensagens_guardioes IS 'Rastreamento de mensagens enviadas aos guardiões';
 
 -- Dados iniciais (opcional)
 -- Você pode adicionar dados de teste aqui se necessário
@@ -103,5 +119,5 @@ SELECT
     tableowner
 FROM pg_tables 
 WHERE schemaname = 'public' 
-    AND tablename IN ('usuarios', 'denuncias', 'mensagens_capturadas', 'votos_guardioes', 'servidores_premium', 'configuracoes_servidor')
+    AND tablename IN ('usuarios', 'denuncias', 'mensagens_capturadas', 'votos_guardioes', 'servidores_premium', 'configuracoes_servidor', 'mensagens_guardioes')
 ORDER BY tablename;

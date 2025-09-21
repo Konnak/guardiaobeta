@@ -121,6 +121,22 @@ class ConfiguracaoServidor(Base):
         return f"<ConfiguracaoServidor(servidor={self.id_servidor})>"
 
 
+class MensagemGuardiao(Base):
+    """Tabela para rastrear mensagens enviadas aos guardiões"""
+    __tablename__ = 'mensagens_guardioes'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='ID único da mensagem')
+    id_denuncia = Column(Integer, ForeignKey('denuncias.id'), nullable=False, comment='ID da denúncia relacionada')
+    id_guardiao = Column(BigInteger, ForeignKey('usuarios.id_discord'), nullable=False, comment='ID do guardião')
+    id_mensagem = Column(BigInteger, nullable=False, comment='ID da mensagem no Discord')
+    data_envio = Column(DateTime, default=func.current_timestamp(), nullable=False, comment='Data de envio')
+    timeout_expira = Column(DateTime, nullable=False, comment='Quando expira o timeout de 5 minutos')
+    status = Column(String(20), default='Enviada', nullable=False, comment='Status: Enviada, Atendida, Dispensada, Expirada')
+    
+    def __repr__(self):
+        return f"<MensagemGuardiao(denuncia={self.id_denuncia}, guardiao={self.id_guardiao}, status='{self.status}')>"
+
+
 # Lista de todas as tabelas para facilitar operações
 TABELAS = [
     Usuario,
@@ -128,5 +144,6 @@ TABELAS = [
     MensagemCapturada,
     VotoGuardaio,
     ServidorPremium,
-    ConfiguracaoServidor
+    ConfiguracaoServidor,
+    MensagemGuardiao
 ]

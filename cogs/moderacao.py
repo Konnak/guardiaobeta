@@ -44,6 +44,16 @@ class ReportView(ui.View):
         try:
             logger.info(f"Guardian {interaction.user.id} tentando atender denúncia {self.hash_denuncia}")
             
+            # Atualiza o status da mensagem para "Atendida"
+            update_msg_query = """
+                UPDATE mensagens_guardioes 
+                SET status = 'Atendida' 
+                WHERE id_guardiao = $1 AND id_denuncia = (
+                    SELECT id FROM denuncias WHERE hash_denuncia = $2
+                ) AND status = 'Enviada'
+            """
+            db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            
             # Verifica se ainda há vagas para esta denúncia
             count_query = """
                 SELECT COUNT(*) FROM votos_guardioes 
@@ -71,44 +81,26 @@ class ReportView(ui.View):
             """
             denuncia = db_manager.execute_one_sync(denuncia_query, self.hash_denuncia)
             
-            # Debug: verifica se a denúncia existe sem JOINs
             if not denuncia:
-                # Tenta buscar apenas a denúncia sem JOINs para debug
+                # Fallback: busca sem JOINs
                 simple_query = "SELECT * FROM denuncias WHERE hash_denuncia = $1"
                 simple_denuncia = db_manager.execute_one_sync(simple_query, self.hash_denuncia)
                 
                 if simple_denuncia:
-                    logger.error(f"Denúncia encontrada sem JOINs: {simple_denuncia}")
-                    # Busca os usuários separadamente
-                    denunciante = db_manager.execute_one_sync(
-                        "SELECT username FROM usuarios WHERE id_discord = $1", 
-                        simple_denuncia['id_denunciante']
-                    )
-                    denunciado = db_manager.execute_one_sync(
-                        "SELECT username FROM usuarios WHERE id_discord = $1", 
-                        simple_denuncia['id_denunciado']
-                    )
-                    
-                    logger.info(f"Denunciante {simple_denuncia['id_denunciante']}: {denunciante}")
-                    logger.info(f"Denunciado {simple_denuncia['id_denunciado']}: {denunciado}")
-                    
-                    # Cria o objeto denúncia manualmente
                     denuncia = simple_denuncia.copy()
-                    denuncia['denunciante_name'] = denunciante['username'] if denunciante else f'Usuário {simple_denuncia["id_denunciante"]}'
-                    denuncia['denunciado_name'] = denunciado['username'] if denunciado else f'Usuário {simple_denuncia["id_denunciado"]}'
+                    denuncia['denunciante_name'] = f'Usuário {simple_denuncia["id_denunciante"]}'
+                    denuncia['denunciado_name'] = f'Usuário {simple_denuncia["id_denunciado"]}'
                 else:
-                    logger.error(f"Denúncia com hash {self.hash_denuncia} não encontrada no banco")
                     await interaction.response.send_message("Denúncia não encontrada.", ephemeral=True)
                     return
             
-            # Busca as mensagens capturadas (ordenadas do mais recente ao mais antigo)
+            # Busca as mensagens capturadas
             mensagens_query = """
                 SELECT * FROM mensagens_capturadas 
                 WHERE id_denuncia = $1 
                 ORDER BY timestamp_mensagem DESC
             """
             mensagens = db_manager.execute_query_sync(mensagens_query, denuncia['id'])
-            logger.info(f"Busca de mensagens para denúncia ID {denuncia['id']}: encontradas {len(mensagens) if mensagens else 0}")
             
             # Cria o embed com os detalhes da denúncia
             embed = discord.Embed(
@@ -129,71 +121,15 @@ class ReportView(ui.View):
             
             # Adiciona as mensagens capturadas (anonimizadas)
             if mensagens:
-                logger.info(f"Exibindo {len(mensagens)} mensagens capturadas")
-                logger.info(f"Chamando _anonymize_messages com denunciado ID: {denuncia['id_denunciado']}")
+                mensagens_anonimizadas = self._anonymize_messages(mensagens, denuncia['id_denunciado'])
                 
-                # Anonimização inline simples para teste
-                usuarios_unicos = {}
-                contador_usuario = 1
-                id_denunciado = denuncia['id_denunciado']
+                # Divide em chunks para não exceder limite do Discord
+                chunks = self._split_into_chunks(mensagens_anonimizadas, 1000)
                 
-                # Mapeia usuários únicos
-                for msg in mensagens:
-                    if msg['id_autor'] not in usuarios_unicos:
-                        if msg['id_autor'] == id_denunciado:
-                            usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
-                        else:
-                            usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
-                            contador_usuario += 1
-                
-                logger.info(f"Mapeamento de usuários: {usuarios_unicos}")
-                
-                # Processa mensagens (ordena do mais recente ao mais antigo)
-                mensagens_ordenadas = sorted(mensagens, key=lambda x: x['timestamp_mensagem'], reverse=True)
-                result = []
-                for msg in mensagens_ordenadas[:100]:  # Limite de 100 mensagens
-                    # Converte para horário de Brasília (UTC-3)
-                    timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
-                    timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
-                    
-                    autor = usuarios_unicos[msg['id_autor']]
-                    conteudo = msg['conteudo'][:150] + "..." if len(msg['conteudo']) > 150 else msg['conteudo']
-                    
-                    if msg['id_autor'] == id_denunciado:
-                        linha = f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**"
-                    else:
-                        linha = f"{autor} ({timestamp_formatado}): {conteudo}"
-                    
-                    result.append(linha)
-                    logger.info(f"Linha criada: {linha}")
-                
-                mensagens_anonimizadas = "\n\n".join(result)
-                logger.info(f"Resultado final: {mensagens_anonimizadas[:200]}...")
-                
-                # Divide as mensagens em chunks para evitar limite do Discord (1024 caracteres por field)
-                chunks = []
-                current_chunk = ""
-                
-                for linha in result:
-                    if len(current_chunk + linha + "\n\n") > 1000:  # Deixa margem de segurança
-                        chunks.append(current_chunk.strip())
-                        current_chunk = linha + "\n\n"
-                    else:
-                        current_chunk += linha + "\n\n"
-                
-                if current_chunk.strip():
-                    chunks.append(current_chunk.strip())
-                
-                # Adiciona cada chunk como um field separado
                 for i, chunk in enumerate(chunks):
-                    field_name = f"💬 Mensagens Capturadas" if i == 0 else f"💬 Mensagens Capturadas (continuação {i+1})"
-                    embed.add_field(
-                        name=field_name,
-                        value=chunk,
-                        inline=False
-                    )
+                    field_name = f"💬 Mensagens Capturadas" if i == 0 else f"💬 Mensagens (cont. {i+1})"
+                    embed.add_field(name=field_name, value=chunk, inline=False)
             else:
-                logger.info("Nenhuma mensagem capturada encontrada")
                 embed.add_field(
                     name="💬 Mensagens Capturadas",
                     value="Nenhuma mensagem foi encontrada no histórico das últimas 24 horas.",
@@ -214,9 +150,6 @@ class ReportView(ui.View):
             
             await interaction.response.edit_message(embed=embed, view=vote_view)
             
-            # Inicia o timer de 5 minutos
-            await self._start_vote_timer(interaction.user.id, self.hash_denuncia)
-            
         except Exception as e:
             logger.error(f"Erro ao atender denúncia: {e}")
             await interaction.response.send_message("Erro ao processar atendimento.", ephemeral=True)
@@ -224,6 +157,16 @@ class ReportView(ui.View):
     async def _handle_dispensar(self, interaction: discord.Interaction):
         """Processa a dispensa de uma denúncia"""
         try:
+            # Atualiza o status da mensagem para "Dispensada"
+            update_msg_query = """
+                UPDATE mensagens_guardioes 
+                SET status = 'Dispensada' 
+                WHERE id_guardiao = $1 AND id_denuncia = (
+                    SELECT id FROM denuncias WHERE hash_denuncia = $2
+                ) AND status = 'Enviada'
+            """
+            db_manager.execute_command_sync(update_msg_query, interaction.user.id, self.hash_denuncia)
+            
             # Define o cooldown de dispensa
             cooldown_time = datetime.utcnow() + timedelta(minutes=DISPENSE_COOLDOWN_MINUTES)
             query = "UPDATE usuarios SET cooldown_dispensa = $1 WHERE id_discord = $2"
@@ -248,58 +191,68 @@ class ReportView(ui.View):
     
     def _anonymize_messages(self, mensagens: List[Dict], id_denunciado: int) -> str:
         """Anonimiza as mensagens para proteção da privacidade"""
-        anonymized = []
-        
-        for msg in mensagens:
-            timestamp = msg['timestamp_mensagem'].strftime('%H:%M')
-            content = msg['conteudo']
-            
-            # Substitui menções por texto genérico
-            content = re.sub(r'<@!?\d+>', '[Usuário Alvo]' if msg['id_autor'] == id_denunciado else '[Outro Usuário]', content)
-            
-            # Destaca mensagens do denunciado
-            if msg['id_autor'] == id_denunciado:
-                content = f"**{content}**"
-            
-            anonymized.append(f"`{timestamp}` {content}")
-        
-        return "\n".join(anonymized[:10])  # Limita a 10 mensagens
-    
-    async def _start_vote_timer(self, user_id: int, hash_denuncia: str):
-        """Inicia o timer de 5 minutos para votação"""
         try:
-            await asyncio.sleep(VOTE_TIMEOUT_MINUTES * 60)
+            if not mensagens:
+                return "Nenhuma mensagem encontrada."
             
-            # Verifica se o usuário votou
-            vote_check = """
-                SELECT id FROM votos_guardioes 
-                WHERE id_guardiao = $1 AND id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $2)
-            """
-            vote_exists = db_manager.execute_scalar_sync(vote_check, user_id, hash_denuncia)
+            # Mapeia usuários únicos para nomes anônimos
+            usuarios_unicos = {}
+            contador_usuario = 1
             
-            if not vote_exists:
-                # Aplica penalidade por inatividade
-                await self._apply_inactivity_penalty(user_id)
+            for msg in mensagens:
+                if msg['id_autor'] not in usuarios_unicos:
+                    if msg['id_autor'] == id_denunciado:
+                        usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
+                    else:
+                        usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
+                        contador_usuario += 1
+            
+            result = []
+            for msg in mensagens[:15]:  # Limita a 15 mensagens
+                # Converte para horário de Brasília
+                timestamp_brasilia = msg['timestamp_mensagem'] - timedelta(hours=3)
+                timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
                 
+                autor = usuarios_unicos[msg['id_autor']]
+                conteudo = msg['conteudo'][:150] + "..." if len(msg['conteudo']) > 150 else msg['conteudo']
+                
+                # Remove menções para anonimização
+                conteudo = re.sub(r'<@!?\d+>', '[Usuário]', conteudo)
+                
+                if msg['id_autor'] == id_denunciado:
+                    linha = f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**"
+                else:
+                    linha = f"{autor} ({timestamp_formatado}): {conteudo}"
+                
+                result.append(linha)
+            
+            return "\n\n".join(result)
+            
         except Exception as e:
-            logger.error(f"Erro no timer de votação: {e}")
+            logger.error(f"Erro ao anonimizar mensagens: {e}")
+            return "Erro ao processar mensagens."
     
-    async def _apply_inactivity_penalty(self, user_id: int):
-        """Aplica penalidade por inatividade"""
-        try:
-            # Remove 5 pontos e define cooldown
-            penalty_time = datetime.utcnow() + timedelta(hours=INACTIVE_PENALTY_HOURS)
-            query = """
-                UPDATE usuarios 
-                SET pontos = pontos - 5, cooldown_inativo = $1 
-                WHERE id_discord = $2
-            """
-            db_manager.execute_command_sync(query, penalty_time, user_id)
-            
-            logger.info(f"Penalidade de inatividade aplicada ao usuário {user_id}")
-            
-        except Exception as e:
-            logger.error(f"Erro ao aplicar penalidade de inatividade: {e}")
+    def _split_into_chunks(self, text: str, max_length: int) -> List[str]:
+        """Divide o texto em chunks para não exceder o limite do Discord"""
+        if len(text) <= max_length:
+            return [text]
+        
+        chunks = []
+        lines = text.split('\n\n')
+        current_chunk = ""
+        
+        for line in lines:
+            if len(current_chunk + line + "\n\n") > max_length:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                current_chunk = line + "\n\n"
+            else:
+                current_chunk += line + "\n\n"
+        
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
+        
+        return chunks
 
 
 class VoteView(ui.View):
@@ -408,7 +361,8 @@ class VoteView(ui.View):
             await self._distribute_experience()
             
             # Envia DM para o denunciado com botão de apelação
-            await self._send_appeal_notification(result)
+            if result['punishment']:
+                await self._send_appeal_notification(result)
             
         except Exception as e:
             logger.error(f"Erro ao finalizar denúncia: {e}")
@@ -423,12 +377,21 @@ class VoteView(ui.View):
         if ok_votes >= 3:
             return {"type": "Improcedente", "punishment": False}
         
-        # 3 "Intimidou": Mute de 1 hora
-        if intimidou_votes >= 3 and grave_votes == 0:
+        # 4+ "Grave": Ban de 24 horas
+        if grave_votes >= 4:
             return {
-                "type": "Intimidou", 
+                "type": "Grave", 
                 "punishment": True, 
-                "duration": PUNISHMENT_RULES['intimidou_3'] * 3600
+                "duration": PUNISHMENT_RULES['grave_4_plus'] * 3600,
+                "is_ban": True
+            }
+        
+        # 3 "Grave": Mute de 12 horas
+        if grave_votes >= 3:
+            return {
+                "type": "Grave", 
+                "punishment": True, 
+                "duration": PUNISHMENT_RULES['grave_3'] * 3600
             }
         
         # 3 "Intimidou" + 2 "Grave": Mute de 6 horas
@@ -439,21 +402,12 @@ class VoteView(ui.View):
                 "duration": PUNISHMENT_RULES['intimidou_grave'] * 3600
             }
         
-        # 3 "Grave": Mute de 12 horas
-        if grave_votes >= 3 and intimidou_votes < 3:
+        # 3 "Intimidou": Mute de 1 hora
+        if intimidou_votes >= 3:
             return {
-                "type": "Grave", 
+                "type": "Intimidou", 
                 "punishment": True, 
-                "duration": PUNISHMENT_RULES['grave_3'] * 3600
-            }
-        
-        # 4+ "Grave": Ban de 24 horas
-        if grave_votes >= 4:
-            return {
-                "type": "Grave", 
-                "punishment": True, 
-                "duration": PUNISHMENT_RULES['grave_4_plus'] * 3600,
-                "is_ban": True
+                "duration": PUNISHMENT_RULES['intimidou_3'] * 3600
             }
         
         # Caso não se encaixe em nenhuma regra, considera improcedente
@@ -472,8 +426,9 @@ class VoteView(ui.View):
             if not denuncia:
                 return
             
-            # Busca o servidor
-            guild = self.bot.get_guild(denuncia['id_servidor'])
+            # Busca o servidor através do bot
+            from main import bot  # Import local para evitar circular
+            guild = bot.get_guild(denuncia['id_servidor'])
             if not guild:
                 logger.warning(f"Servidor {denuncia['id_servidor']} não encontrado")
                 return
@@ -485,13 +440,15 @@ class VoteView(ui.View):
                 return
             
             # Aplica a punição
+            duration_delta = timedelta(seconds=result['duration'])
+            
             if result.get('is_ban'):
-                # Ban temporário (não implementado no Discord, então usa timeout longo)
-                await member.timeout(discord.utils.timedelta(seconds=result['duration']))
-                logger.info(f"Ban aplicado para {member.display_name} por {result['duration']} segundos")
+                # Para bans temporários, usa timeout longo (Discord não tem ban temporário nativo)
+                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
+                logger.info(f"Ban (timeout) aplicado para {member.display_name} por {result['duration']} segundos")
             else:
-                # Timeout
-                await member.timeout(discord.utils.timedelta(seconds=result['duration']))
+                # Timeout normal
+                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
                 logger.info(f"Timeout aplicado para {member.display_name} por {result['duration']} segundos")
             
         except Exception as e:
@@ -537,30 +494,30 @@ class VoteView(ui.View):
                 return
             
             # Cria o embed de notificação
-            if result['punishment']:
-                embed = discord.Embed(
-                    title="⚖️ Punição Aplicada",
-                    description="Você recebeu uma punição baseada em denúncia da comunidade.",
-                    color=0xff0000
-                )
+            embed = discord.Embed(
+                title="⚖️ Punição Aplicada",
+                description="Você recebeu uma punição baseada em denúncia da comunidade.",
+                color=0xff0000
+            )
+            
+            duration_hours = result['duration'] // 3600
+            embed.add_field(
+                name="📋 Detalhes",
+                value=f"**Tipo:** {result['type']}\n"
+                      f"**Duração:** {duration_hours} horas\n"
+                      f"**Hash da Denúncia:** `{self.hash_denuncia}`",
+                inline=False
+            )
+            
+            # Cria view com botão de apelação
+            appeal_view = AppealView(self.hash_denuncia)
+            
+            # Envia DM para o usuário
+            from main import bot  # Import local para evitar circular
+            user = bot.get_user(denuncia['id_denunciado'])
+            if user:
+                await user.send(embed=embed, view=appeal_view)
                 
-                duration_hours = result['duration'] // 3600
-                embed.add_field(
-                    name="📋 Detalhes",
-                    value=f"**Tipo:** {result['type']}\n"
-                          f"**Duração:** {duration_hours} horas\n"
-                          f"**Hash da Denúncia:** `{self.hash_denuncia}`",
-                    inline=False
-                )
-                
-                # Cria view com botão de apelação
-                appeal_view = AppealView(self.hash_denuncia)
-                
-                # Envia DM para o usuário
-                user = self.bot.get_user(denuncia['id_denunciado'])
-                if user:
-                    await user.send(embed=embed, view=appeal_view)
-                    
         except Exception as e:
             logger.error(f"Erro ao enviar notificação de apelação: {e}")
 
@@ -605,6 +562,7 @@ class ModeracaoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.distribution_loop.start()
+        self.timeout_check.start()
         self.inactivity_check.start()
     
     @app_commands.command(
@@ -619,16 +577,6 @@ class ModeracaoCog(commands.Cog):
         Cria uma denúncia e inicia o processo de moderação comunitária
         """
         try:
-            # Verifica argumentos
-            if not usuario or not motivo:
-                embed = discord.Embed(
-                    title="❌ Uso Incorreto",
-                    description="Use: `!report @usuario motivo da denúncia`",
-                    color=0xff0000
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-            
             # Verifica se o banco de dados está disponível
             if not db_manager.pool:
                 db_manager.initialize_pool()
@@ -638,7 +586,7 @@ class ModeracaoCog(commands.Cog):
             if not user_data:
                 embed = discord.Embed(
                     title="❌ Usuário Não Cadastrado",
-                    description="Você precisa se cadastrar primeiro usando `!cadastro`!",
+                    description="Você precisa se cadastrar primeiro usando `/cadastro`!",
                     color=0xff0000
                 )
                 await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -678,21 +626,15 @@ class ModeracaoCog(commands.Cog):
                 interaction.user.id, usuario.id, motivo, is_premium
             )
             
-            # Resposta imediata para evitar timeout
+            # Resposta imediata
             embed_loading = discord.Embed(
                 title="🔄 Processando Denúncia...",
                 description=f"Capturando mensagens e criando denúncia...\n\n**Denunciado:** {usuario.display_name}\n**Motivo:** {motivo}",
                 color=0xffa500
             )
-            embed_loading.set_footer(text="Aguarde alguns segundos...")
+            await interaction.response.send_message(embed=embed_loading, ephemeral=True)
             
-            # Envia resposta imediata
-            try:
-                await interaction.response.send_message(embed=embed_loading, ephemeral=True)
-            except discord.NotFound:
-                await interaction.followup.send(embed=embed_loading, ephemeral=True)
-            
-            # Captura mensagens do histórico (processo demorado)
+            # Captura mensagens do histórico
             await self._capture_messages(interaction, usuario, denuncia_id)
             
             # Conta guardiões em serviço
@@ -735,14 +677,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            # Atualiza a mensagem original
-            try:
-                await interaction.edit_original_response(embed=embed)
-            except discord.NotFound:
-                try:
-                    await interaction.followup.send(embed=embed, ephemeral=True)
-                except discord.NotFound:
-                    pass
+            await interaction.edit_original_response(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -751,71 +686,32 @@ class ModeracaoCog(commands.Cog):
                 description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
                 color=0xff0000
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            try:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except:
+                await interaction.followup.send(embed=embed, ephemeral=True)
     
     async def _capture_messages(self, interaction: discord.Interaction, target_user: discord.Member, denuncia_id: int):
         """Captura mensagens do histórico do canal"""
         try:
             messages_captured = 0
-            total_messages_checked = 0
             
-            # Busca mensagens das últimas 24 horas (usando timezone UTC correto)
+            # Busca mensagens das últimas 24 horas
             now_utc = datetime.now(timezone.utc)
             cutoff_time = now_utc - timedelta(hours=24)
             
-            # Converte para horário de Brasília para logs
-            now_brasilia = now_utc - timedelta(hours=3)
-            cutoff_brasilia = cutoff_time - timedelta(hours=3)
+            # Coleta mensagens
+            messages = []
+            async for message in interaction.channel.history(limit=100, after=cutoff_time):
+                messages.append(message)
             
-            logger.info(f"Horário atual UTC: {now_utc}")
-            logger.info(f"Horário atual Brasília: {now_brasilia}")
-            logger.info(f"Capturando mensagens do canal desde {cutoff_time} (UTC)")
-            logger.info(f"Capturando mensagens do canal desde {cutoff_brasilia} (Brasília)")
-            logger.info(f"Data atual: {now_brasilia.date()}, Data cutoff: {cutoff_brasilia.date()}")
-            logger.info(f"Usuário denunciado: {target_user.id} ({target_user.display_name})")
-            logger.info(f"Usuário denunciante: {interaction.user.id} ({interaction.user.display_name})")
-            
-            # Primeiro, tenta capturar mensagens de hoje (20/09)
-            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-            today_messages = []
-            
-            logger.info(f"Buscando mensagens de hoje desde: {today_start}")
-            
-            # Coleta todas as mensagens de hoje
-            async for message in interaction.channel.history(limit=100, after=today_start):
-                today_messages.append(message)
-                if len(today_messages) >= 100:
-                    break
-            
-            logger.info(f"Encontradas {len(today_messages)} mensagens de hoje")
-            
-            # Se não há mensagens de hoje, busca mensagens de ontem
-            if not today_messages:
-                logger.info("Nenhuma mensagem de hoje encontrada, buscando mensagens de ontem...")
-                async for message in interaction.channel.history(limit=100, after=cutoff_time):
-                    today_messages.append(message)
-                    if len(today_messages) >= 100:
-                        break
-                logger.info(f"Encontradas {len(today_messages)} mensagens de ontem")
-            
-            # Inverte a ordem para mostrar da mais recente para a mais antiga
-            today_messages.reverse()
-            logger.info(f"Mensagens ordenadas da mais recente para a mais antiga")
+            # Ordena do mais recente ao mais antigo
+            messages.reverse()
             
             # Processa as mensagens encontradas
-            for message in today_messages:
-                total_messages_checked += 1
-                
-                # Log para debug das primeiras mensagens
-                if total_messages_checked <= 10:
-                    logger.info(f"Mensagem {total_messages_checked}: autor={message.author.id}, criada={message.created_at}, conteúdo='{message.content[:50]}...'")
-                    logger.info(f"Timestamp UTC: {message.created_at}, Timestamp Brasília: {message.created_at - timedelta(hours=3)}")
-                
-                # Captura mensagens de TODOS os usuários (não apenas denunciado/denunciante)
+            for message in messages:
                 # Prepara URLs dos anexos
-                attachment_urls = []
-                for attachment in message.attachments:
-                    attachment_urls.append(attachment.url)
+                attachment_urls = [attachment.url for attachment in message.attachments]
                 
                 # Insere a mensagem no banco
                 mensagem_query = """
@@ -831,76 +727,9 @@ class ModeracaoCog(commands.Cog):
                 messages_captured += 1
             
             logger.info(f"Capturadas {messages_captured} mensagens para denúncia {denuncia_id}")
-            logger.info(f"Total verificadas: {total_messages_checked}")
             
         except Exception as e:
             logger.error(f"Erro ao capturar mensagens: {e}")
-    
-    def _anonymize_messages(self, mensagens: List[Dict], id_denunciado: int) -> str:
-        """Anonimiza mensagens para exibição com horário de Brasília"""
-        try:
-            if not mensagens:
-                return "Nenhuma mensagem encontrada."
-            
-            logger.info(f"Iniciando anonimização de {len(mensagens)} mensagens para denunciado {id_denunciado}")
-            
-            # Mapeia usuários únicos para nomes anônimos
-            usuarios_unicos = {}
-            contador_usuario = 1
-            
-            # Primeiro, identifica todos os usuários únicos
-            for msg in mensagens:
-                if msg['id_autor'] not in usuarios_unicos:
-                    if msg['id_autor'] == id_denunciado:
-                        usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
-                        logger.info(f"Usuário {msg['id_autor']} mapeado como Denunciado")
-                    else:
-                        usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
-                        logger.info(f"Usuário {msg['id_autor']} mapeado como Usuário {contador_usuario}")
-                        contador_usuario += 1
-            
-            logger.info(f"Mapeamento de usuários: {usuarios_unicos}")
-            
-            result = []
-            for i, msg in enumerate(mensagens[:15]):  # Limita a 15 mensagens para não exceder o limite do Discord
-                logger.info(f"Processando mensagem {i+1}: {msg}")
-                
-                # Converte para horário de Brasília (UTC-3)
-                timestamp_original = msg['timestamp_mensagem']
-                timestamp_brasilia = timestamp_original - timedelta(hours=3)
-                timestamp_formatado = timestamp_brasilia.strftime('%H:%M')
-                
-                logger.info(f"Timestamp original: {timestamp_original}, Brasília: {timestamp_brasilia}, formatado: {timestamp_formatado}")
-                
-                # Pega o nome anônimo do autor
-                autor = usuarios_unicos[msg['id_autor']]
-                
-                # Limita o conteúdo da mensagem
-                conteudo = msg['conteudo'][:150] + "..." if len(msg['conteudo']) > 150 else msg['conteudo']
-                
-                # Destaque especial para o denunciado
-                if msg['id_autor'] == id_denunciado:
-                    linha = f"🔴 **{autor}** ({timestamp_formatado}): **{conteudo}**"
-                    result.append(linha)
-                    logger.info(f"Linha denunciado: {linha}")
-                else:
-                    linha = f"{autor} ({timestamp_formatado}): {conteudo}"
-                    result.append(linha)
-                    logger.info(f"Linha usuário: {linha}")
-                
-                # Adiciona anexos se existirem
-                if msg['anexos_urls']:
-                    result.append(f"📎 Anexos: {msg['anexos_urls']}")
-            
-            resultado_final = "\n\n".join(result)
-            logger.info(f"Resultado final da anonimização: {resultado_final}")
-            return resultado_final
-            
-        except Exception as e:
-            logger.error(f"Erro ao anonimizar mensagens: {e}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            return "Erro ao processar mensagens."
     
     @tasks.loop(seconds=10)
     async def distribution_loop(self):
@@ -909,16 +738,41 @@ class ModeracaoCog(commands.Cog):
             if not db_manager.pool:
                 return
             
-            # Busca denúncias pendentes (premium primeiro)
+            # Busca denúncias que precisam de mais votos (incluindo "Em Análise")
             denuncias_query = """
-                SELECT * FROM denuncias 
-                WHERE status = 'Pendente' 
-                ORDER BY e_premium DESC, data_criacao ASC
+                SELECT d.*, 
+                       COALESCE(v.votos_count, 0) as votos_atuais,
+                       COALESCE(m.mensagens_ativas, 0) as mensagens_ativas
+                FROM denuncias d
+                LEFT JOIN (
+                    SELECT id_denuncia, COUNT(*) as votos_count 
+                    FROM votos_guardioes 
+                    GROUP BY id_denuncia
+                ) v ON d.id = v.id_denuncia
+                LEFT JOIN (
+                    SELECT id_denuncia, COUNT(*) as mensagens_ativas 
+                    FROM mensagens_guardioes 
+                    WHERE status = 'Enviada' AND timeout_expira > NOW()
+                    GROUP BY id_denuncia
+                ) m ON d.id = m.id_denuncia
+                WHERE d.status IN ('Pendente', 'Em Análise', 'Apelada')
+                  AND COALESCE(v.votos_count, 0) < $1
+                  AND COALESCE(m.mensagens_ativas, 0) < $2
+                ORDER BY d.e_premium DESC, d.data_criacao ASC
                 LIMIT 1
             """
-            denuncia = db_manager.execute_one_sync(denuncias_query)
+            denuncia = db_manager.execute_one_sync(
+                denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
+            )
             
             if not denuncia:
+                return
+            
+            # Calcula quantos guardiões ainda precisamos
+            votos_necessarios = REQUIRED_VOTES_FOR_DECISION - denuncia['votos_atuais']
+            mensagens_necessarias = min(votos_necessarios, MAX_GUARDIANS_PER_REPORT - denuncia['mensagens_ativas'])
+            
+            if mensagens_necessarias <= 0:
                 return
             
             # Busca guardiões disponíveis
@@ -932,23 +786,28 @@ class ModeracaoCog(commands.Cog):
                     SELECT id_guardiao FROM votos_guardioes 
                     WHERE id_denuncia = $1
                 )
+                AND id_discord NOT IN (
+                    SELECT id_guardiao FROM mensagens_guardioes 
+                    WHERE id_denuncia = $1 AND status = 'Enviada' AND timeout_expira > NOW()
+                )
                 ORDER BY RANDOM()
                 LIMIT $2
             """
-            guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
+            guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
             
             if not guardians:
                 return
             
-            # Muda o status para "Em Análise"
-            update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
-            db_manager.execute_command_sync(update_query, denuncia['id'])
+            # Muda o status para "Em Análise" se ainda estiver pendente
+            if denuncia['status'] == 'Pendente':
+                update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
+                db_manager.execute_command_sync(update_query, denuncia['id'])
             
             # Envia para cada guardião
             for guardian_data in guardians:
                 await self._send_to_guardian(guardian_data['id_discord'], denuncia)
             
-            logger.info(f"Denúncia {denuncia['hash_denuncia']} enviada para {len(guardians)} guardiões")
+            logger.info(f"Denúncia {denuncia['hash_denuncia']} enviada para {len(guardians)} guardiões adicionais")
             
         except Exception as e:
             logger.error(f"Erro no loop de distribuição: {e}")
@@ -978,34 +837,136 @@ class ModeracaoCog(commands.Cog):
                 name="⚠️ Importante",
                 value="• Clique em **Atender** para analisar\n"
                       "• Clique em **Dispensar** se não puder analisar\n"
-                      "• Você tem 5 minutos para votar após atender",
+                      "• Você tem 5 minutos para votar após atender\n"
+                      "• A mensagem será removida em 5 minutos se não atendida",
                 inline=False
             )
             
             view = ReportView(denuncia['hash_denuncia'])
-            await user.send(embed=embed, view=view)
+            message = await user.send(embed=embed, view=view)
+            
+            # Registra a mensagem enviada
+            timeout_time = datetime.utcnow() + timedelta(minutes=VOTE_TIMEOUT_MINUTES)
+            insert_query = """
+                INSERT INTO mensagens_guardioes (
+                    id_denuncia, id_guardiao, id_mensagem, timeout_expira
+                ) VALUES ($1, $2, $3, $4)
+            """
+            db_manager.execute_command_sync(
+                insert_query, denuncia['id'], guardian_id, message.id, timeout_time
+            )
             
         except Exception as e:
             logger.error(f"Erro ao enviar denúncia para guardião {guardian_id}: {e}")
     
-    @tasks.loop(minutes=5)
-    async def inactivity_check(self):
-        """Verifica guardiões inativos e aplica penalidades"""
+    @tasks.loop(minutes=1)
+    async def timeout_check(self):
+        """Verifica mensagens que expiraram e as remove"""
         try:
             if not db_manager.pool:
                 return
             
-            # Busca guardiões que receberam denúncias mas não votaram
-            # Esta lógica seria mais complexa em um sistema real
-            # Por simplicidade, verificamos apenas cooldowns
+            # Busca mensagens expiradas
+            expired_query = """
+                SELECT * FROM mensagens_guardioes 
+                WHERE status = 'Enviada' AND timeout_expira <= NOW()
+            """
+            expired_messages = db_manager.execute_query_sync(expired_query)
             
-            logger.debug("Verificação de inatividade executada")
+            for msg_data in expired_messages:
+                try:
+                    # Busca o usuário e a mensagem
+                    user = self.bot.get_user(msg_data['id_guardiao'])
+                    if user:
+                        try:
+                            # Tenta buscar e deletar a mensagem
+                            channel = user.dm_channel
+                            if not channel:
+                                channel = await user.create_dm()
+                            
+                            message = await channel.fetch_message(msg_data['id_mensagem'])
+                            await message.delete()
+                            
+                        except discord.NotFound:
+                            pass  # Mensagem já foi deletada
+                        except Exception as e:
+                            logger.warning(f"Erro ao deletar mensagem {msg_data['id_mensagem']}: {e}")
+                    
+                    # Atualiza o status da mensagem
+                    update_query = """
+                        UPDATE mensagens_guardioes 
+                        SET status = 'Expirada' 
+                        WHERE id = $1
+                    """
+                    db_manager.execute_command_sync(update_query, msg_data['id'])
+                    
+                except Exception as e:
+                    logger.error(f"Erro ao processar mensagem expirada {msg_data['id']}: {e}")
+            
+            if expired_messages:
+                logger.info(f"Processadas {len(expired_messages)} mensagens expiradas")
+            
+        except Exception as e:
+            logger.error(f"Erro na verificação de timeout: {e}")
+    
+    @tasks.loop(minutes=5)
+    async def inactivity_check(self):
+        """Verifica guardiões inativos que atenderam mas não votaram"""
+        try:
+            if not db_manager.pool:
+                return
+            
+            # Busca guardiões que atenderam mas não votaram em 5 minutos
+            inactivity_query = """
+                SELECT DISTINCT mg.id_guardiao, mg.id_denuncia, d.hash_denuncia
+                FROM mensagens_guardioes mg
+                JOIN denuncias d ON mg.id_denuncia = d.id
+                WHERE mg.status = 'Atendida'
+                  AND mg.data_envio <= NOW() - INTERVAL '5 minutes'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM votos_guardioes vg 
+                      WHERE vg.id_guardiao = mg.id_guardiao 
+                        AND vg.id_denuncia = mg.id_denuncia
+                  )
+            """
+            inactive_guardians = db_manager.execute_query_sync(inactivity_query)
+            
+            for guardian_data in inactive_guardians:
+                try:
+                    # Aplica penalidade de inatividade
+                    penalty_time = datetime.utcnow() + timedelta(hours=INACTIVE_PENALTY_HOURS)
+                    penalty_query = """
+                        UPDATE usuarios 
+                        SET pontos = pontos - 5, cooldown_inativo = $1 
+                        WHERE id_discord = $2
+                    """
+                    db_manager.execute_command_sync(penalty_query, penalty_time, guardian_data['id_guardiao'])
+                    
+                    # Atualiza status da mensagem
+                    update_msg_query = """
+                        UPDATE mensagens_guardioes 
+                        SET status = 'Inativo' 
+                        WHERE id_guardiao = $1 AND id_denuncia = $2 AND status = 'Atendida'
+                    """
+                    db_manager.execute_command_sync(
+                        update_msg_query, guardian_data['id_guardiao'], guardian_data['id_denuncia']
+                    )
+                    
+                    logger.info(f"Penalidade de inatividade aplicada ao guardião {guardian_data['id_guardiao']}")
+                    
+                except Exception as e:
+                    logger.error(f"Erro ao aplicar penalidade de inatividade: {e}")
             
         except Exception as e:
             logger.error(f"Erro na verificação de inatividade: {e}")
     
     @distribution_loop.before_loop
     async def before_distribution_loop(self):
+        """Aguarda o bot estar pronto antes de iniciar o loop"""
+        await self.bot.wait_until_ready()
+    
+    @timeout_check.before_loop
+    async def before_timeout_check(self):
         """Aguarda o bot estar pronto antes de iniciar o loop"""
         await self.bot.wait_until_ready()
     
