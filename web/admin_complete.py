@@ -317,15 +317,23 @@ def setup_admin_complete(app):
     @app.route('/admin/reports')
     @admin_required_simple
     def admin_reports_list():
-        """Lista de denúncias"""
+        """Lista de denúncias com filtros avançados"""
         try:
             page = request.args.get('page', 1, type=int)
-            per_page = 25
+            per_page = request.args.get('per_page', 25, type=int)
             offset = (page - 1) * per_page
             
-            # Filtros
+            # Filtros avançados
             status = request.args.get('status', '')
             periodo = request.args.get('periodo', '')
+            hash_search = request.args.get('hash', '')
+            denunciado_search = request.args.get('denunciado', '')
+            denunciante_search = request.args.get('denunciante', '')
+            guardiao_search = request.args.get('guardiao', '')
+            motivo_search = request.args.get('motivo', '')
+            resultado = request.args.get('resultado', '')
+            premium = request.args.get('premium', '')
+            servidor_id = request.args.get('servidor', '')
             
             # Construir query
             where_conditions = []
@@ -339,18 +347,87 @@ def setup_admin_complete(app):
             
             if periodo:
                 param_count += 1
-                where_conditions.append(f"d.data_criacao >= NOW() - INTERVAL '{periodo} days'")
+                if periodo == 'hoje':
+                    where_conditions.append(f"d.data_criacao >= CURRENT_DATE")
+                elif periodo == 'semana':
+                    where_conditions.append(f"d.data_criacao >= NOW() - INTERVAL '7 days'")
+                elif periodo == 'mes':
+                    where_conditions.append(f"d.data_criacao >= NOW() - INTERVAL '30 days'")
+                elif periodo.isdigit():
+                    where_conditions.append(f"d.data_criacao >= NOW() - INTERVAL '{periodo} days'")
+            
+            if hash_search:
+                param_count += 1
+                where_conditions.append(f"d.hash_denuncia ILIKE ${param_count}")
+                params.append(f"%{hash_search}%")
+            
+            if denunciado_search:
+                param_count += 1
+                where_conditions.append(f"(u2.username ILIKE ${param_count} OR u2.display_name ILIKE ${param_count} OR d.id_denunciado::text ILIKE ${param_count})")
+                params.append(f"%{denunciado_search}%")
+            
+            if denunciante_search:
+                param_count += 1
+                where_conditions.append(f"(u1.username ILIKE ${param_count} OR u1.display_name ILIKE ${param_count} OR d.id_denunciante::text ILIKE ${param_count})")
+                params.append(f"%{denunciante_search}%")
+            
+            if motivo_search:
+                param_count += 1
+                where_conditions.append(f"d.motivo ILIKE ${param_count}")
+                params.append(f"%{motivo_search}%")
+            
+            if resultado:
+                param_count += 1
+                where_conditions.append(f"d.resultado_final = ${param_count}")
+                params.append(resultado)
+            
+            if premium:
+                param_count += 1
+                where_conditions.append(f"d.e_premium = ${param_count}")
+                params.append(premium == 'true')
+            
+            if servidor_id:
+                param_count += 1
+                where_conditions.append(f"d.id_servidor = ${param_count}")
+                params.append(int(servidor_id))
+            
+            # Filtro por guardião que votou
+            if guardiao_search:
+                param_count += 1
+                where_conditions.append(f"""
+                    d.id IN (
+                        SELECT vg.id_denuncia FROM votos_guardioes vg
+                        JOIN usuarios ug ON vg.id_guardiao = ug.id_discord
+                        WHERE ug.username ILIKE ${param_count} OR ug.display_name ILIKE ${param_count} OR vg.id_guardiao::text ILIKE ${param_count}
+                    )
+                """)
+                params.append(f"%{guardiao_search}%")
             
             where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
             
-            # Query principal
+            # Query principal com contagem de votos
             reports_query = f"""
                 SELECT d.*, 
                        u1.username as denunciante_username,
-                       u2.username as denunciado_username
+                       u1.display_name as denunciante_display,
+                       u2.username as denunciado_username,
+                       u2.display_name as denunciado_display,
+                       COALESCE(v.votos_count, 0) as total_votos,
+                       COALESCE(v.votos_ok, 0) as votos_ok,
+                       COALESCE(v.votos_intimidou, 0) as votos_intimidou,
+                       COALESCE(v.votos_grave, 0) as votos_grave
                 FROM denuncias d
                 LEFT JOIN usuarios u1 ON d.id_denunciante = u1.id_discord
                 LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
+                LEFT JOIN (
+                    SELECT id_denuncia,
+                           COUNT(*) as votos_count,
+                           COUNT(CASE WHEN voto = 'OK!' THEN 1 END) as votos_ok,
+                           COUNT(CASE WHEN voto = 'Intimidou' THEN 1 END) as votos_intimidou,
+                           COUNT(CASE WHEN voto = 'Grave' THEN 1 END) as votos_grave
+                    FROM votos_guardioes 
+                    GROUP BY id_denuncia
+                ) v ON d.id = v.id_denuncia
                 {where_clause}
                 ORDER BY d.data_criacao DESC 
                 LIMIT ${param_count + 1} OFFSET ${param_count + 2}
@@ -360,18 +437,48 @@ def setup_admin_complete(app):
             reports = db_manager.execute_query_sync(reports_query, *params) if db_manager else []
             
             # Total para paginação
-            count_query = f"SELECT COUNT(*) as total FROM denuncias d {where_clause}"
+            count_query = f"""
+                SELECT COUNT(DISTINCT d.id) as total 
+                FROM denuncias d
+                LEFT JOIN usuarios u1 ON d.id_denunciante = u1.id_discord
+                LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
+                {where_clause}
+            """
             count_params = params[:-2]
             total = db_manager.execute_one_sync(count_query, *count_params) if db_manager else {'total': 0}
             total_reports = total['total']
             total_pages = max(1, (total_reports + per_page - 1) // per_page)
             
-            return render_template('admin/reports_list.html',
+            # Estatísticas dos filtros aplicados
+            stats_query = f"""
+                SELECT 
+                    COUNT(DISTINCT d.id) as total_filtrado,
+                    COUNT(CASE WHEN d.status = 'Pendente' THEN 1 END) as pendentes,
+                    COUNT(CASE WHEN d.status = 'Em Análise' THEN 1 END) as em_analise,
+                    COUNT(CASE WHEN d.status = 'Finalizada' THEN 1 END) as finalizadas,
+                    COUNT(CASE WHEN d.e_premium = true THEN 1 END) as premium_count
+                FROM denuncias d
+                LEFT JOIN usuarios u1 ON d.id_denunciante = u1.id_discord
+                LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
+                {where_clause}
+            """
+            filter_stats = db_manager.execute_one_sync(stats_query, *count_params) if db_manager else {}
+            
+            filters = {
+                'status': status, 'periodo': periodo, 'hash': hash_search,
+                'denunciado': denunciado_search, 'denunciante': denunciante_search,
+                'guardiao': guardiao_search, 'motivo': motivo_search,
+                'resultado': resultado, 'premium': premium, 'servidor': servidor_id
+            }
+            
+            return render_template('admin/reports_list_enhanced.html',
                                  reports=reports,
                                  page=page,
                                  total_pages=total_pages,
                                  total_reports=total_reports,
-                                 filters={'status': status, 'periodo': periodo})
+                                 per_page=per_page,
+                                 filters=filters,
+                                 filter_stats=filter_stats or {})
             
         except Exception as e:
             logger.error(f"Erro ao listar denúncias: {e}")
@@ -414,7 +521,7 @@ def setup_admin_complete(app):
                 ORDER BY m.timestamp_mensagem
             """, report_id) if db_manager else []
             
-            return render_template('admin/report_detail.html',
+            return render_template('admin/report_detail_enhanced.html',
                                  report=report,
                                  votes=votes,
                                  messages=messages)
@@ -422,6 +529,129 @@ def setup_admin_complete(app):
         except Exception as e:
             logger.error(f"Erro ao buscar denúncia: {e}")
             return f"<h2>Erro: {e}</h2><a href='/admin/reports'>← Voltar</a>"
+    
+    @app.route('/admin/reports/<int:report_id>/delete', methods=['POST'])
+    @admin_required_simple
+    def admin_report_delete(report_id):
+        """Excluir uma denúncia"""
+        try:
+            # Verifica se a denúncia existe
+            report = db_manager.execute_one_sync("""
+                SELECT hash_denuncia, motivo FROM denuncias WHERE id = $1
+            """, report_id) if db_manager else None
+            
+            if not report:
+                flash('Denúncia não encontrada.', 'error')
+                return redirect(url_for('admin_reports_list'))
+            
+            # Exclui votos relacionados primeiro
+            db_manager.execute_command_sync("""
+                DELETE FROM votos_guardioes WHERE id_denuncia = $1
+            """, report_id)
+            
+            # Exclui mensagens capturadas
+            db_manager.execute_command_sync("""
+                DELETE FROM mensagens_capturadas WHERE id_denuncia = $1
+            """, report_id)
+            
+            # Exclui mensagens de guardiões (se a tabela existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                db_manager.execute_command_sync("""
+                    DELETE FROM mensagens_guardioes WHERE id_denuncia = $1
+                """, report_id)
+            
+            # Exclui a denúncia
+            db_manager.execute_command_sync("""
+                DELETE FROM denuncias WHERE id = $1
+            """, report_id)
+            
+            flash(f'Denúncia {report["hash_denuncia"]} excluída com sucesso.', 'success')
+            logger.info(f"Denúncia {report['hash_denuncia']} excluída pelo admin")
+            
+            return redirect(url_for('admin_reports_list'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao excluir denúncia: {e}")
+            flash(f'Erro ao excluir denúncia: {e}', 'error')
+            return redirect(url_for('admin_reports_list'))
+    
+    @app.route('/admin/reports/bulk-delete', methods=['POST'])
+    @admin_required_simple
+    def admin_reports_bulk_delete():
+        """Exclusão em massa de denúncias"""
+        try:
+            report_ids = request.form.getlist('report_ids')
+            
+            if not report_ids:
+                flash('Nenhuma denúncia selecionada.', 'warning')
+                return redirect(url_for('admin_reports_list'))
+            
+            # Converte para integers
+            report_ids = [int(rid) for rid in report_ids if rid.isdigit()]
+            
+            if not report_ids:
+                flash('IDs de denúncia inválidos.', 'error')
+                return redirect(url_for('admin_reports_list'))
+            
+            # Busca hashes das denúncias para log
+            hashes_query = f"""
+                SELECT hash_denuncia FROM denuncias 
+                WHERE id = ANY($1)
+            """
+            hashes = db_manager.execute_query_sync(hashes_query, report_ids) if db_manager else []
+            
+            # Exclui em ordem (relacionamentos primeiro)
+            placeholders = ','.join([f'${i+1}' for i in range(len(report_ids))])
+            
+            # Votos
+            db_manager.execute_command_sync(f"""
+                DELETE FROM votos_guardioes WHERE id_denuncia IN ({placeholders})
+            """, *report_ids)
+            
+            # Mensagens capturadas
+            db_manager.execute_command_sync(f"""
+                DELETE FROM mensagens_capturadas WHERE id_denuncia IN ({placeholders})
+            """, *report_ids)
+            
+            # Mensagens de guardiões (se existir)
+            table_exists_query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'mensagens_guardioes'
+                )
+            """
+            table_exists = db_manager.execute_scalar_sync(table_exists_query)
+            
+            if table_exists:
+                db_manager.execute_command_sync(f"""
+                    DELETE FROM mensagens_guardioes WHERE id_denuncia IN ({placeholders})
+                """, *report_ids)
+            
+            # Denúncias
+            db_manager.execute_command_sync(f"""
+                DELETE FROM denuncias WHERE id IN ({placeholders})
+            """, *report_ids)
+            
+            hash_list = [h['hash_denuncia'] for h in hashes]
+            flash(f'{len(report_ids)} denúncias excluídas com sucesso: {", ".join(hash_list[:5])}{"..." if len(hash_list) > 5 else ""}', 'success')
+            logger.info(f"{len(report_ids)} denúncias excluídas em massa pelo admin: {hash_list}")
+            
+            return redirect(url_for('admin_reports_list'))
+            
+        except Exception as e:
+            logger.error(f"Erro na exclusão em massa: {e}")
+            flash(f'Erro na exclusão em massa: {e}', 'error')
+            return redirect(url_for('admin_reports_list'))
     
     # ==================== GESTÃO DE SERVIDORES PREMIUM ====================
     @app.route('/admin/premium')

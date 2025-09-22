@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Denúncia {{ report.hash_denuncia }} - Admin Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+        
+        .breadcrumb {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover { text-decoration: underline; }
+        
+        .action-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #3498db;
+        }
+        
+        .info-card h3 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-item {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: #333;
+            text-align: right;
+            flex: 1;
+        }
+        
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-em-analise { background: #d1ecf1; color: #0c5460; }
+        .status-finalizada { background: #d4edda; color: #155724; }
+        .status-apelada { background: #f8d7da; color: #721c24; }
+        
+        .priority-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .priority-premium { background: #ffd700; color: #b8860b; }
+        .priority-normal { background: #e9ecef; color: #6c757d; }
+        
+        .hash-code {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .username {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .user-id {
+            font-size: 11px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+        
+        .votes-section, .messages-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .votes-section h3, .messages-section h3 {
+            margin: 0 0 25px 0;
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .vote-summary {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .vote-count {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .vote-count-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .vote-count-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .vote-ok .vote-count-number { color: #28a745; }
+        .vote-intimidou .vote-count-number { color: #ffc107; }
+        .vote-grave .vote-count-number { color: #dc3545; }
+        .vote-total .vote-count-number { color: #6c757d; }
+        
+        .vote-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid #28a745;
+            transition: transform 0.3s ease;
+        }
+        
+        .vote-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .vote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .vote-guardian {
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .guardian-name {
+            font-size: 16px;
+        }
+        
+        .guardian-id {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+        
+        .vote-value {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .vote-ok { background: #d4edda; color: #155724; }
+        .vote-intimidou { background: #fff3cd; color: #856404; }
+        .vote-grave { background: #f8d7da; color: #721c24; }
+        
+        .vote-time {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .message-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid #6c757d;
+            transition: transform 0.3s ease;
+        }
+        
+        .message-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-size: 16px;
+        }
+        
+        .author-id {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+        
+        .message-time {
+            color: #6c757d;
+            font-size: 13px;
+            text-align: right;
+        }
+        
+        .message-content {
+            color: #333;
+            line-height: 1.6;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+            word-wrap: break-word;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .no-data h4 {
+            margin-bottom: 10px;
+            color: #95a5a6;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+            .vote-header, .message-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .vote-summary { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Detalhes da Denúncia</h1>
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">Dashboard</a> / 
+                <a href="/admin/reports">Denúncias</a> / 
+                {{ report.hash_denuncia }}
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/admin/reports" class="btn btn-secondary">← Voltar</a>
+                <form method="POST" action="/admin/reports/{{ report.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta denúncia? Esta ação não pode ser desfeita.')">
+                    <button type="submit" class="btn btn-danger">🗑️ Excluir</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Report Information -->
+        <div class="info-grid">
+            <!-- Basic Info -->
+            <div class="info-card">
+                <h3>📋 Informações Básicas</h3>
+                
+                <div class="info-item">
+                    <span class="info-label">Hash:</span>
+                    <span class="info-value">
+                        <span class="hash-code">{{ report.hash_denuncia }}</span>
+                    </span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="status-badge status-{{ report.status.lower().replace(' ', '-') }}">
+                            {{ report.status }}
+                        </span>
+                    </span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Prioridade:</span>
+                    <span class="info-value">
+                        <span class="priority-badge priority-{{ 'premium' if report.e_premium else 'normal' }}">
+                            {{ '⭐ Premium' if report.e_premium else '📋 Normal' }}
+                        </span>
+                    </span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Data:</span>
+                    <span class="info-value">{{ report.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Servidor ID:</span>
+                    <span class="info-value">{{ report.id_servidor }}</span>
+                </div>
+                
+                {% if report.resultado_final %}
+                <div class="info-item">
+                    <span class="info-label">Resultado:</span>
+                    <span class="info-value">
+                        <span class="status-badge status-{{ report.resultado_final.lower().replace(' ', '-').replace('+', '') }}">
+                            {{ report.resultado_final }}
+                        </span>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Users Info -->
+            <div class="info-card">
+                <h3>👥 Usuários Envolvidos</h3>
+                
+                <div class="info-item">
+                    <span class="info-label">Denunciado:</span>
+                    <div class="user-info">
+                        <span class="username">{{ report.denunciado_username or 'N/A' }}</span>
+                        <span class="user-id">ID: {{ report.id_denunciado }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Denunciante:</span>
+                    <div class="user-info">
+                        <span class="username">{{ report.denunciante_username or 'N/A' }}</span>
+                        <span class="user-id">ID: {{ report.id_denunciante }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivo -->
+            <div class="info-card" style="grid-column: 1 / -1;">
+                <h3>📝 Motivo da Denúncia</h3>
+                <div style="background: white; padding: 20px; border-radius: 10px; border-left: 4px solid #3498db;">
+                    {{ report.motivo }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Votes Section -->
+        <div class="votes-section">
+            <h3>🗳️ Votação dos Guardiões</h3>
+            
+            {% if votes %}
+                <!-- Vote Summary -->
+                <div class="vote-summary">
+                    <div class="vote-count vote-ok">
+                        <div class="vote-count-number">{{ votes | selectattr('voto', 'equalto', 'OK!') | list | length }}</div>
+                        <div class="vote-count-label">✅ OK!</div>
+                    </div>
+                    <div class="vote-count vote-intimidou">
+                        <div class="vote-count-number">{{ votes | selectattr('voto', 'equalto', 'Intimidou') | list | length }}</div>
+                        <div class="vote-count-label">⚠️ Intimidou</div>
+                    </div>
+                    <div class="vote-count vote-grave">
+                        <div class="vote-count-number">{{ votes | selectattr('voto', 'equalto', 'Grave') | list | length }}</div>
+                        <div class="vote-count-label">🚨 Grave</div>
+                    </div>
+                    <div class="vote-count vote-total">
+                        <div class="vote-count-number">{{ votes | length }}</div>
+                        <div class="vote-count-label">📊 Total</div>
+                    </div>
+                </div>
+
+                <!-- Individual Votes -->
+                {% for vote in votes %}
+                <div class="vote-item">
+                    <div class="vote-header">
+                        <div class="vote-guardian">
+                            <span class="guardian-name">{{ vote.guardiao_username or 'Guardião Desconhecido' }}</span>
+                            <span class="guardian-id">ID: {{ vote.id_guardiao }}</span>
+                        </div>
+                        <span class="vote-value vote-{{ vote.voto.lower().replace('!', '') }}">
+                            {{ vote.voto }}
+                        </span>
+                    </div>
+                    <div class="vote-time">
+                        Votado em {{ vote.data_voto.strftime('%d/%m/%Y às %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <h4>🗳️ Nenhum voto registrado</h4>
+                    <p>Esta denúncia ainda não recebeu votos dos guardiões.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Messages Section -->
+        <div class="messages-section">
+            <h3>💬 Mensagens Capturadas</h3>
+            
+            {% if messages %}
+                {% for message in messages %}
+                <div class="message-item">
+                    <div class="message-header">
+                        <div class="message-author">
+                            <span class="author-name">{{ message.nome_usuario or 'Usuário Desconhecido' }}</span>
+                            <span class="author-id">ID: {{ message.id_usuario }}</span>
+                        </div>
+                        <div class="message-time">
+                            {{ message.timestamp_mensagem.strftime('%d/%m/%Y às %H:%M:%S') }}
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        {{ message.conteudo_mensagem }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <h4>💬 Nenhuma mensagem capturada</h4>
+                    <p>Não foram encontradas mensagens relacionadas a esta denúncia.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

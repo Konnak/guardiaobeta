@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denúncias - Admin Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .breadcrumb {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover { text-decoration: underline; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .filters-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filters-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .results-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results-header {
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .reports-table th,
+        .reports-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .reports-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .reports-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+        
+        .reports-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-em-analise { background: #d1ecf1; color: #0c5460; }
+        .status-finalizada { background: #d4edda; color: #155724; }
+        .status-apelada { background: #f8d7da; color: #721c24; }
+        
+        .priority-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .priority-premium { background: #ffd700; color: #b8860b; }
+        .priority-normal { background: #e9ecef; color: #6c757d; }
+        
+        .votes-summary {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .vote-count {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .vote-ok { background: #d4edda; color: #155724; }
+        .vote-intimidou { background: #fff3cd; color: #856404; }
+        .vote-grave { background: #f8d7da; color: #721c24; }
+        
+        .hash-code {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .pagination {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination a:hover {
+            background: #e9ecef;
+            color: #2c3e50;
+        }
+        
+        .pagination .current {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .no-results img {
+            width: 100px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flash-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .filters-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-actions { flex-direction: column; }
+            .results-header { flex-direction: column; align-items: stretch; }
+            .bulk-actions { justify-content: center; }
+        }
+        
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+        
+        .actions-cell {
+            width: 120px;
+            text-align: center;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .username {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .user-id {
+            font-size: 11px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+        
+        .motivo-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .date-info {
+            font-size: 13px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Gestão de Denúncias</h1>
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">Dashboard</a> / Denúncias
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        {% if filter_stats %}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" style="color: #3498db;">{{ filter_stats.total_filtrado or 0 }}</div>
+                <div class="stat-label">Total Filtrado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #f39c12;">{{ filter_stats.pendentes or 0 }}</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #17a2b8;">{{ filter_stats.em_analise or 0 }}</div>
+                <div class="stat-label">Em Análise</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #28a745;">{{ filter_stats.finalizadas or 0 }}</div>
+                <div class="stat-label">Finalizadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #ffd700;">{{ filter_stats.premium_count or 0 }}</div>
+                <div class="stat-label">Premium</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <h3 class="filters-title">🔍 Filtros Avançados</h3>
+            
+            <form method="GET" id="filterForm">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select name="status">
+                            <option value="">Todos</option>
+                            <option value="Pendente" {{ 'selected' if filters.status == 'Pendente' }}>Pendente</option>
+                            <option value="Em Análise" {{ 'selected' if filters.status == 'Em Análise' }}>Em Análise</option>
+                            <option value="Finalizada" {{ 'selected' if filters.status == 'Finalizada' }}>Finalizada</option>
+                            <option value="Apelada" {{ 'selected' if filters.status == 'Apelada' }}>Apelada</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Período</label>
+                        <select name="periodo">
+                            <option value="">Todos</option>
+                            <option value="hoje" {{ 'selected' if filters.periodo == 'hoje' }}>Hoje</option>
+                            <option value="semana" {{ 'selected' if filters.periodo == 'semana' }}>Última Semana</option>
+                            <option value="mes" {{ 'selected' if filters.periodo == 'mes' }}>Último Mês</option>
+                            <option value="7" {{ 'selected' if filters.periodo == '7' }}>7 dias</option>
+                            <option value="30" {{ 'selected' if filters.periodo == '30' }}>30 dias</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Hash da Denúncia</label>
+                        <input type="text" name="hash" placeholder="Ex: 871f67135f708c17" value="{{ filters.hash }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Denunciado</label>
+                        <input type="text" name="denunciado" placeholder="Username, nome ou ID" value="{{ filters.denunciado }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Denunciante</label>
+                        <input type="text" name="denunciante" placeholder="Username, nome ou ID" value="{{ filters.denunciante }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Guardião (que votou)</label>
+                        <input type="text" name="guardiao" placeholder="Username, nome ou ID" value="{{ filters.guardiao }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Motivo</label>
+                        <input type="text" name="motivo" placeholder="Buscar no motivo" value="{{ filters.motivo }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Resultado Final</label>
+                        <select name="resultado">
+                            <option value="">Todos</option>
+                            <option value="Improcedente" {{ 'selected' if filters.resultado == 'Improcedente' }}>Improcedente</option>
+                            <option value="Intimidou" {{ 'selected' if filters.resultado == 'Intimidou' }}>Intimidou</option>
+                            <option value="Grave" {{ 'selected' if filters.resultado == 'Grave' }}>Grave</option>
+                            <option value="Intimidou + Grave" {{ 'selected' if filters.resultado == 'Intimidou + Grave' }}>Intimidou + Grave</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Premium</label>
+                        <select name="premium">
+                            <option value="">Todos</option>
+                            <option value="true" {{ 'selected' if filters.premium == 'true' }}>Apenas Premium</option>
+                            <option value="false" {{ 'selected' if filters.premium == 'false' }}>Apenas Normal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Servidor ID</label>
+                        <input type="text" name="servidor" placeholder="ID do servidor" value="{{ filters.servidor }}">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Itens por página</label>
+                        <select name="per_page">
+                            <option value="25" {{ 'selected' if per_page == 25 }}>25</option>
+                            <option value="50" {{ 'selected' if per_page == 50 }}>50</option>
+                            <option value="100" {{ 'selected' if per_page == 100 }}>100</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
+                    <a href="/admin/reports" class="btn btn-secondary">🔄 Limpar</a>
+                    <button type="button" class="btn btn-success" onclick="exportResults()">📊 Exportar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section">
+            <div class="results-header">
+                <div class="results-title">
+                    📋 Resultados ({{ total_reports }} denúncias encontradas)
+                </div>
+                <div class="bulk-actions">
+                    <button type="button" class="btn btn-secondary" onclick="selectAll()">✅ Selecionar Todos</button>
+                    <button type="button" class="btn btn-danger" onclick="bulkDelete()" id="bulkDeleteBtn" disabled>🗑️ Excluir Selecionados</button>
+                </div>
+            </div>
+            
+            {% if reports %}
+            <form id="bulkForm" method="POST" action="/admin/reports/bulk-delete">
+                <div class="table-container">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAll()">
+                                </th>
+                                <th>Hash</th>
+                                <th>Status</th>
+                                <th>Denunciado</th>
+                                <th>Denunciante</th>
+                                <th>Motivo</th>
+                                <th>Votos</th>
+                                <th>Resultado</th>
+                                <th>Data</th>
+                                <th>Prioridade</th>
+                                <th class="actions-cell">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr>
+                                <td class="checkbox-cell">
+                                    <input type="checkbox" name="report_ids" value="{{ report.id }}" class="report-checkbox" onchange="updateBulkButton()">
+                                </td>
+                                <td>
+                                    <span class="hash-code">{{ report.hash_denuncia }}</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ report.status.lower().replace(' ', '-') }}">
+                                        {{ report.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <span class="username">{{ report.denunciado_username or 'N/A' }}</span>
+                                        <span class="user-id">ID: {{ report.id_denunciado }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <span class="username">{{ report.denunciante_username or 'N/A' }}</span>
+                                        <span class="user-id">ID: {{ report.id_denunciante }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="motivo-cell" title="{{ report.motivo }}">
+                                        {{ report.motivo }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="votes-summary">
+                                        <span class="vote-count vote-ok">✅ {{ report.votos_ok or 0 }}</span>
+                                        <span class="vote-count vote-intimidou">⚠️ {{ report.votos_intimidou or 0 }}</span>
+                                        <span class="vote-count vote-grave">🚨 {{ report.votos_grave or 0 }}</span>
+                                        <small>({{ report.total_votos or 0 }}/5)</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if report.resultado_final %}
+                                        <span class="status-badge status-{{ report.resultado_final.lower().replace(' ', '-').replace('+', '') }}">
+                                            {{ report.resultado_final }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: #6c757d;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="date-info">
+                                        {{ report.data_criacao.strftime('%d/%m/%Y') }}<br>
+                                        <small>{{ report.data_criacao.strftime('%H:%M') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="priority-badge priority-{{ 'premium' if report.e_premium else 'normal' }}">
+                                        {{ '⭐ Premium' if report.e_premium else '📋 Normal' }}
+                                    </span>
+                                </td>
+                                <td class="actions-cell">
+                                    <a href="/admin/reports/{{ report.id }}" class="btn btn-primary" style="font-size: 12px; padding: 5px 10px;">👁️</a>
+                                    <form method="POST" action="/admin/reports/{{ report.id }}/delete" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta denúncia?')">
+                                        <button type="submit" class="btn btn-danger" style="font-size: 12px; padding: 5px 10px;">🗑️</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="?page=1&{{ request.query_string.decode() | replace('page=' + page|string, '') }}">« Primeira</a>
+                    <a href="?page={{ page - 1 }}&{{ request.query_string.decode() | replace('page=' + page|string, '') }}">‹ Anterior</a>
+                {% endif %}
+                
+                {% for p in range(([1, page - 2]|max), ([total_pages + 1, page + 3]|min)) %}
+                    {% if p == page %}
+                        <span class="current">{{ p }}</span>
+                    {% else %}
+                        <a href="?page={{ p }}&{{ request.query_string.decode() | replace('page=' + page|string, '') }}">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                    <a href="?page={{ page + 1 }}&{{ request.query_string.decode() | replace('page=' + page|string, '') }}">Próxima ›</a>
+                    <a href="?page={{ total_pages }}&{{ request.query_string.decode() | replace('page=' + page|string, '') }}">Última »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="no-results">
+                <h3>🔍 Nenhuma denúncia encontrada</h3>
+                <p>Tente ajustar os filtros ou remover alguns critérios de busca.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.report-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            
+            updateBulkButton();
+        }
+        
+        function selectAll() {
+            document.getElementById('selectAllCheckbox').checked = true;
+            toggleAll();
+        }
+        
+        function updateBulkButton() {
+            const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            
+            bulkDeleteBtn.disabled = checkboxes.length === 0;
+            bulkDeleteBtn.textContent = `🗑️ Excluir Selecionados (${checkboxes.length})`;
+        }
+        
+        function bulkDelete() {
+            const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Selecione pelo menos uma denúncia para excluir.');
+                return;
+            }
+            
+            if (confirm(`Tem certeza que deseja excluir ${checkboxes.length} denúncias selecionadas? Esta ação não pode ser desfeita.`)) {
+                document.getElementById('bulkForm').submit();
+            }
+        }
+        
+        function exportResults() {
+            // Implementar exportação futura
+            alert('Funcionalidade de exportação será implementada em breve!');
+        }
+        
+        // Auto-submit form quando alguns filtros mudam
+        document.querySelectorAll('select[name="status"], select[name="periodo"], select[name="resultado"], select[name="premium"], select[name="per_page"]').forEach(select => {
+            select.addEventListener('change', () => {
+                document.getElementById('filterForm').submit();
+            });
+        });
+        
+        // Atualizar botão de exclusão em massa ao carregar a página
+        document.addEventListener('DOMContentLoaded', updateBulkButton);
+    </script>
+</body>
+</html>
