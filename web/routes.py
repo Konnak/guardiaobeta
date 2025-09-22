@@ -695,7 +695,7 @@ def setup_routes(app):
     @app.route('/premium/success')
     @login_required
     def premium_success():
-        """Página de sucesso após pagamento"""
+        """Página de sucesso após pagamento - ATIVA PREMIUM AUTOMATICAMENTE"""
         try:
             session_id = request.args.get('session_id')
             
@@ -703,17 +703,87 @@ def setup_routes(app):
                 flash('Sessão inválida.', 'error')
                 return redirect(url_for('premium'))
             
-            # Verificar sessão no Stripe
+            # Verificar sessão no Stripe e ativar premium
             import stripe
             stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
             
+            if not stripe.api_key:
+                flash("Stripe não configurado. Entre em contato com o administrador.", "error")
+                return redirect(url_for('servers'))
+            
             try:
                 checkout_session = stripe.checkout.Session.retrieve(session_id)
+                logger.info(f"🎉 Processando sucesso do pagamento: {session_id}")
                 
-                if checkout_session.payment_status == 'paid':
-                    flash('Pagamento confirmado! Seu premium será ativado em breve.', 'success')
-                else:
+                if checkout_session.payment_status != 'paid':
                     flash('Pagamento pendente. Aguarde a confirmação.', 'warning')
+                    return redirect(url_for('servers'))
+                
+                # Extrair metadados
+                user_id = checkout_session['metadata'].get('user_id')
+                plan = checkout_session['metadata'].get('plan')
+                server_id = checkout_session['metadata'].get('server_id')
+                
+                logger.info(f"📊 Dados da sessão: user_id={user_id}, plan={plan}, server_id={server_id}")
+                
+                if not all([user_id, plan, server_id]):
+                    logger.error(f"❌ Dados incompletos na sessão: user_id={user_id}, plan={plan}, server_id={server_id}")
+                    flash("Dados de pagamento incompletos. Entre em contato com o suporte.", "error")
+                    return redirect(url_for('servers'))
+                
+                # Calcular data de expiração
+                from datetime import datetime, timedelta
+                
+                if plan == 'monthly':
+                    data_fim = datetime.utcnow() + timedelta(days=30)
+                    plano_nome = "Mensal"
+                elif plan == 'quarterly':
+                    data_fim = datetime.utcnow() + timedelta(days=90)
+                    plano_nome = "Trimestral"
+                elif plan == 'yearly':
+                    data_fim = datetime.utcnow() + timedelta(days=365)
+                    plano_nome = "Anual"
+                else:
+                    data_fim = datetime.utcnow() + timedelta(days=30)
+                    plano_nome = "Mensal"
+                
+                # Ativar premium no servidor
+                try:
+                    # Tentar com schema completo
+                    activate_premium_query = """
+                        INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim, motivo, stripe_session_id)
+                        VALUES ($1, NOW(), $2, $3, $4)
+                        ON CONFLICT (id_servidor) 
+                        DO UPDATE SET 
+                            data_fim = EXCLUDED.data_fim,
+                            motivo = EXCLUDED.motivo,
+                            stripe_session_id = EXCLUDED.stripe_session_id
+                    """
+                    
+                    motivo = f"Premium {plano_nome} ativado via Stripe (Sucesso Manual)"
+                    db_manager.execute_query_sync(activate_premium_query, int(server_id), data_fim, motivo, session_id)
+                    
+                except Exception as schema_error:
+                    logger.warning(f"Schema completo falhou, tentando básico: {schema_error}")
+                    
+                    # Fallback para schema básico
+                    activate_premium_basic_query = """
+                        INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim)
+                        VALUES ($1, NOW(), $2)
+                        ON CONFLICT (id_servidor) 
+                        DO UPDATE SET data_fim = EXCLUDED.data_fim
+                    """
+                    
+                    db_manager.execute_query_sync(activate_premium_basic_query, int(server_id), data_fim)
+                
+                logger.info(f"✅ Premium ativado com sucesso via página de sucesso!")
+                logger.info(f"- Usuário: {user_id}")
+                logger.info(f"- Servidor: {server_id}")
+                logger.info(f"- Plano: {plano_nome}")
+                logger.info(f"- Válido até: {data_fim}")
+                logger.info(f"- Session ID: {session_id}")
+                
+                flash(f"🎉 Premium {plano_nome} ativado com sucesso! Válido até {data_fim.strftime('%d/%m/%Y')}.", "success")
                     
             except stripe.error.StripeError as e:
                 logger.error(f"Erro ao verificar sessão Stripe: {e}")
@@ -722,9 +792,9 @@ def setup_routes(app):
             return redirect(url_for('servers'))
             
         except Exception as e:
-            logger.error(f"Erro na página de sucesso: {e}")
-            flash('Erro interno.', 'error')
-            return redirect(url_for('premium'))
+            logger.error(f"❌ Erro na ativação do premium: {e}")
+            flash("Pagamento processado, mas houve erro na ativação. Entre em contato com o suporte.", "error")
+            return redirect(url_for('servers'))
 
     @app.route('/webhook/stripe', methods=['POST'])
     def stripe_webhook():
