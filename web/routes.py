@@ -1068,6 +1068,60 @@ def setup_routes(app):
             return jsonify({'error': 'Erro interno'}), 500
 
 
+# Cache simples para dados de usuários do Discord (evita muitas requisições)
+_discord_user_cache = {}
+_cache_timeout = 300  # 5 minutos
+
+def get_discord_user_info(user_id: int) -> dict:
+    """Busca informações do usuário no Discord via API com cache"""
+    try:
+        import requests
+        import time
+        
+        # Verificar cache
+        cache_key = str(user_id)
+        current_time = time.time()
+        
+        if cache_key in _discord_user_cache:
+            cached_data, cached_time = _discord_user_cache[cache_key]
+            if current_time - cached_time < _cache_timeout:
+                return cached_data
+        
+        bot_token = os.getenv('DISCORD_TOKEN')
+        
+        if not bot_token:
+            logger.warning("DISCORD_TOKEN não configurado para buscar usuários")
+            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+            _discord_user_cache[cache_key] = (result, current_time)
+            return result
+        
+        headers = {'Authorization': f'Bot {bot_token}'}
+        response = requests.get(f'https://discord.com/api/v10/users/{user_id}', headers=headers)
+        
+        if response.status_code == 200:
+            user_data = response.json()
+            result = {
+                'discord_username': user_data.get('username'),
+                'discord_avatar': user_data.get('avatar'),
+                'discord_discriminator': user_data.get('discriminator'),
+                'discord_display_name': user_data.get('global_name') or user_data.get('username')
+            }
+            # Armazenar no cache
+            _discord_user_cache[cache_key] = (result, current_time)
+            logger.info(f"Dados do usuário {user_id} obtidos do Discord: {result['discord_username']}")
+            return result
+        else:
+            logger.warning(f"Erro ao buscar usuário {user_id}: {response.status_code}")
+            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+            _discord_user_cache[cache_key] = (result, current_time)
+            return result
+            
+    except Exception as e:
+        logger.error(f"Erro ao buscar informações do usuário {user_id}: {e}")
+        result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+        _discord_user_cache[cache_key] = (result, current_time)
+        return result
+
 def get_server_stats(server_id: int) -> dict:
     """Busca estatísticas de um servidor"""
     try:
@@ -1127,7 +1181,16 @@ def get_server_stats(server_id: int) -> dict:
             ORDER BY denuncias_count DESC
             LIMIT 10
         """
-        top_denunciados = db_manager.execute_query_sync(top_denunciados_query, server_id)
+        top_denunciados_raw = db_manager.execute_query_sync(top_denunciados_query, server_id)
+        
+        # Enriquecer com dados do Discord
+        top_denunciados = []
+        if top_denunciados_raw:
+            for user in top_denunciados_raw:
+                discord_user = get_discord_user_info(user['id_denunciado'])
+                user_data = dict(user)
+                user_data.update(discord_user)
+                top_denunciados.append(user_data)
         
         return {
             'general': general_stats[0] if general_stats else {},

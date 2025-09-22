@@ -789,13 +789,33 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
-                                                     style="width: 32px; height: 32px; font-size: 0.8rem; color: white;">
-                                                    <i class="bi bi-person-fill"></i>
-                                                </div>
+                                                {% if user.discord_avatar %}
+                                                    <img src="https://cdn.discordapp.com/avatars/{{ user.id_denunciado }}/{{ user.discord_avatar }}.png?size=32" 
+                                                         alt="Avatar" class="rounded-circle me-2" width="32" height="32"
+                                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                    <div class="rounded-circle bg-primary align-items-center justify-content-center me-2" 
+                                                         style="width: 32px; height: 32px; font-size: 0.8rem; color: white; display: none;">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 32px; height: 32px; font-size: 0.8rem; color: white;">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </div>
+                                                {% endif %}
                                                 <div>
                                                     <div class="fw-medium">
-                                                        {% if user.display_name %}
+                                                        {% if user.discord_display_name %}
+                                                            {{ user.discord_display_name }}
+                                                            {% if user.discord_discriminator and user.discord_discriminator != '0' %}
+                                                                <span class="text-muted">#{{ user.discord_discriminator }}</span>
+                                                            {% endif %}
+                                                        {% elif user.discord_username %}
+                                                            {{ user.discord_username }}
+                                                            {% if user.discord_discriminator and user.discord_discriminator != '0' %}
+                                                                <span class="text-muted">#{{ user.discord_discriminator }}</span>
+                                                            {% endif %}
+                                                        {% elif user.display_name %}
                                                             {{ user.display_name }}
                                                         {% elif user.username %}
                                                             {{ user.username }}
