@@ -284,7 +284,8 @@ def setup_routes(app):
             return render_template('servers.html',
                                  user=user_data,
                                  servers=servers_info,
-                                 avatar_url=get_user_avatar_url(str(user_data['id']), user_data.get('avatar'), user_data.get('discriminator')))
+                                 avatar_url=get_user_avatar_url(str(user_data['id']), user_data.get('avatar'), user_data.get('discriminator')),
+                                 bot_invite_url=get_bot_invite_url())
             
         except Exception as e:
             logger.error(f"Erro na lista de servidores: {e}")
@@ -476,6 +477,194 @@ def setup_routes(app):
         except Exception as e:
             logger.error(f"Erro ao salvar configurações: {e}")
             return jsonify({'error': 'Erro interno do servidor'}), 500
+
+    # ==================== STRIPE PAYMENT ROUTES ====================
+    @app.route('/api/create-checkout', methods=['POST'])
+    @login_required
+    def create_checkout():
+        """Criar sessão de checkout do Stripe"""
+        try:
+            import stripe
+            
+            # Configurar Stripe
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            
+            if not stripe.api_key:
+                return jsonify({'success': False, 'error': 'Stripe não configurado'}), 500
+            
+            data = request.get_json()
+            plan = data.get('plan')
+            
+            # Definir produtos e preços
+            plans_config = {
+                'monthly': {
+                    'price': 990,  # R$ 9,90 em centavos
+                    'currency': 'brl',
+                    'interval': 'month',
+                    'name': 'Guardião Premium - Mensal'
+                },
+                'quarterly': {
+                    'price': 2490,  # R$ 24,90 em centavos  
+                    'currency': 'brl',
+                    'interval': 'month',
+                    'interval_count': 3,
+                    'name': 'Guardião Premium - Trimestral'
+                },
+                'yearly': {
+                    'price': 8990,  # R$ 89,90 em centavos
+                    'currency': 'brl', 
+                    'interval': 'year',
+                    'name': 'Guardião Premium - Anual'
+                }
+            }
+            
+            if plan not in plans_config:
+                return jsonify({'success': False, 'error': 'Plano inválido'}), 400
+            
+            plan_config = plans_config[plan]
+            user_data = session['user']
+            
+            # Criar sessão de checkout
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': plan_config['currency'],
+                        'product_data': {
+                            'name': plan_config['name'],
+                            'description': f'Acesso premium para o Guardião Bot',
+                        },
+                        'unit_amount': plan_config['price'],
+                        'recurring': {
+                            'interval': plan_config['interval'],
+                            'interval_count': plan_config.get('interval_count', 1)
+                        } if plan != 'yearly' else {
+                            'interval': plan_config['interval']
+                        }
+                    },
+                    'quantity': 1,
+                }],
+                mode='subscription',
+                success_url=request.url_root + 'premium/success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=request.url_root + 'premium',
+                customer_email=f"{user_data['username']}@discord.local",
+                metadata={
+                    'user_id': str(user_data['id']),
+                    'username': user_data['username'],
+                    'plan': plan
+                }
+            )
+            
+            logger.info(f"Checkout criado para usuário {user_data['username']}: {checkout_session.id}")
+            
+            return jsonify({
+                'success': True,
+                'checkout_url': checkout_session.url
+            })
+            
+        except Exception as e:
+            logger.error(f"Erro ao criar checkout: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/premium/success')
+    @login_required
+    def premium_success():
+        """Página de sucesso após pagamento"""
+        try:
+            session_id = request.args.get('session_id')
+            
+            if not session_id:
+                flash('Sessão inválida.', 'error')
+                return redirect(url_for('premium'))
+            
+            # Verificar sessão no Stripe
+            import stripe
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            
+            try:
+                checkout_session = stripe.checkout.Session.retrieve(session_id)
+                
+                if checkout_session.payment_status == 'paid':
+                    flash('Pagamento confirmado! Seu premium será ativado em breve.', 'success')
+                else:
+                    flash('Pagamento pendente. Aguarde a confirmação.', 'warning')
+                    
+            except stripe.error.StripeError as e:
+                logger.error(f"Erro ao verificar sessão Stripe: {e}")
+                flash('Erro ao verificar pagamento.', 'error')
+            
+            return redirect(url_for('servers'))
+            
+        except Exception as e:
+            logger.error(f"Erro na página de sucesso: {e}")
+            flash('Erro interno.', 'error')
+            return redirect(url_for('premium'))
+
+    @app.route('/webhook/stripe', methods=['POST'])
+    def stripe_webhook():
+        """Webhook do Stripe para processar eventos"""
+        try:
+            import stripe
+            
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            endpoint_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+            
+            payload = request.get_data()
+            sig_header = request.headers.get('Stripe-Signature')
+            
+            if not endpoint_secret:
+                logger.error("STRIPE_WEBHOOK_SECRET não configurado")
+                return '', 400
+            
+            try:
+                event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+            except ValueError:
+                logger.error("Payload inválido")
+                return '', 400
+            except stripe.error.SignatureVerificationError:
+                logger.error("Assinatura inválida")
+                return '', 400
+            
+            # Processar evento
+            if event['type'] == 'checkout.session.completed':
+                session = event['data']['object']
+                
+                # Extrair dados do cliente
+                user_id = session['metadata'].get('user_id')
+                plan = session['metadata'].get('plan')
+                
+                if user_id and plan:
+                    # Calcular data de expiração baseada no plano
+                    from datetime import datetime, timedelta
+                    
+                    if plan == 'monthly':
+                        data_fim = datetime.utcnow() + timedelta(days=30)
+                    elif plan == 'quarterly':
+                        data_fim = datetime.utcnow() + timedelta(days=90)
+                    elif plan == 'yearly':
+                        data_fim = datetime.utcnow() + timedelta(days=365)
+                    else:
+                        data_fim = datetime.utcnow() + timedelta(days=30)
+                    
+                    # Ativar premium no banco (aqui você precisa escolher o servidor)
+                    # Por enquanto, vamos logar e deixar para ativação manual
+                    logger.info(f"Premium ativado para usuário {user_id} (plano: {plan}) até {data_fim}")
+                    
+                    # TODO: Implementar seleção de servidor ou ativação automática
+                    
+            elif event['type'] == 'invoice.payment_succeeded':
+                # Renovação automática
+                logger.info(f"Pagamento de renovação processado: {event['data']['object']['id']}")
+                
+            elif event['type'] == 'customer.subscription.deleted':
+                # Cancelamento
+                logger.info(f"Assinatura cancelada: {event['data']['object']['id']}")
+            
+            return '', 200
+            
+        except Exception as e:
+            logger.error(f"Erro no webhook Stripe: {e}")
+            return '', 500
 
     @app.route('/api/server/<int:server_id>/stats')
     @login_required

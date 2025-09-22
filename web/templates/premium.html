@@ -4,465 +4,889 @@
 
 {% block main_class %}premium-page{% endblock %}
 
-{% block content %}
-<!-- Hero Section -->
-<section class="hero-section bg-gradient-primary text-white py-5">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-12">
-                <h1 class="display-4 fw-bold mb-4">
-                    <i class="bi bi-star-fill"></i> Guardião Premium
-                </h1>
-                <p class="lead mb-4">
-                    Leve a moderação do seu servidor para o próximo nível com recursos exclusivos
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Features Comparison -->
-<section class="features-section py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold">Comparação de Recursos</h2>
-                <p class="lead text-muted">Veja a diferença entre os planos</p>
-            </div>
-        </div>
+{% block extra_head %}
+<style>
+    :root {
+        /* Paleta baseada na logo - Azul petróleo e dourado */
+        --primary-teal: #1e5a5a;
+        --primary-teal-dark: #0f3d3d;
+        --primary-teal-light: #2d7a7a;
+        --primary-gold: #ffb800;
+        --primary-gold-dark: #e6a600;
+        --primary-gold-light: #ffcc33;
         
-        <div class="row g-4">
-            <!-- Free Plan -->
-            <div class="col-md-4">
-                <div class="card h-100 border-2">
-                    <div class="card-header text-center bg-light">
-                        <h3 class="card-title">Gratuito</h3>
-                        <div class="price">
-                            <span class="display-4 fw-bold">R$ 0</span>
-                            <span class="text-muted">/mês</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                Moderação comunitária básica
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                Até 5 Guardiões simultâneos
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                Sistema de votação padrão
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                Punições automáticas
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                Suporte via Discord
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-x-circle text-muted"></i>
-                                Prioridade na análise
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-x-circle text-muted"></i>
-                                Configurações personalizadas
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-x-circle text-muted"></i>
-                                Canal de log personalizado
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-x-circle text-muted"></i>
-                                Estatísticas avançadas
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center">
-                        <a href="{{ bot_invite_url }}" class="btn btn-outline-primary w-100" target="_blank">
-                            Usar Gratuitamente
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Premium Plan -->
-            <div class="col-md-4">
-                <div class="card h-100 border-2 border-warning position-relative">
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">
-                            <i class="bi bi-star-fill"></i> Recomendado
-                        </span>
-                    </div>
-                    <div class="card-header text-center bg-warning text-dark">
-                        <h3 class="card-title">Premium</h3>
-                        <div class="price">
-                            <span class="display-4 fw-bold">R$ 5</span>
-                            <span class="text-muted">/mês</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>Todos os recursos gratuitos</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Prioridade máxima na análise</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Configurações personalizadas</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Canal de log personalizado</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Estatísticas avançadas</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Durações de punição customizáveis</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Suporte prioritário</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-warning"></i>
-                                <strong>Relatórios detalhados</strong>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center">
-                        <button class="btn btn-warning w-100" onclick="purchasePremium()">
-                            <i class="bi bi-cart-plus"></i> Assinar Premium
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Enterprise Plan -->
-            <div class="col-md-4">
-                <div class="card h-100 border-2">
-                    <div class="card-header text-center bg-dark text-white">
-                        <h3 class="card-title">Enterprise</h3>
-                        <div class="price">
-                            <span class="display-4 fw-bold">R$ 20</span>
-                            <span class="text-muted">/mês</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>Todos os recursos Premium</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>Múltiplos servidores</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>API personalizada</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>Suporte 24/7</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>Integrações customizadas</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>Treinamento personalizado</strong>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-dark"></i>
-                                <strong>SLA garantido</strong>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center">
-                        <button class="btn btn-dark w-100" onclick="contactEnterprise()">
-                            <i class="bi bi-telephone"></i> Contatar Vendas
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Premium Features Details -->
-<section class="premium-features py-5 bg-light">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold">Recursos Premium</h2>
-                <p class="lead text-muted">Descubra todos os benefícios do plano Premium</p>
-            </div>
-        </div>
+        /* Cores de apoio */
+        --dark-bg: #0d1117;
+        --dark-card: #161b22;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: #8b949e;
+        --shadow-glow: 0 20px 40px rgba(255, 184, 0, 0.15);
         
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
-                    <div class="d-flex align-items-start">
-                        <div class="feature-icon me-3">
-                            <i class="bi bi-lightning-charge text-warning" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <div>
-                            <h4>Prioridade Máxima</h4>
-                            <p class="text-muted">
-                                Suas denúncias são analisadas com prioridade máxima pelos Guardiões, 
-                                garantindo resposta mais rápida.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
-                    <div class="d-flex align-items-start">
-                        <div class="feature-icon me-3">
-                            <i class="bi bi-gear text-primary" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <div>
-                            <h4>Configurações Personalizadas</h4>
-                            <p class="text-muted">
-                                Personalize durações de punições, configure canais de log 
-                                e ajuste o sistema às suas necessidades.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
-                    <div class="d-flex align-items-start">
-                        <div class="feature-icon me-3">
-                            <i class="bi bi-graph-up text-success" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <div>
-                            <h4>Estatísticas Avançadas</h4>
-                            <p class="text-muted">
-                                Acesse relatórios detalhados, gráficos de atividade 
-                                e análises de tendências do seu servidor.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="feature-card p-4 bg-white rounded-3 shadow-sm">
-                    <div class="d-flex align-items-start">
-                        <div class="feature-icon me-3">
-                            <i class="bi bi-headset text-info" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <div>
-                            <h4>Suporte Prioritário</h4>
-                            <p class="text-muted">
-                                Receba suporte prioritário com tempo de resposta reduzido 
-                                e acesso direto à equipe de desenvolvimento.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        /* Status colors */
+        --success-color: #238636;
+        --warning-color: #d29922;
+        --danger-color: #da3633;
+        --info-color: var(--primary-teal);
+    }
 
-<!-- Payment Section -->
-<section class="payment-section py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-lg">
-                    <div class="card-header bg-warning text-dark text-center">
-                        <h3 class="mb-0">
-                            <i class="bi bi-cart-check"></i> Assinar Premium
-                        </h3>
-                    </div>
-                    <div class="card-body p-5">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>Resumo da Assinatura</h5>
-                                <ul class="list-unstyled">
-                                    <li class="mb-2">
-                                        <strong>Plano:</strong> Premium
-                                    </li>
-                                    <li class="mb-2">
-                                        <strong>Valor:</strong> R$ 5,00/mês
-                                    </li>
-                                    <li class="mb-2">
-                                        <strong>Cobrança:</strong> Mensal
-                                    </li>
-                                    <li class="mb-2">
-                                        <strong>Cancele quando quiser</strong>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>Métodos de Pagamento</h5>
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-success" onclick="payWithMercadoPago()">
-                                        <i class="bi bi-credit-card"></i> Mercado Pago
-                                    </button>
-                                    <button class="btn btn-outline-primary" onclick="payWithPix()">
-                                        <i class="bi bi-qr-code"></i> PIX
-                                    </button>
-                                    <button class="btn btn-outline-warning" onclick="payWithPayPal()">
-                                        <i class="bi bi-paypal"></i> PayPal
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <div class="text-center">
-                            <p class="text-muted mb-0">
-                                <i class="bi bi-shield-check"></i>
-                                Pagamento 100% seguro • Cancele quando quiser • Suporte 24/7
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+    body {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-teal-dark) 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-<!-- FAQ Section -->
-<section class="faq-section py-5 bg-light">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold">Perguntas Frequentes</h2>
-            </div>
-        </div>
+    .premium-page {
+        min-height: 100vh;
+        padding-top: 2rem;
+    }
+
+    /* Hero Section */
+    .premium-hero {
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+        border-radius: 25px;
+        padding: 4rem 2rem;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .premium-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(255, 184, 0, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .premium-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .premium-hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px rgba(255, 184, 0, 0.5);
+    }
+
+    .premium-hero p {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .premium-badge {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        color: var(--dark-bg);
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    /* Plans Section */
+    .plans-section {
+        margin-bottom: 4rem;
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .plan-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        text-align: center;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .plan-card.featured {
+        border-color: var(--primary-gold);
+        background: linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 184, 0, 0.05) 100%);
+        transform: scale(1.05);
+    }
+
+    .plan-card.featured::before {
+        content: 'MAIS POPULAR';
+        position: absolute;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--primary-gold);
+        color: var(--dark-bg);
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .plan-header {
+        margin-bottom: 2rem;
+    }
+
+    .plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .plan-price {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        margin-bottom: 0.5rem;
+    }
+
+    .plan-period {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .plan-discount {
+        background: var(--success-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+        text-align: left;
+    }
+
+    .plan-features li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        color: var(--text-primary);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .plan-features li:last-child {
+        border-bottom: none;
+    }
+
+    .plan-features .feature-icon {
+        color: var(--primary-gold);
+        font-size: 1.1rem;
+        min-width: 20px;
+    }
+
+    .plan-features .feature-icon.disabled {
+        color: var(--text-secondary);
+    }
+
+    .plan-button {
+        width: 100%;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .plan-button.primary {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        color: var(--dark-bg);
+    }
+
+    .plan-button.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(255, 184, 0, 0.4);
+        background: linear-gradient(135deg, var(--primary-gold-light) 0%, var(--primary-gold) 100%);
+    }
+
+    .plan-button.secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .plan-button.secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
+    }
+
+    /* Features Comparison */
+    .features-section {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 25px;
+        padding: 3rem 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .features-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 3rem;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .feature-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .feature-item:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .feature-icon-large {
+        font-size: 3rem;
+        color: var(--primary-gold);
+        margin-bottom: 1rem;
+    }
+
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .feature-description {
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 25px;
+        padding: 3rem 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .faq-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 3rem;
+    }
+
+    .faq-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .faq-question {
+        padding: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-primary);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .faq-question:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .faq-answer {
+        padding: 0 1.5rem 1.5rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        display: none;
+    }
+
+    .faq-item.active .faq-answer {
+        display: block;
+    }
+
+    .faq-toggle {
+        color: var(--primary-gold);
+        transition: transform 0.3s ease;
+    }
+
+    .faq-item.active .faq-toggle {
+        transform: rotate(180deg);
+    }
+
+    /* CTA Section */
+    .cta-section {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+        border-radius: 25px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 30% 70%, rgba(255, 184, 0, 0.15) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .cta-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .cta-description {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .premium-hero h1 {
+            font-size: 2.5rem;
+        }
         
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                Como funciona o cancelamento?
-                            </button>
-                        </h2>
-                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Você pode cancelar sua assinatura a qualquer momento. O acesso aos recursos Premium 
-                                será mantido até o final do período pago.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                Posso mudar de plano depois?
-                            </button>
-                        </h2>
-                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
-                                As alterações serão aplicadas no próximo ciclo de cobrança.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                O que acontece se eu não pagar?
-                            </button>
-                        </h2>
-                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Seu servidor voltará automaticamente para o plano gratuito. 
-                                Não há multas ou taxas por atraso no pagamento.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                Os recursos Premium são instantâneos?
-                            </button>
-                        </h2>
-                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Sim! Assim que o pagamento for confirmado, todos os recursos Premium 
-                                estarão disponíveis imediatamente no seu servidor.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        .premium-hero p {
+            font-size: 1rem;
+        }
+        
+        .plans-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .plan-card.featured {
+            transform: none;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .cta-title {
+            font-size: 2rem;
+        }
+        
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
 
-<!-- CTA Section -->
-<section class="cta-section bg-primary text-white py-5">
-    <div class="container text-center">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-4">
-                    Pronto para experimentar o Premium?
-                </h2>
-                <p class="lead mb-4">
-                    Comece hoje mesmo e veja a diferença que o Premium pode fazer no seu servidor.
-                </p>
-                <button class="btn btn-light btn-lg" onclick="purchasePremium()">
-                    <i class="bi bi-star-fill"></i> Assinar Premium Agora
-                </button>
-                <p class="mt-3 mb-0">
-                    <small>Teste por 7 dias • Cancele quando quiser</small>
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
+    /* Loading animation for Stripe */
+    .loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top: 4px solid var(--primary-gold);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
 {% endblock %}
 
-{% block extra_scripts %}
+{% block content %}
+<div class="container py-4">
+    <!-- Hero Section -->
+    <div class="premium-hero">
+        <div class="premium-hero-content">
+            <div class="premium-badge">
+                <i class="bi bi-star-fill"></i>
+                Desbloqueie Todo o Potencial
+            </div>
+            
+            <h1>
+                <i class="bi bi-crown me-3" style="color: var(--primary-gold);"></i>
+                Guardião Premium
+            </h1>
+            
+            <p>
+                Transforme sua moderação com recursos avançados, prioridade na análise e configurações personalizadas. 
+                Mantenha sua comunidade segura com a máxima eficiência.
+            </p>
+        </div>
+    </div>
+
+    <!-- Plans Section -->
+    <div class="plans-section">
+        <div class="plans-grid">
+            <!-- Plano Gratuito -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Gratuito</div>
+                    <div class="plan-price">R$ 0</div>
+                    <div class="plan-period">para sempre</div>
+                </div>
+                
+                <ul class="plan-features">
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Moderação comunitária básica</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Suporte via Discord</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Painel de estatísticas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Sistema de denúncias anônimas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-x-circle feature-icon disabled"></i>
+                        <span>Prioridade na análise</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-x-circle feature-icon disabled"></i>
+                        <span>Configurações personalizadas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-x-circle feature-icon disabled"></i>
+                        <span>Canal de log personalizado</span>
+                    </li>
+                </ul>
+                
+                <a href="{{ bot_invite_url }}" class="plan-button secondary" target="_blank">
+                    <i class="bi bi-download me-2"></i>
+                    Adicionar ao Servidor
+                </a>
+            </div>
+
+            <!-- Plano Mensal -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Premium Mensal</div>
+                    <div class="plan-price">R$ 9,90</div>
+                    <div class="plan-period">por mês</div>
+                </div>
+                
+                <ul class="plan-features">
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Todos os recursos gratuitos</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Prioridade na análise</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Configurações personalizadas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Canal de log personalizado</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Estatísticas avançadas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Suporte prioritário</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Relatórios mensais detalhados</span>
+                    </li>
+                </ul>
+                
+                <button class="plan-button primary" onclick="createCheckout('monthly')">
+                    <i class="bi bi-credit-card me-2"></i>
+                    Assinar Agora
+                </button>
+            </div>
+
+            <!-- Plano Trimestral -->
+            <div class="plan-card featured">
+                <div class="plan-header">
+                    <div class="plan-name">Premium Trimestral</div>
+                    <div class="plan-price">R$ 24,90</div>
+                    <div class="plan-period">por 3 meses</div>
+                    <div class="plan-discount">17% de desconto</div>
+                </div>
+                
+                <ul class="plan-features">
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Todos os recursos premium</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Economia de R$ 5,00</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Configurações avançadas</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Backup de configurações</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Análise de tendências</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Suporte via WhatsApp</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Beta de novos recursos</span>
+                    </li>
+                </ul>
+                
+                <button class="plan-button primary" onclick="createCheckout('quarterly')">
+                    <i class="bi bi-star-fill me-2"></i>
+                    Escolher Trimestral
+                </button>
+            </div>
+
+            <!-- Plano Anual -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Premium Anual</div>
+                    <div class="plan-price">R$ 89,90</div>
+                    <div class="plan-period">por ano</div>
+                    <div class="plan-discount">25% de desconto</div>
+                </div>
+                
+                <ul class="plan-features">
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Todos os recursos premium</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Economia de R$ 29,00</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Consultoria de moderação</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Configuração personalizada</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Integração com outros bots</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Suporte 24/7</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check-circle feature-icon"></i>
+                        <span>Recursos exclusivos</span>
+                    </li>
+                </ul>
+                
+                <button class="plan-button primary" onclick="createCheckout('yearly')">
+                    <i class="bi bi-gem me-2"></i>
+                    Melhor Valor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+        <h2 class="features-title">Por que escolher o Premium?</h2>
+        
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon-large">
+                    <i class="bi bi-lightning-charge"></i>
+                </div>
+                <div class="feature-title">Prioridade na Análise</div>
+                <div class="feature-description">
+                    Suas denúncias são processadas primeiro, garantindo respostas mais rápidas e eficientes para manter sua comunidade segura.
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon-large">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <div class="feature-title">Configurações Personalizadas</div>
+                <div class="feature-description">
+                    Ajuste durações de punições, configure canais de log e personalize o sistema de acordo com suas necessidades.
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon-large">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="feature-title">Estatísticas Avançadas</div>
+                <div class="feature-description">
+                    Relatórios detalhados, análise de tendências e insights sobre a moderação da sua comunidade.
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon-large">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <div class="feature-title">Suporte Prioritário</div>
+                <div class="feature-description">
+                    Atendimento exclusivo via Discord, WhatsApp e suporte técnico especializado quando precisar.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+        <h2 class="faq-title">Perguntas Frequentes</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Como funciona o pagamento?</span>
+                <i class="bi bi-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                Utilizamos o Stripe para processar pagamentos de forma segura. Você pode pagar com cartão de crédito, PIX ou boleto bancário. O premium é ativado automaticamente após a confirmação do pagamento.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Posso cancelar a qualquer momento?</span>
+                <i class="bi bi-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                Sim! Você pode cancelar sua assinatura a qualquer momento através do painel de controle. Não há taxas de cancelamento e você continuará com acesso premium até o final do período pago.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>O que acontece se eu cancelar?</span>
+                <i class="bi bi-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                Após o cancelamento, você manterá todos os recursos premium até o final do período pago. Depois disso, sua conta voltará ao plano gratuito, mas suas configurações serão preservadas caso decida reativar.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Posso usar em múltiplos servidores?</span>
+                <i class="bi bi-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                Cada assinatura premium é válida para um servidor específico. Se você administra múltiplos servidores, será necessário uma assinatura para cada um deles.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Há garantia de reembolso?</span>
+                <i class="bi bi-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                Oferecemos garantia de reembolso de 7 dias para novos usuários premium. Se não ficar satisfeito, entre em contato conosco e processaremos o reembolso integral.
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">Pronto para elevar sua moderação?</h2>
+            <p class="cta-description">
+                Junte-se a milhares de servidores que já transformaram sua comunidade com o Guardião Premium. 
+                Comece hoje e veja a diferença em minutos.
+            </p>
+            
+            <div class="cta-buttons">
+                <button class="plan-button primary" onclick="createCheckout('quarterly')" style="width: auto; min-width: 200px;">
+                    <i class="bi bi-star-fill me-2"></i>
+                    Começar Agora
+                </button>
+                
+                <a href="{{ bot_invite_url }}" class="plan-button secondary" target="_blank" style="width: auto; min-width: 200px;">
+                    <i class="bi bi-download me-2"></i>
+                    Testar Grátis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading" id="loadingOverlay">
+    <div style="text-align: center; color: white;">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem;">Redirecionando para pagamento...</p>
+    </div>
+</div>
+
 <script>
-// Purchase functions
-function purchasePremium() {
-    // In a real implementation, this would redirect to payment processor
-    alert('Sistema de pagamento em desenvolvimento. Entre em contato através do Discord para assinar o Premium.');
+// FAQ Toggle
+function toggleFaq(element) {
+    const faqItem = element.parentElement;
+    const isActive = faqItem.classList.contains('active');
+    
+    // Fechar todos os FAQs
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Abrir o clicado se não estava ativo
+    if (!isActive) {
+        faqItem.classList.add('active');
+    }
 }
 
-function payWithMercadoPago() {
-    alert('Pagamento via Mercado Pago em desenvolvimento.');
+// Stripe Checkout
+async function createCheckout(plan) {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    loadingOverlay.style.display = 'flex';
+    
+    try {
+        const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ plan: plan })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Redirecionar para o Stripe Checkout
+            window.location.href = data.checkout_url;
+        } else {
+            alert('Erro ao criar sessão de pagamento: ' + (data.error || 'Erro desconhecido'));
+            loadingOverlay.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao processar solicitação. Tente novamente.');
+        loadingOverlay.style.display = 'none';
+    }
 }
 
-function payWithPix() {
-    alert('Pagamento via PIX em desenvolvimento.');
-}
-
-function payWithPayPal() {
-    alert('Pagamento via PayPal em desenvolvimento.');
-}
-
-function contactEnterprise() {
-    alert('Para planos Enterprise, entre em contato através do Discord ou email.');
-}
+// Smooth scrolling for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-open first FAQ if no hash in URL
+    if (!window.location.hash) {
+        const firstFaq = document.querySelector('.faq-item');
+        if (firstFaq) {
+            firstFaq.classList.add('active');
+        }
+    }
+});
 </script>
 {% endblock %}
