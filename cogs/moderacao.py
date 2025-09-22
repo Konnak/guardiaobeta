@@ -78,15 +78,17 @@ class ReportView(ui.View):
                         if not moderacao_cog.temp_message_tracking[denuncia_id]:
                             moderacao_cog.temp_message_tracking.pop(denuncia_id, None)
             
-            # Verifica se ainda há vagas para esta denúncia
-            count_query = """
-                SELECT COUNT(*) FROM votos_guardioes 
-                WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
+            # Verifica se ainda há vagas para esta denúncia (considerando peso dos moderadores)
+            weighted_count_query = """
+                SELECT COALESCE(SUM(CASE WHEN u.categoria = 'Moderador' THEN 5 ELSE 1 END), 0) as peso_total
+                FROM votos_guardioes vg
+                JOIN usuarios u ON vg.id_guardiao = u.id_discord
+                WHERE vg.id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            count = db_manager.execute_scalar_sync(count_query, self.hash_denuncia)
-            logger.info(f"Votos existentes para denúncia {self.hash_denuncia}: {count}")
+            weighted_count = db_manager.execute_scalar_sync(weighted_count_query, self.hash_denuncia)
+            logger.info(f"Peso total de votos para denúncia {self.hash_denuncia}: {weighted_count}")
             
-            if count >= REQUIRED_VOTES_FOR_DECISION:
+            if weighted_count >= REQUIRED_VOTES_FOR_DECISION:
                 embed = discord.Embed(
                     title="❌ Vaga Indisponível",
                     description="Infelizmente a ocorrência já foi atendida por outros Guardiões.",
@@ -249,7 +251,7 @@ class ReportView(ui.View):
             
             for msg in mensagens:
                 if msg['id_autor'] not in usuarios_unicos:
-                    if msg['id_autor'] == id_denunciado:
+            if msg['id_autor'] == id_denunciado:
                         usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
                     else:
                         usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
@@ -275,7 +277,7 @@ class ReportView(ui.View):
                 result.append(linha)
             
             return "\n\n".join(result)
-            
+                
         except Exception as e:
             logger.error(f"Erro ao anonimizar mensagens: {e}")
             return "Erro ao processar mensagens."
@@ -374,14 +376,16 @@ class VoteView(ui.View):
     async def _check_denuncia_completion(self):
         """Verifica se a denúncia atingiu 5 votos e processa o resultado"""
         try:
-            # Conta os votos
-            count_query = """
-                SELECT COUNT(*) FROM votos_guardioes 
-                WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
+            # Conta os votos com peso (moderador = 5, guardião = 1)
+            weighted_votes_query = """
+                SELECT SUM(CASE WHEN u.categoria = 'Moderador' THEN 5 ELSE 1 END) as peso_total
+                FROM votos_guardioes vg
+                JOIN usuarios u ON vg.id_guardiao = u.id_discord
+                WHERE vg.id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
-            total_votes = db_manager.execute_scalar_sync(count_query, self.hash_denuncia)
+            total_weighted_votes = db_manager.execute_scalar_sync(weighted_votes_query, self.hash_denuncia) or 0
             
-            if total_votes >= REQUIRED_VOTES_FOR_DECISION:
+            if total_weighted_votes >= REQUIRED_VOTES_FOR_DECISION:
                 await self._finalize_denuncia()
                 
         except Exception as e:
@@ -390,17 +394,22 @@ class VoteView(ui.View):
     async def _finalize_denuncia(self):
         """Finaliza a denúncia e aplica a punição"""
         try:
-            # Busca todos os votos
+            # Busca todos os votos com categoria do votante
             votes_query = """
-                SELECT voto FROM votos_guardioes 
-                WHERE id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
+                SELECT vg.voto, u.categoria 
+                FROM votos_guardioes vg
+                JOIN usuarios u ON vg.id_guardiao = u.id_discord
+                WHERE vg.id_denuncia = (SELECT id FROM denuncias WHERE hash_denuncia = $1)
             """
             votes = db_manager.execute_query_sync(votes_query, self.hash_denuncia)
             
-            # Conta os votos
+            # Conta os votos com peso especial para moderadores
             vote_counts = {"OK!": 0, "Intimidou": 0, "Grave": 0}
             for vote in votes:
-                vote_counts[vote['voto']] += 1
+                peso = 5 if vote['categoria'] == 'Moderador' else 1
+                vote_counts[vote['voto']] += peso
+                if peso > 1:
+                    logger.info(f"Voto de moderador aplicado com peso {peso}: {vote['voto']}")
             
             # Determina o resultado
             result = self._determine_punishment(vote_counts)
@@ -422,7 +431,7 @@ class VoteView(ui.View):
             
             # Envia DM para o denunciado com botão de apelação
             if result['punishment']:
-                await self._send_appeal_notification(result)
+            await self._send_appeal_notification(result)
             
         except Exception as e:
             logger.error(f"Erro ao finalizar denúncia: {e}")
@@ -554,30 +563,30 @@ class VoteView(ui.View):
                 return
             
             # Cria o embed de notificação
-            embed = discord.Embed(
-                title="⚖️ Punição Aplicada",
-                description="Você recebeu uma punição baseada em denúncia da comunidade.",
-                color=0xff0000
-            )
-            
-            duration_hours = result['duration'] // 3600
-            embed.add_field(
-                name="📋 Detalhes",
-                value=f"**Tipo:** {result['type']}\n"
-                      f"**Duração:** {duration_hours} horas\n"
-                      f"**Hash da Denúncia:** `{self.hash_denuncia}`",
-                inline=False
-            )
-            
-            # Cria view com botão de apelação
-            appeal_view = AppealView(self.hash_denuncia)
-            
-            # Envia DM para o usuário
+                embed = discord.Embed(
+                    title="⚖️ Punição Aplicada",
+                    description="Você recebeu uma punição baseada em denúncia da comunidade.",
+                    color=0xff0000
+                )
+                
+                duration_hours = result['duration'] // 3600
+                embed.add_field(
+                    name="📋 Detalhes",
+                    value=f"**Tipo:** {result['type']}\n"
+                          f"**Duração:** {duration_hours} horas\n"
+                          f"**Hash da Denúncia:** `{self.hash_denuncia}`",
+                    inline=False
+                )
+                
+                # Cria view com botão de apelação
+                appeal_view = AppealView(self.hash_denuncia)
+                
+                # Envia DM para o usuário
             from main import bot  # Import local para evitar circular
             user = bot.get_user(denuncia['id_denunciado'])
-            if user:
-                await user.send(embed=embed, view=appeal_view)
-                
+                if user:
+                    await user.send(embed=embed, view=appeal_view)
+                    
         except Exception as e:
             logger.error(f"Erro ao enviar notificação de apelação: {e}")
 
@@ -629,6 +638,71 @@ class ModeracaoCog(commands.Cog):
         self.timeout_check.start()
         self.inactivity_check.start()
     
+    async def _should_include_moderators(self, denuncia: dict) -> dict:
+        """Verifica se deve incluir moderadores na distribuição"""
+        try:
+            # Verifica se a denúncia está pendente há mais de 15 minutos
+            current_time = datetime.utcnow()
+            denuncia_time = denuncia['data_criacao']
+            
+            # Se data_criacao é timezone-aware, converte para UTC naive
+            if hasattr(denuncia_time, 'tzinfo') and denuncia_time.tzinfo is not None:
+                denuncia_time = denuncia_time.replace(tzinfo=None)
+            
+            time_diff = current_time - denuncia_time
+            
+            # Denúncia pendente há mais de 15 minutos
+            if time_diff.total_seconds() > 15 * 60:  # 15 minutos
+                return {
+                    'include': True,
+                    'reason': f'Denúncia pendente há {int(time_diff.total_seconds() // 60)} minutos'
+                }
+            
+            # Denúncia premium sem guardiões suficientes
+            if denuncia.get('e_premium', False):
+                guardians_count = db_manager.execute_scalar_sync(
+                    "SELECT COUNT(*) FROM usuarios WHERE em_servico = TRUE AND categoria = 'Guardião'"
+                )
+                if guardians_count < 2:  # Menos de 2 guardiões disponíveis
+                    return {
+                        'include': True,
+                        'reason': f'Denúncia premium com apenas {guardians_count} guardiões disponíveis'
+                    }
+            
+            return {'include': False, 'reason': 'Condições não atendidas'}
+            
+        except Exception as e:
+            logger.error(f"Erro ao verificar se deve incluir moderadores: {e}")
+            return {'include': False, 'reason': 'Erro na verificação'}
+    
+    async def _get_available_moderators(self, denuncia_id: int, limit: int) -> list:
+        """Busca moderadores disponíveis para a denúncia"""
+        try:
+            moderators_query = """
+                SELECT id_discord, categoria FROM usuarios 
+                WHERE em_servico = TRUE 
+                AND categoria = 'Moderador'
+                AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                AND id_discord NOT IN (
+                    SELECT id_guardiao FROM votos_guardioes 
+                    WHERE id_denuncia = $1
+                )
+                AND id_discord NOT IN (
+                    SELECT id_guardiao FROM mensagens_guardioes 
+                    WHERE id_denuncia = $1 AND status = 'Enviada' AND timeout_expira > NOW()
+                )
+                ORDER BY RANDOM()
+                LIMIT $2
+            """
+            moderators = db_manager.execute_query_sync(moderators_query, denuncia_id, limit)
+            logger.info(f"Encontrados {len(moderators)} moderadores disponíveis para denúncia {denuncia_id}")
+            return moderators
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar moderadores disponíveis: {e}")
+            return []
+
     async def _check_denuncias_limits(self, server_id: int, is_premium: bool) -> dict:
         """Verifica se o servidor pode criar mais denúncias baseado nos limites do plano"""
         try:
@@ -768,7 +842,7 @@ class ModeracaoCog(commands.Cog):
                 description=f"Capturando mensagens e criando denúncia...\n\n**Denunciado:** {usuario.display_name}\n**Motivo:** {motivo}",
                 color=0xffa500
             )
-            await interaction.response.send_message(embed=embed_loading, ephemeral=True)
+                await interaction.response.send_message(embed=embed_loading, ephemeral=True)
             
             # Captura mensagens do histórico
             await self._capture_messages(interaction, usuario, denuncia_id)
@@ -813,7 +887,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await interaction.edit_original_response(embed=embed)
+                await interaction.edit_original_response(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -823,7 +897,7 @@ class ModeracaoCog(commands.Cog):
                 color=0xff0000
             )
             try:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             except:
                 await interaction.followup.send(embed=embed, ephemeral=True)
     
@@ -838,7 +912,7 @@ class ModeracaoCog(commands.Cog):
             
             # Coleta mensagens
             messages = []
-            async for message in interaction.channel.history(limit=100, after=cutoff_time):
+                async for message in interaction.channel.history(limit=100, after=cutoff_time):
                 messages.append(message)
             
             # Ordena do mais recente ao mais antigo
@@ -920,7 +994,7 @@ class ModeracaoCog(commands.Cog):
                 denuncia = db_manager.execute_one_sync(
                     denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
                 )
-            else:
+                else:
                 # Versão simplificada sem rastreamento de mensagens
                 logger.warning("Tabela mensagens_guardioes não existe. Execute a migração: database/migrate_add_mensagens_guardioes.sql")
                 denuncias_query = """
@@ -955,10 +1029,10 @@ class ModeracaoCog(commands.Cog):
                 logger.debug(f"Denúncia {denuncia['hash_denuncia']} não precisa de mais guardiões")
                 return
             
-            # Busca guardiões disponíveis
+            # Busca guardiões disponíveis (prioridade para guardiões)
             if table_exists:
                 guardians_query = """
-                    SELECT id_discord FROM usuarios 
+                    SELECT id_discord, categoria FROM usuarios 
                     WHERE em_servico = TRUE 
                     AND categoria = 'Guardião'
                     AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
@@ -975,21 +1049,29 @@ class ModeracaoCog(commands.Cog):
                     LIMIT $2
                 """
                 guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], mensagens_necessarias)
+                
+                # Se não há guardiões suficientes, verifica se deve incluir moderadores
+                if len(guardians) < mensagens_necessarias:
+                    should_include_moderators = await self._should_include_moderators(denuncia)
+                    if should_include_moderators['include']:
+                        logger.info(f"Incluindo moderadores para denúncia {denuncia['hash_denuncia']} - {should_include_moderators['reason']}")
+                        moderators = await self._get_available_moderators(denuncia['id'], mensagens_necessarias - len(guardians))
+                        guardians.extend(moderators)
             else:
                 # Versão simplificada usando cache temporário para evitar spam
-                guardians_query = """
-                    SELECT id_discord FROM usuarios 
-                    WHERE em_servico = TRUE 
-                    AND categoria = 'Guardião'
-                    AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
-                    AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
-                    AND id_discord NOT IN (
-                        SELECT id_guardiao FROM votos_guardioes 
-                        WHERE id_denuncia = $1
-                    )
-                    ORDER BY RANDOM()
-                    LIMIT $2
-                """
+            guardians_query = """
+                SELECT id_discord FROM usuarios 
+                WHERE em_servico = TRUE 
+                AND categoria = 'Guardião'
+                AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                AND id_discord NOT IN (
+                    SELECT id_guardiao FROM votos_guardioes 
+                    WHERE id_denuncia = $1
+                )
+                ORDER BY RANDOM()
+                LIMIT $2
+            """
                 all_guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
                 
                 # Filtra guardiões que NÃO têm mensagens ativas (não reenvia para o mesmo guardião)
@@ -1026,8 +1108,8 @@ class ModeracaoCog(commands.Cog):
             
             # Muda o status para "Em Análise" se ainda estiver pendente
             if denuncia['status'] == 'Pendente':
-                update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
-                db_manager.execute_command_sync(update_query, denuncia['id'])
+            update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
+            db_manager.execute_command_sync(update_query, denuncia['id'])
                 logger.info(f"Status da denúncia {denuncia['hash_denuncia']} alterado para 'Em Análise'")
             
             # Envia para cada guardião
