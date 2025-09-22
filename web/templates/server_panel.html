@@ -167,9 +167,86 @@
         border-radius: 20px;
         padding: 2rem;
         margin-bottom: 2rem;
-        color: var(--dark-bg);
+        color: #000000 !important; /* Força texto preto para melhor contraste */
         position: relative;
         overflow: hidden;
+    }
+    
+    /* Força texto preto em todos os elementos da seção premium */
+    .premium-section * {
+        color: #000000 !important;
+    }
+    
+    .premium-section h3 {
+        color: #000000 !important;
+        font-weight: 700;
+    }
+    
+    .premium-section label,
+    .premium-section .form-label {
+        color: #000000 !important;
+        font-weight: 600;
+    }
+    
+    .premium-section .form-text {
+        color: #333333 !important;
+        opacity: 0.8;
+    }
+    
+    .premium-section p {
+        color: #000000 !important;
+    }
+    
+    /* Estilos para formulários na seção premium */
+    .premium-section .form-select,
+    .premium-section .form-control,
+    .premium-section select,
+    .premium-section input {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid rgba(0, 0, 0, 0.1) !important;
+        color: #000000 !important;
+        font-weight: 500;
+    }
+    
+    .premium-section .form-select:focus,
+    .premium-section .form-control:focus,
+    .premium-section select:focus,
+    .premium-section input:focus {
+        background-color: #ffffff !important;
+        border-color: var(--primary-teal) !important;
+        box-shadow: 0 0 0 0.2rem rgba(30, 90, 90, 0.25) !important;
+        color: #000000 !important;
+    }
+    
+    .premium-section .form-select option,
+    .premium-section select option {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    
+    /* Botão na seção premium */
+    .premium-section .btn {
+        background: var(--primary-teal) !important;
+        border-color: var(--primary-teal) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .premium-section .btn:hover {
+        background: var(--primary-teal-dark) !important;
+        border-color: var(--primary-teal-dark) !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(30, 90, 90, 0.3);
+    }
+    
+    .premium-section .btn:disabled {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-color: rgba(0, 0, 0, 0.3) !important;
+        color: rgba(0, 0, 0, 0.5) !important;
     }
 
     .premium-section.disabled {
