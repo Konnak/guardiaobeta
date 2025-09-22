@@ -467,11 +467,17 @@ def setup_routes(app):
     def get_server_channels(server_id):
         """API para obter canais de texto do servidor"""
         try:
+            logger.info(f"🔍 API channels chamada para servidor: {server_id}")
+            
             # Verificar se o usuário tem acesso ao servidor
             admin_guilds = get_user_guilds_admin()
+            logger.info(f"📋 Usuário tem acesso a {len(admin_guilds)} servidores: {[guild['id'] for guild in admin_guilds]}")
+            
             server_found = any(guild['id'] == str(server_id) for guild in admin_guilds)
+            logger.info(f"🔑 Servidor {server_id} encontrado na lista do usuário: {server_found}")
             
             if not server_found:
+                logger.error(f"❌ Usuário não tem acesso ao servidor {server_id}")
                 return jsonify({'error': 'Acesso negado ao servidor'}), 403
             
             # Usar a API do Discord através do bot para obter canais
