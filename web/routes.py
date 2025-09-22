@@ -560,43 +560,37 @@ def setup_routes(app):
             if not premium_exists:
                 return jsonify({'error': 'Servidor não possui premium ativo'}), 403
             
-            # Obter dados do formulário
-            data = request.get_json()
-            canal_log = data.get('canal_log')
-            duracao_intimidou = data.get('duracao_intimidou', 1)
-            duracao_grave = data.get('duracao_grave', 12)
-            duracao_ban = data.get('duracao_ban', 24)
-            
-            # Validações
-            try:
-                duracao_intimidou = int(duracao_intimidou)
-                duracao_grave = int(duracao_grave) 
-                duracao_ban = int(duracao_ban)
-                
-                if not (1 <= duracao_intimidou <= 24):
-                    return jsonify({'error': 'Duração de intimidação deve estar entre 1 e 24 horas'}), 400
-                if not (1 <= duracao_grave <= 168):
-                    return jsonify({'error': 'Duração grave deve estar entre 1 e 168 horas'}), 400
-                if not (1 <= duracao_ban <= 8760):
-                    return jsonify({'error': 'Duração de ban deve estar entre 1 e 8760 horas'}), 400
+             # Obter dados do formulário
+             data = request.get_json()
+             canal_log = data.get('canal_log')
+             duracao_intimidou = data.get('duracao_intimidou', 1)
+             duracao_grave = data.get('duracao_grave', 12)
+             
+             # Validações
+             try:
+                 duracao_intimidou = int(duracao_intimidou)
+                 duracao_grave = int(duracao_grave) 
+                 
+                 if not (1 <= duracao_intimidou <= 24):
+                     return jsonify({'error': 'Duração de intimidação deve estar entre 1 e 24 horas'}), 400
+                 if not (1 <= duracao_grave <= 168):
+                     return jsonify({'error': 'Duração grave deve estar entre 1 e 168 horas'}), 400
                     
             except ValueError:
                 return jsonify({'error': 'Durações devem ser números válidos'}), 400
             
-            # Salvar configurações no banco
-            upsert_config = """
-                INSERT INTO configuracoes_servidor (id_servidor, canal_log, duracao_intimidou, duracao_grave, duracao_ban)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (id_servidor) 
-                DO UPDATE SET 
-                    canal_log = EXCLUDED.canal_log,
-                    duracao_intimidou = EXCLUDED.duracao_intimidou,
-                    duracao_grave = EXCLUDED.duracao_grave,
-                    duracao_ban = EXCLUDED.duracao_ban,
-                    atualizado_em = NOW()
-            """
-            
-            db_manager.execute_query_sync(upsert_config, server_id, canal_log, duracao_intimidou, duracao_grave, duracao_ban)
+             # Salvar configurações no banco (sem duracao_ban - usar duracao_grave_4plus)
+             upsert_config = """
+                 INSERT INTO configuracoes_servidor (id_servidor, canal_log, duracao_intimidou, duracao_grave)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (id_servidor) 
+                 DO UPDATE SET 
+                     canal_log = EXCLUDED.canal_log,
+                     duracao_intimidou = EXCLUDED.duracao_intimidou,
+                     duracao_grave = EXCLUDED.duracao_grave
+             """
+             
+             db_manager.execute_query_sync(upsert_config, server_id, canal_log, duracao_intimidou, duracao_grave)
             
             logger.info(f"Configurações premium salvas para servidor {server_id}")
             

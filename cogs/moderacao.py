@@ -251,7 +251,7 @@ class ReportView(ui.View):
             
             for msg in mensagens:
                 if msg['id_autor'] not in usuarios_unicos:
-                    if msg['id_autor'] == id_denunciado:
+            if msg['id_autor'] == id_denunciado:
                         usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
                     else:
                         usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
@@ -431,7 +431,7 @@ class VoteView(ui.View):
             
             # Envia DM para o denunciado com botão de apelação
             if result['punishment']:
-                await self._send_appeal_notification(result)
+            await self._send_appeal_notification(result)
             
         except Exception as e:
             logger.error(f"Erro ao finalizar denúncia: {e}")
@@ -517,13 +517,74 @@ class VoteView(ui.View):
                 # Para bans temporários, usa timeout longo (Discord não tem ban temporário nativo)
                 await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
                 logger.info(f"Ban (timeout) aplicado para {member.display_name} por {result['duration']} segundos")
+                punishment_action = "🔨 Banimento Temporário"
             else:
                 # Timeout normal
                 await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
                 logger.info(f"Timeout aplicado para {member.display_name} por {result['duration']} segundos")
+                punishment_action = "⏰ Timeout"
+            
+            # Enviar log para o canal configurado
+            await self._send_punishment_log(guild, member, result, punishment_action)
             
         except Exception as e:
             logger.error(f"Erro ao aplicar punição: {e}")
+    
+    async def _send_punishment_log(self, guild: discord.Guild, member: discord.Member, result: Dict, action: str):
+        """Envia log da punição para o canal configurado"""
+        try:
+            # Buscar canal de log configurado
+            config_query = """
+                SELECT canal_log FROM configuracoes_servidor 
+                WHERE id_servidor = $1
+            """
+            config = db_manager.execute_one_sync(config_query, guild.id)
+            
+            if not config or not config['canal_log']:
+                logger.debug(f"Nenhum canal de log configurado para servidor {guild.id}")
+                return
+            
+            # Buscar o canal
+            log_channel_id = int(config['canal_log'])
+            log_channel = guild.get_channel(log_channel_id)
+            
+            if not log_channel:
+                logger.warning(f"Canal de log {log_channel_id} não encontrado no servidor {guild.id}")
+                return
+            
+            # Criar embed de log
+            embed = discord.Embed(
+                title="🛡️ Sistema Guardião - Punição Aplicada",
+                color=0xff6b35,
+                timestamp=datetime.utcnow()
+            )
+            
+            embed.add_field(
+                name="👤 Usuário Punido",
+                value=f"{member.mention} ({member.display_name})\n`ID: {member.id}`",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="⚖️ Punição",
+                value=f"{action}\n**Tipo:** {result['type']}\n**Duração:** {result['duration'] // 3600}h",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="📋 Detalhes",
+                value=f"**Hash:** `{self.hash_denuncia}`\n**Sistema:** Moderação Comunitária",
+                inline=False
+            )
+            
+            embed.set_footer(text="Sistema Guardião BETA", icon_url=guild.icon.url if guild.icon else None)
+            
+            # Enviar para o canal de log
+            await log_channel.send(embed=embed)
+            logger.info(f"Log de punição enviado para canal {log_channel.name} no servidor {guild.name}")
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar log de punição: {e}")
     
     async def _distribute_experience(self):
         """Distribui experiência para os guardiões que votaram"""
@@ -845,7 +906,7 @@ class ModeracaoCog(commands.Cog):
                 description=f"Capturando mensagens e criando denúncia...\n\n**Denunciado:** {usuario.display_name}\n**Motivo:** {motivo}",
                 color=0xffa500
             )
-            await interaction.response.send_message(embed=embed_loading, ephemeral=True)
+                await interaction.response.send_message(embed=embed_loading, ephemeral=True)
             
             # Captura mensagens do histórico
             await self._capture_messages(interaction, usuario, denuncia_id)
@@ -890,7 +951,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-            await interaction.edit_original_response(embed=embed)
+                await interaction.edit_original_response(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -900,7 +961,7 @@ class ModeracaoCog(commands.Cog):
                 color=0xff0000
             )
             try:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
             except:
                 await interaction.followup.send(embed=embed, ephemeral=True)
     
@@ -915,7 +976,7 @@ class ModeracaoCog(commands.Cog):
             
             # Coleta mensagens
             messages = []
-            async for message in interaction.channel.history(limit=100, after=cutoff_time):
+                async for message in interaction.channel.history(limit=100, after=cutoff_time):
                 messages.append(message)
             
             # Ordena do mais recente ao mais antigo
@@ -997,7 +1058,7 @@ class ModeracaoCog(commands.Cog):
                 denuncia = db_manager.execute_one_sync(
                     denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
                 )
-            else:
+                else:
                 # Versão simplificada sem rastreamento de mensagens
                 logger.warning("Tabela mensagens_guardioes não existe. Execute a migração: database/migrate_add_mensagens_guardioes.sql")
                 denuncias_query = """
@@ -1062,7 +1123,7 @@ class ModeracaoCog(commands.Cog):
                         guardians.extend(moderators)
             else:
                 # Versão simplificada usando cache temporário para evitar spam
-                guardians_query = """
+            guardians_query = """
                 SELECT id_discord FROM usuarios 
                 WHERE em_servico = TRUE 
                 AND categoria = 'Guardião'
@@ -1111,8 +1172,8 @@ class ModeracaoCog(commands.Cog):
             
             # Muda o status para "Em Análise" se ainda estiver pendente
             if denuncia['status'] == 'Pendente':
-                update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
-                db_manager.execute_command_sync(update_query, denuncia['id'])
+            update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
+            db_manager.execute_command_sync(update_query, denuncia['id'])
                 logger.info(f"Status da denúncia {denuncia['hash_denuncia']} alterado para 'Em Análise'")
             
             # Envia para cada guardião

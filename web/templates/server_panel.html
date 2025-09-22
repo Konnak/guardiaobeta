@@ -692,17 +692,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="duracaoBan" class="form-label">
-                                <i class="bi bi-ban"></i> Duração - Ban (horas)
-                            </label>
-                            <input type="number" class="form-control" id="duracaoBan" 
-                                   name="duracao_ban" value="{{ server_config.duracao_ban or 24 }}" 
-                                   min="1" max="8760" step="1" {% if not is_premium %}disabled{% endif %}>
-                            <div class="form-text">
-                                Tempo de banimento para infrações extremas (1-8760 horas / 1 ano)
-            </div>
-        </div>
+                            <!-- Duração de ban removida - usando duracao_grave_4plus do schema -->
     </div>
 
                     {% if is_premium %}
