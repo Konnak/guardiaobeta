@@ -994,7 +994,7 @@ class ModeracaoCog(commands.Cog):
                 denuncia = db_manager.execute_one_sync(
                     denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
                 )
-                else:
+            else:
                 # Versão simplificada sem rastreamento de mensagens
                 logger.warning("Tabela mensagens_guardioes não existe. Execute a migração: database/migrate_add_mensagens_guardioes.sql")
                 denuncias_query = """
@@ -1059,7 +1059,7 @@ class ModeracaoCog(commands.Cog):
                         guardians.extend(moderators)
             else:
                 # Versão simplificada usando cache temporário para evitar spam
-            guardians_query = """
+                guardians_query = """
                 SELECT id_discord FROM usuarios 
                 WHERE em_servico = TRUE 
                 AND categoria = 'Guardião'
@@ -1108,8 +1108,8 @@ class ModeracaoCog(commands.Cog):
             
             # Muda o status para "Em Análise" se ainda estiver pendente
             if denuncia['status'] == 'Pendente':
-            update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
-            db_manager.execute_command_sync(update_query, denuncia['id'])
+                update_query = "UPDATE denuncias SET status = 'Em Análise' WHERE id = $1"
+                db_manager.execute_command_sync(update_query, denuncia['id'])
                 logger.info(f"Status da denúncia {denuncia['hash_denuncia']} alterado para 'Em Análise'")
             
             # Envia para cada guardião
