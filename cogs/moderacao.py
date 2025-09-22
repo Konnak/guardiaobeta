@@ -251,7 +251,7 @@ class ReportView(ui.View):
             
             for msg in mensagens:
                 if msg['id_autor'] not in usuarios_unicos:
-            if msg['id_autor'] == id_denunciado:
+                    if msg['id_autor'] == id_denunciado:
                         usuarios_unicos[msg['id_autor']] = "**🔴 Denunciado**"
                     else:
                         usuarios_unicos[msg['id_autor']] = f"**Usuário {contador_usuario}**"
