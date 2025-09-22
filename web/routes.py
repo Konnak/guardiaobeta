@@ -241,7 +241,7 @@ def setup_routes(app):
                 
                 # Verificar se bot está no servidor (tentar buscar canais)
                 bot_in_server = False
-                bot_token = os.getenv('DISCORD_BOT_TOKEN')
+                bot_token = os.getenv('DISCORD_TOKEN')
                 
                 if bot_token:
                     try:
@@ -258,7 +258,7 @@ def setup_routes(app):
                 else:
                     # TEMPORÁRIO: Se não tem token, assumir que bot está presente
                     # Isso evita mostrar "Não Protegido" para todos os servidores
-                    logger.warning(f"DISCORD_BOT_TOKEN não configurado - assumindo bot presente no servidor {guild['name']}")
+                    logger.warning(f"DISCORD_TOKEN não configurado - assumindo bot presente no servidor {guild['name']}")
                     bot_in_server = True
                 
                 # Buscar estatísticas de denúncias
@@ -380,9 +380,9 @@ def setup_routes(app):
             logger.info(f"🔍 Verificando {len(admin_guilds)} servidores para seleção premium...")
             
             # Obter token uma vez
-            bot_token = os.getenv('DISCORD_BOT_TOKEN')
+            bot_token = os.getenv('DISCORD_TOKEN')
             if not bot_token:
-                logger.warning("⚠️ DISCORD_BOT_TOKEN não encontrado no .env - assumindo bot presente em todos os servidores")
+                logger.warning("⚠️ DISCORD_TOKEN não encontrado no .env - assumindo bot presente em todos os servidores")
             
             for guild in admin_guilds:
                 guild_id = int(guild['id'])
@@ -476,10 +476,10 @@ def setup_routes(app):
             
             # Usar a API do Discord através do bot para obter canais
             import requests
-            bot_token = os.getenv('DISCORD_BOT_TOKEN')
+            bot_token = os.getenv('DISCORD_TOKEN')
             
             if not bot_token:
-                logger.error("DISCORD_BOT_TOKEN não configurado para buscar canais")
+                logger.error("DISCORD_TOKEN não configurado para buscar canais")
                 # Retornar canais fictícios para permitir teste
                 fake_channels = [
                     {'id': '123456789', 'name': '📋｜logs', 'type': 0, 'position': 0},
