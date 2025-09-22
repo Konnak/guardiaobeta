@@ -866,13 +866,15 @@ async function createCheckout(plan) {
         
         if (data.success) {
             // Redirecionar para o Stripe Checkout
+            console.log('Redirecionando para Stripe Checkout:', data.checkout_url);
             window.location.href = data.checkout_url;
         } else {
+            console.error('Erro na resposta:', data);
             alert('Erro ao criar sessão de pagamento: ' + (data.error || 'Erro desconhecido'));
             loadingOverlay.style.display = 'none';
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro na requisição:', error);
         alert('Erro ao processar solicitação. Tente novamente.');
         loadingOverlay.style.display = 'none';
     }

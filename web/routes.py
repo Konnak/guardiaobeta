@@ -490,10 +490,15 @@ def setup_routes(app):
             stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
             
             if not stripe.api_key:
-                return jsonify({'success': False, 'error': 'Stripe não configurado'}), 500
+                logger.error("STRIPE_SECRET_KEY não configurado no .env")
+                return jsonify({'success': False, 'error': 'Stripe não configurado. Verifique as variáveis de ambiente.'}), 500
+            
+            logger.info(f"Stripe configurado com chave: {stripe.api_key[:7]}...")
             
             data = request.get_json()
             plan = data.get('plan')
+            
+            logger.info(f"Criando checkout para plano: {plan}")
             
             # Definir produtos e preços
             plans_config = {
@@ -538,8 +543,6 @@ def setup_routes(app):
                         'recurring': {
                             'interval': plan_config['interval'],
                             'interval_count': plan_config.get('interval_count', 1)
-                        } if plan != 'yearly' else {
-                            'interval': plan_config['interval']
                         }
                     },
                     'quantity': 1,
@@ -555,11 +558,17 @@ def setup_routes(app):
                 }
             )
             
-            logger.info(f"Checkout criado para usuário {user_data['username']}: {checkout_session.id}")
+            logger.info(f"Checkout criado com sucesso!")
+            logger.info(f"- Usuário: {user_data['username']}")
+            logger.info(f"- Session ID: {checkout_session.id}")
+            logger.info(f"- URL: {checkout_session.url}")
+            logger.info(f"- Plano: {plan} - {plan_config['name']}")
+            logger.info(f"- Preço: R$ {plan_config['price']/100:.2f}")
             
             return jsonify({
                 'success': True,
-                'checkout_url': checkout_session.url
+                'checkout_url': checkout_session.url,
+                'session_id': checkout_session.id
             })
             
         except Exception as e:
