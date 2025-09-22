@@ -756,27 +756,14 @@
 
 {% block extra_scripts %}
 <script>
-// DEBUG: Mostrar valores do backend
-console.log('🔍 Template server_id (raw):', '{{ server_id }}');
-console.log('🔍 Template guild:', {{ guild|tojson }});
-console.log('🔍 Template guild.id:', '{{ guild.id if guild else "None" }}');
-
-// TESTE: Forçar uso da string literal
-const serverIdFromTemplate = '{{ server_id }}';
-const serverIdFromGuild = '{{ guild.id if guild else "None" }}';
-const serverId = parseInt(serverIdFromTemplate);
-
-console.log('🔍 serverIdFromTemplate:', serverIdFromTemplate);
-console.log('🔍 serverIdFromGuild:', serverIdFromGuild);
-console.log('🔍 serverId final:', serverId);
+// CORREÇÃO: Usar string para evitar problemas de precisão do JavaScript com números grandes
+const serverId = '{{ server_id }}';
 const isPremium = {{ is_premium|tojson }};
 let currentPage = 1;
 let currentFilter = 'all';
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 JavaScript serverId:', serverId);
-    console.log('🔍 JavaScript isPremium:', isPremium);
     loadDenuncias();
     
     if (isPremium) {
@@ -788,11 +775,8 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadChannels() {
     if (!isPremium) return;
     
-    console.log('🔍 loadChannels() - Usando serverId:', serverId);
     try {
-        const url = `/api/server/${serverId}/channels`;
-        console.log('🔍 loadChannels() - URL da API:', url);
-        const response = await fetch(url);
+        const response = await fetch(`/api/server/${serverId}/channels`);
         const data = await response.json();
         
         const channelSelect = document.getElementById('canalLog');
@@ -882,10 +866,7 @@ function loadDenuncias(page = 1, filter = 'all') {
     `;
     
     // Buscar dados
-    console.log('🔍 loadDenuncias() - Usando serverId:', serverId);
-    const denunciasUrl = `/api/server/${serverId}/denuncias?page=${page}&per_page=10&status=${filter === 'all' ? '' : filter}`;
-    console.log('🔍 loadDenuncias() - URL da API:', denunciasUrl);
-    fetch(denunciasUrl)
+    fetch(`/api/server/${serverId}/denuncias?page=${page}&per_page=10&status=${filter === 'all' ? '' : filter}`)
         .then(response => response.json())
         .then(data => {
             if (data.denuncias && data.denuncias.length > 0) {

@@ -165,7 +165,6 @@ def setup_routes(app):
     def server_panel(server_id):
         """Painel de controle do servidor"""
         try:
-            logger.info(f"🔍 server_panel chamado com server_id: {server_id}")
             user_data = session['user']
             
             # Verifica se o usuário é admin do servidor
@@ -201,12 +200,7 @@ def setup_routes(app):
                 """
                 server_config = db_manager.execute_one_sync(config_query, server_id)
             
-            logger.info(f"📤 Passando server_id para template: {server_id}")
-            logger.info(f"📤 Tipo do server_id: {type(server_id)}")
-            logger.info(f"📤 Guild ID: {guild.get('id') if guild else 'None'}")
-            logger.info(f"📤 Todas as variáveis do template:")
-            logger.info(f"   - server_id: {server_id}")
-            logger.info(f"   - guild: {guild}")
+            logger.info(f"📤 Renderizando server_panel para servidor: {server_id}")
             
             return render_template('server_panel.html',
                                  user=user_data,
@@ -475,17 +469,12 @@ def setup_routes(app):
     def get_server_channels(server_id):
         """API para obter canais de texto do servidor"""
         try:
-            logger.info(f"🔍 API channels chamada para servidor: {server_id}")
-            
             # Verificar se o usuário tem acesso ao servidor
             admin_guilds = get_user_guilds_admin()
-            logger.info(f"📋 Usuário tem acesso a {len(admin_guilds)} servidores: {[guild['id'] for guild in admin_guilds]}")
-            
             server_found = any(guild['id'] == str(server_id) for guild in admin_guilds)
-            logger.info(f"🔑 Servidor {server_id} encontrado na lista do usuário: {server_found}")
             
             if not server_found:
-                logger.error(f"❌ Usuário não tem acesso ao servidor {server_id}")
+                logger.warning(f"Usuário tentou acessar servidor {server_id} sem permissão")
                 return jsonify({'error': 'Acesso negado ao servidor'}), 403
             
             # Usar a API do Discord através do bot para obter canais
