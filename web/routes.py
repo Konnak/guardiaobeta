@@ -972,7 +972,7 @@ def setup_routes(app):
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 20, type=int)
             status = request.args.get('status', None)
-            periodo = request.args.get('periodo', '30')  # dias
+            periodo = request.args.get('periodo', '90')  # dias - aumentado para mostrar mais denúncias
             
             # Calcula offset
             offset = (page - 1) * per_page
@@ -1107,13 +1107,25 @@ def get_server_stats(server_id: int) -> dict:
         """
         period_stats = db_manager.execute_query_sync(period_query, server_id)
         
-        # Usuários mais denunciados
+        # Usuários mais denunciados (com informações do usuário)
         top_denunciados_query = """
-            SELECT id_denunciado, COUNT(*) as denuncias_count
-            FROM denuncias 
-            WHERE id_servidor = $1 
-            AND data_criacao >= NOW() - INTERVAL '30 days'
-            GROUP BY id_denunciado
+            SELECT 
+                d.id_denunciado,
+                u.username,
+                u.avatar,
+                u.discriminator,
+                COUNT(*) as denuncias_count,
+                CASE 
+                    WHEN u.categoria = 'Banido' THEN 'BANIDO'
+                    WHEN u.categoria = 'Intimidou' THEN 'INTIMIDOU'
+                    WHEN u.categoria = 'Grave' THEN 'GRAVE'
+                    ELSE 'ATIVO'
+                END as status_usuario
+            FROM denuncias d
+            LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
+            WHERE d.id_servidor = $1 
+            AND d.data_criacao >= NOW() - INTERVAL '30 days'
+            GROUP BY d.id_denunciado, u.username, u.avatar, u.discriminator, u.categoria
             ORDER BY denuncias_count DESC
             LIMIT 10
         """

@@ -788,14 +788,44 @@
                                 {% for user in stats.top_denunciados %}
                                     <tr>
                                         <td>
-                                <i class="bi bi-person-circle me-2"></i>
-                                            Usuário ID: {{ user.id_denunciado }}
+                                            <div class="d-flex align-items-center">
+                                                {% if user.avatar %}
+                                                    <img src="https://cdn.discordapp.com/avatars/{{ user.id_denunciado }}/{{ user.avatar }}.png?size=32" 
+                                                         alt="Avatar" class="rounded-circle me-2" width="32" height="32">
+                                                {% else %}
+                                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <div class="fw-medium">
+                                                        {% if user.username %}
+                                                            {{ user.username }}
+                                                            {% if user.discriminator and user.discriminator != '0' %}
+                                                                <span class="text-muted">#{{ user.discriminator }}</span>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <span class="text-muted">Usuário Desconhecido</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <small class="text-muted">ID: {{ user.id_denunciado }}</small>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-warning">{{ user.denuncias_count }}</span>
+                                            <span class="badge bg-warning text-dark">{{ user.denuncias_count }}</span>
                                         </td>
                                         <td>
-                                <span class="badge bg-success">Ativo</span>
+                                            {% if user.status_usuario == 'BANIDO' %}
+                                                <span class="badge bg-danger">Banido</span>
+                                            {% elif user.status_usuario == 'INTIMIDOU' %}
+                                                <span class="badge bg-warning text-dark">Intimidou</span>
+                                            {% elif user.status_usuario == 'GRAVE' %}
+                                                <span class="badge bg-dark">Grave</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                 {% else %}
@@ -948,27 +978,46 @@ function loadDenuncias(page = 1, filter = 'all') {
         .then(data => {
             if (data.denuncias && data.denuncias.length > 0) {
                 tbody.innerHTML = data.denuncias.map(denuncia => `
-                    <tr>
+                    <tr class="align-middle">
                         <td>
-                            <code style="background: rgba(255, 184, 0, 0.1); color: var(--primary-gold); padding: 0.25rem 0.5rem; border-radius: 6px;">
-                                ${denuncia.hash_denuncia}
-                            </code>
+                            <div class="d-flex flex-column">
+                                <code style="background: rgba(255, 184, 0, 0.1); color: var(--primary-gold); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.8rem;">
+                                    ${denuncia.hash_denuncia}
+                                </code>
+                                ${denuncia.denunciado_name ? 
+                                    `<small class="text-muted mt-1">vs ${denuncia.denunciado_name}</small>` : 
+                                    `<small class="text-muted mt-1">ID: ${denuncia.id_denunciado}</small>`
+                                }
+                            </div>
                         </td>
                         <td>
-                            <span class="badge bg-${getStatusColor(denuncia.status)}">
+                            <span class="badge bg-${getStatusColor(denuncia.status)} fs-6">
                                 ${getStatusText(denuncia.status)}
                             </span>
                         </td>
-                        <td>${denuncia.motivo}</td>
-                        <td>${new Date(denuncia.data_criacao).toLocaleDateString('pt-BR')}</td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span>${denuncia.motivo}</span>
+                                ${denuncia.denunciante_name ? 
+                                    `<small class="text-muted">por ${denuncia.denunciante_name}</small>` : 
+                                    ''
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span>${new Date(denuncia.data_criacao).toLocaleDateString('pt-BR')}</span>
+                                <small class="text-muted">${new Date(denuncia.data_criacao).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</small>
+                            </div>
+                        </td>
                         <td>
                             ${denuncia.resultado_final ? 
-                                `<span class="badge bg-${getResultColor(denuncia.resultado_final)}">${denuncia.resultado_final}</span>` : 
-                                '<span class="text-muted">-</span>'
+                                `<span class="badge bg-${getResultColor(denuncia.resultado_final)} fs-6">${denuncia.resultado_final}</span>` : 
+                                '<span class="text-muted">Aguardando</span>'
                             }
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="showDenunciaDetails('${denuncia.hash_denuncia}')">
+                            <button class="btn btn-sm btn-outline-primary" onclick="showDenunciaDetails('${denuncia.hash_denuncia}')" title="Ver detalhes">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </td>
