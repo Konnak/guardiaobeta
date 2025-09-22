@@ -1244,9 +1244,10 @@ class ModeracaoCog(commands.Cog):
                 try:
                     # Aplica penalidade de inatividade
                     penalty_time = datetime.utcnow() + timedelta(hours=INACTIVE_PENALTY_HOURS)
+                    # Remove pontos e XP correspondente (5 pontos = 10 XP)
                     penalty_query = """
                         UPDATE usuarios 
-                        SET pontos = pontos - 5, cooldown_inativo = $1 
+                        SET pontos = pontos - 5, experiencia = experiencia - 10, cooldown_inativo = $1 
                         WHERE id_discord = $2
                     """
                     db_manager.execute_command_sync(penalty_query, penalty_time, guardian_data['id_guardiao'])

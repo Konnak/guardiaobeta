@@ -777,12 +777,14 @@ class GuardiaoCog(commands.Cog):
             if not db_manager.pool:
                 return
             
+            # Adiciona pontos e XP correspondente (1 ponto = 2 XP)
+            xp_reward = TURN_POINTS_PER_HOUR * 2
             query = """
                 UPDATE usuarios 
-                SET pontos = pontos + $1 
+                SET pontos = pontos + $1, experiencia = experiencia + $2
                 WHERE em_servico = TRUE AND categoria IN ('Guardião', 'Moderador', 'Administrador')
             """
-            await db_manager.execute_command(query, TURN_POINTS_PER_HOUR)
+            await db_manager.execute_command(query, TURN_POINTS_PER_HOUR, xp_reward)
             
             logger.info(f"Pontos adicionados para Guardiões em serviço: +{TURN_POINTS_PER_HOUR}")
             

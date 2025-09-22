@@ -313,6 +313,83 @@ def setup_admin_complete(app):
             logger.error(f"Erro ao editar usuário: {e}")
             return f"<h2>Erro: {e}</h2><a href='/admin/users/{user_id}'>← Voltar</a>"
     
+    @app.route('/admin/users/<int:user_id>/points', methods=['POST'])
+    @admin_required_simple
+    def admin_user_modify_points(user_id):
+        """Modificar pontos de um usuário"""
+        try:
+            from utils.experience_system import calculate_xp_from_points_change
+            
+            # Busca o usuário atual
+            user = db_manager.execute_one_sync("SELECT * FROM usuarios WHERE id_discord = $1", user_id) if db_manager else None
+            
+            if not user:
+                flash('Usuário não encontrado.', 'error')
+                return redirect(url_for('admin_users_list'))
+            
+            # Pega os dados do formulário
+            action = request.form.get('action')  # 'add' ou 'set' ou 'remove'
+            points_value = request.form.get('points_value', type=int)
+            reason = request.form.get('reason', '').strip()
+            
+            if points_value is None:
+                flash('Valor de pontos inválido.', 'error')
+                return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+            old_points = user['pontos']
+            old_xp = user['experiencia']
+            
+            if action == 'add':
+                # Adicionar pontos
+                new_points = old_points + points_value
+                points_change = points_value
+                action_text = f"Adicionados {points_value} pontos"
+            elif action == 'remove':
+                # Remover pontos
+                new_points = max(0, old_points - points_value)  # Não permite pontos negativos
+                points_change = -(old_points - new_points)  # Calcula a diferença real
+                action_text = f"Removidos {abs(points_change)} pontos"
+            elif action == 'set':
+                # Definir pontos
+                new_points = max(0, points_value)
+                points_change = new_points - old_points
+                action_text = f"Pontos definidos para {new_points}"
+            else:
+                flash('Ação inválida.', 'error')
+                return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+            # Calcula XP correspondente (1 ponto = 2 XP)
+            xp_change = calculate_xp_from_points_change(points_change)
+            new_xp = max(0, old_xp + xp_change)  # Não permite XP negativo
+            
+            # Atualiza no banco de dados
+            update_query = """
+                UPDATE usuarios 
+                SET pontos = $1, experiencia = $2
+                WHERE id_discord = $3
+            """
+            db_manager.execute_command_sync(update_query, new_points, new_xp, user_id)
+            
+            # Registra log da ação
+            log_message = f"Admin modificou pontos: {action_text}. Pontos: {old_points} → {new_points}. XP: {old_xp} → {new_xp}"
+            if reason:
+                log_message += f". Motivo: {reason}"
+            
+            logger.info(f"[ADMIN] {log_message} (Usuário: {user['username']})")
+            
+            # Flash message com detalhes
+            flash_message = f"{action_text}. XP ajustado: {old_xp} → {new_xp} ({xp_change:+d} XP)"
+            if reason:
+                flash_message += f". Motivo: {reason}"
+            
+            flash(flash_message, 'success')
+            return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+        except Exception as e:
+            logger.error(f"Erro ao modificar pontos do usuário: {e}")
+            flash(f'Erro ao modificar pontos: {e}', 'error')
+            return redirect(url_for('admin_user_detail', user_id=user_id))
+    
     # ==================== GESTÃO DE DENÚNCIAS ====================
     @app.route('/admin/reports')
     @admin_required_simple

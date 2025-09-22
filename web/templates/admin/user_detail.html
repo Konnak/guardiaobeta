@@ -187,10 +187,143 @@
             margin-top: 20px;
         }
         
+        .points-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .points-info p {
+            margin-bottom: 8px;
+        }
+        
+        .points-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .preview-section {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #3498db;
+        }
+        
+        .preview-section h4 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .preview-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .preview-value {
+            font-family: monospace;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
         @media (max-width: 768px) {
             .activity-section { grid-template-columns: 1fr; }
             .profile-header { flex-direction: column; text-align: center; }
             .actions { flex-direction: column; }
+            .form-row { grid-template-columns: 1fr; }
+            .preview-grid { grid-template-columns: 1fr; }
+            .form-actions { flex-direction: column; }
         }
     </style>
 </head>
@@ -292,6 +425,61 @@
             </div>
         </div>
         
+        <!-- Points Management Section -->
+        <div class="user-profile">
+            <h3>🏆 Gerenciar Pontos e Experiência</h3>
+            <div class="points-info">
+                <p><strong>Conversão:</strong> 1 Ponto = 2 XP</p>
+                <p><strong>Pontos Atuais:</strong> {{ user.pontos or 0 }} pontos</p>
+                <p><strong>XP Atual:</strong> {{ user.experiencia or 0 }} XP</p>
+            </div>
+            
+            <form method="POST" action="/admin/users/{{ user.id_discord }}/points" class="points-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="action">Ação:</label>
+                        <select name="action" id="action" required onchange="updateActionText()">
+                            <option value="">Selecione uma ação</option>
+                            <option value="add">➕ Adicionar pontos</option>
+                            <option value="remove">➖ Remover pontos</option>
+                            <option value="set">🎯 Definir pontos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="points_value">Quantidade de pontos:</label>
+                        <input type="number" name="points_value" id="points_value" min="0" max="99999" required onchange="updatePreview()">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reason">Motivo (opcional):</label>
+                    <input type="text" name="reason" id="reason" placeholder="Ex: Recompensa por bom comportamento">
+                </div>
+                
+                <div class="preview-section" id="preview-section" style="display: none;">
+                    <h4>📊 Prévia das Alterações:</h4>
+                    <div class="preview-grid">
+                        <div class="preview-item">
+                            <span class="preview-label">Pontos:</span>
+                            <span class="preview-value" id="preview-points">{{ user.pontos or 0 }} → ?</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">XP:</span>
+                            <span class="preview-value" id="preview-xp">{{ user.experiencia or 0 }} → ?</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                        <span id="submit-text">Confirmar Alteração</span>
+                    </button>
+                    <button type="reset" class="btn btn-secondary" onclick="resetForm()">Limpar</button>
+                </div>
+            </form>
+        </div>
+        
         <!-- Activity Sections -->
         <div class="activity-section">
             <!-- Denúncias Feitas -->
@@ -373,5 +561,100 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        const currentPoints = {{ user.pontos or 0 }};
+        const currentXP = {{ user.experiencia or 0 }};
+        
+        function updateActionText() {
+            const action = document.getElementById('action').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            
+            if (action === 'add') {
+                submitText.textContent = '➕ Adicionar Pontos';
+            } else if (action === 'remove') {
+                submitText.textContent = '➖ Remover Pontos';
+            } else if (action === 'set') {
+                submitText.textContent = '🎯 Definir Pontos';
+            } else {
+                submitText.textContent = 'Confirmar Alteração';
+            }
+            
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const action = document.getElementById('action').value;
+            const pointsValue = parseInt(document.getElementById('points_value').value) || 0;
+            const previewSection = document.getElementById('preview-section');
+            const previewPoints = document.getElementById('preview-points');
+            const previewXP = document.getElementById('preview-xp');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (!action || !pointsValue) {
+                previewSection.style.display = 'none';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            let newPoints = currentPoints;
+            let pointsChange = 0;
+            
+            if (action === 'add') {
+                newPoints = currentPoints + pointsValue;
+                pointsChange = pointsValue;
+            } else if (action === 'remove') {
+                newPoints = Math.max(0, currentPoints - pointsValue);
+                pointsChange = -(currentPoints - newPoints);
+            } else if (action === 'set') {
+                newPoints = Math.max(0, pointsValue);
+                pointsChange = newPoints - currentPoints;
+            }
+            
+            // Calcula XP (1 ponto = 2 XP)
+            const xpChange = pointsChange * 2;
+            const newXP = Math.max(0, currentXP + xpChange);
+            
+            // Atualiza a prévia
+            previewPoints.innerHTML = `${currentPoints} → <strong>${newPoints}</strong> (${pointsChange >= 0 ? '+' : ''}${pointsChange})`;
+            previewXP.innerHTML = `${currentXP} → <strong>${newXP}</strong> (${xpChange >= 0 ? '+' : ''}${xpChange} XP)`;
+            
+            // Mostra a prévia e habilita o botão
+            previewSection.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+        
+        function resetForm() {
+            document.getElementById('preview-section').style.display = 'none';
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-text').textContent = 'Confirmar Alteração';
+        }
+        
+        // Confirmação antes de enviar
+        document.querySelector('.points-form').addEventListener('submit', function(e) {
+            const action = document.getElementById('action').value;
+            const pointsValue = document.getElementById('points_value').value;
+            const reason = document.getElementById('reason').value;
+            
+            let actionText = '';
+            if (action === 'add') {
+                actionText = `adicionar ${pointsValue} pontos`;
+            } else if (action === 'remove') {
+                actionText = `remover ${pointsValue} pontos`;
+            } else if (action === 'set') {
+                actionText = `definir ${pointsValue} pontos`;
+            }
+            
+            let confirmMessage = `Tem certeza que deseja ${actionText}?`;
+            if (reason) {
+                confirmMessage += `\n\nMotivo: ${reason}`;
+            }
+            
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>

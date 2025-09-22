@@ -267,6 +267,32 @@ def calculate_experience_reward(vote_type: str, is_correct: bool = True) -> int:
         return max(1, base_xp // 2)  # Penalidade por erro
 
 
+def convert_points_to_xp(points: int) -> int:
+    """
+    Converte pontos para experiência
+    
+    Args:
+        points: Quantidade de pontos
+        
+    Returns:
+        Quantidade de XP equivalente (1 ponto = 2 XP)
+    """
+    return points * 2
+
+
+def calculate_xp_from_points_change(points_change: int) -> int:
+    """
+    Calcula XP a ser adicionado/removido baseado na mudança de pontos
+    
+    Args:
+        points_change: Mudança nos pontos (positivo ou negativo)
+        
+    Returns:
+        XP a ser adicionado/removido
+    """
+    return points_change * 2
+
+
 def get_rank_requirements() -> Dict[str, Dict[str, int]]:
     """
     Retorna os requisitos de cada rank
