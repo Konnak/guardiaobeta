@@ -740,7 +740,9 @@ def setup_admin_complete(app):
             premium_servers = db_manager.execute_query_sync("""
                 SELECT sp.*, 
                        CASE WHEN sp.data_fim > NOW() THEN 'Ativo' ELSE 'Expirado' END as status,
-                       cs.canal_log, cs.duracao_intimidou, cs.duracao_grave
+                       cs.canal_log, cs.duracao_intimidou, cs.duracao_grave,
+                       sp.data_inicio AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' as data_inicio_br,
+                       sp.data_fim AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' as data_fim_br
                 FROM servidores_premium sp
                 LEFT JOIN configuracoes_servidor cs ON sp.id_servidor = cs.id_servidor
                 ORDER BY sp.data_fim DESC
@@ -783,7 +785,19 @@ def setup_admin_complete(app):
             # Calcula data de fim
             if duration_type == 'custom' and custom_end_date:
                 try:
+                    # Parse da data customizada (assume horário de Brasília)
                     data_fim = datetime.strptime(custom_end_date, '%Y-%m-%dT%H:%M')
+                    
+                    # Converte para UTC (adiciona 3 horas pois Brasília é UTC-3)
+                    from datetime import timezone, timedelta as td
+                    brasilia_tz = timezone(td(hours=-3))
+                    data_fim = data_fim.replace(tzinfo=brasilia_tz).astimezone(timezone.utc).replace(tzinfo=None)
+                    
+                    # Verifica se a data não é no passado
+                    if data_fim <= datetime.utcnow():
+                        flash('A data de expiração deve ser no futuro.', 'error')
+                        return redirect(url_for('admin_premium_add'))
+                        
                 except ValueError:
                     flash('Data customizada inválida.', 'error')
                     return redirect(url_for('admin_premium_add'))

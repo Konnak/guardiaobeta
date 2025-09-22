@@ -396,15 +396,15 @@
                             </td>
                             <td>
                                 <div style="font-size: 0.9em;">
-                                    <div><strong>Início:</strong> {{ server.data_inicio.strftime('%d/%m/%Y') if server.data_inicio else 'N/A' }}</div>
-                                    <div><strong>Fim:</strong> {{ server.data_fim.strftime('%d/%m/%Y') if server.data_fim else 'N/A' }}</div>
+                                    <div><strong>Início:</strong> {{ server.data_inicio_br.strftime('%d/%m/%Y %H:%M') if server.data_inicio_br else server.data_inicio.strftime('%d/%m/%Y') if server.data_inicio else 'N/A' }}</div>
+                                    <div><strong>Fim:</strong> {{ server.data_fim_br.strftime('%d/%m/%Y %H:%M') if server.data_fim_br else server.data_fim.strftime('%d/%m/%Y') if server.data_fim else 'N/A' }}</div>
                                 </div>
                             </td>
                             <td>
                                 <div class="duration-info">
                                     {% if server.status == 'Ativo' %}
                                         <div class="duration-days positive">Ativo</div>
-                                        <div style="font-size: 0.8em; color: #7f8c8d;">até {{ server.data_fim.strftime('%d/%m') if server.data_fim else 'N/A' }}</div>
+                                        <div style="font-size: 0.8em; color: #7f8c8d;">até {{ server.data_fim_br.strftime('%d/%m %H:%M') if server.data_fim_br else server.data_fim.strftime('%d/%m') if server.data_fim else 'N/A' }}</div>
                                     {% else %}
                                         <div class="duration-days negative">---</div>
                                         <div style="font-size: 0.8em; color: #7f8c8d;">Expirado</div>

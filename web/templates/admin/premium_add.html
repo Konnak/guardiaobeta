@@ -324,10 +324,13 @@
             <h2>📝 Informações do Servidor</h2>
             
             <div class="info-box">
-                <h4>ℹ️ Como obter o ID do servidor:</h4>
+                <h4>ℹ️ Informações importantes:</h4>
+                <p><strong>Como obter o ID do servidor:</strong></p>
                 <p>1. No Discord, clique com botão direito no nome do servidor</p>
                 <p>2. Selecione "Copiar ID" (modo desenvolvedor deve estar ativo)</p>
                 <p>3. Cole o ID no campo abaixo</p>
+                <br>
+                <p><strong>⏰ Fuso horário:</strong> Use o horário de Brasília (GMT-3). O sistema converterá automaticamente.</p>
             </div>
             
             <form method="POST" id="premiumForm">
@@ -524,12 +527,14 @@
                 }
             }
             
-            const endDateFormatted = endDate.toLocaleString('pt-BR');
+            const endDateFormatted = endDate.toLocaleString('pt-BR', {
+                timeZone: 'America/Sao_Paulo'
+            });
             
             previewInfo.innerHTML = `
                 <strong>Servidor:</strong> ${serverId}<br>
                 <strong>Duração:</strong> ${durationText}<br>
-                <strong>Expira em:</strong> ${endDateFormatted}
+                <strong>Expira em:</strong> ${endDateFormatted} (Horário de Brasília)
             `;
             
             previewSection.classList.add('show');
