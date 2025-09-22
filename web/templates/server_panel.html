@@ -759,8 +759,16 @@
 // DEBUG: Mostrar valores do backend
 console.log('🔍 Template server_id (raw):', '{{ server_id }}');
 console.log('🔍 Template guild:', {{ guild|tojson }});
+console.log('🔍 Template guild.id:', '{{ guild.id if guild else "None" }}');
 
-const serverId = {{ server_id }};
+// TESTE: Forçar uso da string literal
+const serverIdFromTemplate = '{{ server_id }}';
+const serverIdFromGuild = '{{ guild.id if guild else "None" }}';
+const serverId = parseInt(serverIdFromTemplate);
+
+console.log('🔍 serverIdFromTemplate:', serverIdFromTemplate);
+console.log('🔍 serverIdFromGuild:', serverIdFromGuild);
+console.log('🔍 serverId final:', serverId);
 const isPremium = {{ is_premium|tojson }};
 let currentPage = 1;
 let currentFilter = 'all';
