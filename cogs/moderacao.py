@@ -431,7 +431,7 @@ class VoteView(ui.View):
             
             # Envia DM para o denunciado com botão de apelação
             if result['punishment']:
-            await self._send_appeal_notification(result)
+                await self._send_appeal_notification(result)
             
         except Exception as e:
             logger.error(f"Erro ao finalizar denúncia: {e}")
@@ -584,8 +584,8 @@ class VoteView(ui.View):
                 # Envia DM para o usuário
             from main import bot  # Import local para evitar circular
             user = bot.get_user(denuncia['id_denunciado'])
-                if user:
-                    await user.send(embed=embed, view=appeal_view)
+            if user:
+                await user.send(embed=embed, view=appeal_view)
                     
         except Exception as e:
             logger.error(f"Erro ao enviar notificação de apelação: {e}")
@@ -842,7 +842,7 @@ class ModeracaoCog(commands.Cog):
                 description=f"Capturando mensagens e criando denúncia...\n\n**Denunciado:** {usuario.display_name}\n**Motivo:** {motivo}",
                 color=0xffa500
             )
-                await interaction.response.send_message(embed=embed_loading, ephemeral=True)
+            await interaction.response.send_message(embed=embed_loading, ephemeral=True)
             
             # Captura mensagens do histórico
             await self._capture_messages(interaction, usuario, denuncia_id)
@@ -887,7 +887,7 @@ class ModeracaoCog(commands.Cog):
             
             embed.set_footer(text="Sistema Guardião BETA - Moderação Comunitária")
             
-                await interaction.edit_original_response(embed=embed)
+            await interaction.edit_original_response(embed=embed)
             
         except Exception as e:
             logger.error(f"Erro no comando report: {e}")
@@ -897,7 +897,7 @@ class ModeracaoCog(commands.Cog):
                 color=0xff0000
             )
             try:
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
             except:
                 await interaction.followup.send(embed=embed, ephemeral=True)
     
@@ -912,7 +912,7 @@ class ModeracaoCog(commands.Cog):
             
             # Coleta mensagens
             messages = []
-                async for message in interaction.channel.history(limit=100, after=cutoff_time):
+            async for message in interaction.channel.history(limit=100, after=cutoff_time):
                 messages.append(message)
             
             # Ordena do mais recente ao mais antigo
@@ -994,7 +994,7 @@ class ModeracaoCog(commands.Cog):
                 denuncia = db_manager.execute_one_sync(
                     denuncias_query, REQUIRED_VOTES_FOR_DECISION, MAX_GUARDIANS_PER_REPORT
                 )
-                else:
+            else:
                 # Versão simplificada sem rastreamento de mensagens
                 logger.warning("Tabela mensagens_guardioes não existe. Execute a migração: database/migrate_add_mensagens_guardioes.sql")
                 denuncias_query = """
