@@ -920,20 +920,31 @@ class ModeracaoCog(commands.Cog):
                 """
                 all_guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
                 
-                # Filtra guardiões que já receberam mensagens recentemente (cache temporário)
+                # Filtra guardiões que NÃO têm mensagens ativas (não reenvia para o mesmo guardião)
                 guardians = []
                 current_time = datetime.utcnow()
-                denuncia_cache = self.temp_message_cache.get(denuncia['id'], {})
+                denuncia_tracking = self.temp_message_tracking.get(denuncia['id'], {})
                 
                 for guardian_data in all_guardians:
                     guardian_id = guardian_data['id_discord']
-                    last_sent = denuncia_cache.get(guardian_id)
                     
-                    # Se nunca enviou ou já passaram 5 minutos, pode enviar
-                    if not last_sent or (current_time - last_sent).total_seconds() > 300:  # 5 minutos
+                    # Verifica se o guardião tem mensagem ativa (não expirada)
+                    has_active_message = False
+                    if guardian_id in denuncia_tracking:
+                        msg_data = denuncia_tracking[guardian_id]
+                        time_diff = (current_time - msg_data['timestamp']).total_seconds()
+                        if time_diff <= 300:  # Mensagem ainda ativa (menos de 5 minutos)
+                            has_active_message = True
+                    
+                    # Só adiciona se NÃO tem mensagem ativa
+                    if not has_active_message:
                         guardians.append(guardian_data)
-                        if len(guardians) >= mensagens_necessarias:
-                            break
+                        logger.debug(f"Guardião {guardian_id} disponível para denúncia {denuncia['hash_denuncia']}")
+                    else:
+                        logger.debug(f"Guardião {guardian_id} já tem mensagem ativa para denúncia {denuncia['hash_denuncia']}")
+                    
+                    if len(guardians) >= mensagens_necessarias:
+                        break
             
             logger.info(f"Encontrados {len(guardians) if guardians else 0} guardiões disponíveis para denúncia {denuncia['hash_denuncia']}")
             
@@ -1103,6 +1114,11 @@ class ModeracaoCog(commands.Cog):
             
             if expired_messages:
                 logger.info(f"Processadas {len(expired_messages)} mensagens expiradas do cache temporário")
+                
+                # Força uma nova distribuição após apagar mensagens expiradas
+                # para que denúncias sejam redistribuídas imediatamente
+                unique_denuncias = set(msg['denuncia_id'] for msg in expired_messages)
+                logger.info(f"Forçando redistribuição para {len(unique_denuncias)} denúncias após timeout")
                 
         except Exception as e:
             logger.error(f"Erro ao processar timeout de mensagens temporárias: {e}")
