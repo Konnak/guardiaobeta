@@ -165,6 +165,7 @@ def setup_routes(app):
     def server_panel(server_id):
         """Painel de controle do servidor"""
         try:
+            logger.info(f"🔍 server_panel chamado com server_id: {server_id}")
             user_data = session['user']
             
             # Verifica se o usuário é admin do servidor
@@ -200,6 +201,7 @@ def setup_routes(app):
                 """
                 server_config = db_manager.execute_one_sync(config_query, server_id)
             
+            logger.info(f"📤 Passando server_id para template: {server_id}")
             return render_template('server_panel.html',
                                  user=user_data,
                                  guild=guild,
