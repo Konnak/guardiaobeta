@@ -367,8 +367,13 @@ def setup_routes(app):
             
             # Filtrar apenas servidores onde o bot está presente e que não têm premium
             available_servers = []
+            logger.info(f"🔍 Verificando {len(admin_guilds)} servidores para seleção premium...")
+            
             for guild in admin_guilds:
                 guild_id = int(guild['id'])
+                guild_name = guild.get('name', 'Servidor Desconhecido')
+                
+                logger.info(f"📊 Verificando servidor: {guild_name} (ID: {guild_id})")
                 
                 # Verificar se bot está no servidor
                 bot_in_server = False
@@ -379,21 +384,35 @@ def setup_routes(app):
                         headers = {'Authorization': f'Bot {bot_token}'}
                         response = requests.get(f'https://discord.com/api/v10/guilds/{guild_id}/channels', headers=headers, timeout=5)
                         bot_in_server = response.status_code == 200
-                except:
+                        logger.info(f"  🤖 Bot no servidor: {'✅ Sim' if bot_in_server else '❌ Não'}")
+                except Exception as e:
+                    logger.warning(f"  ⚠️ Erro ao verificar bot: {e}")
                     bot_in_server = False
                 
                 # Verificar se já tem premium ativo
-                premium_query = """
-                    SELECT id FROM servidores_premium 
-                    WHERE id_servidor = $1 AND data_fim > NOW()
-                """
-                has_premium = db_manager.execute_one_sync(premium_query, guild_id) is not None
+                has_premium = False
+                try:
+                    premium_query = """
+                        SELECT id_servidor FROM servidores_premium 
+                        WHERE id_servidor = $1 AND data_fim > NOW()
+                    """
+                    has_premium = db_manager.execute_one_sync(premium_query, guild_id) is not None
+                    logger.info(f"  💎 Premium ativo: {'❌ Sim (não elegível)' if has_premium else '✅ Não (elegível)'}")
+                except Exception as e:
+                    logger.error(f"  ❌ Erro ao verificar premium: {e}")
+                    has_premium = False  # Se erro, assume que não tem premium
                 
+                # Adicionar à lista se elegível
                 if bot_in_server and not has_premium:
                     available_servers.append({
                         'guild': guild,
                         'icon_url': get_guild_icon_url(guild['id'], guild.get('icon'))
                     })
+                    logger.info(f"  ✅ Servidor adicionado à lista de elegíveis!")
+                else:
+                    logger.info(f"  ❌ Servidor não elegível")
+            
+            logger.info(f"📋 Total de servidores elegíveis: {len(available_servers)}")
             
             if not available_servers:
                 flash('Nenhum servidor disponível para premium. Certifique-se de que o bot está nos servidores e que eles não têm premium ativo.', 'warning')
@@ -571,7 +590,7 @@ def setup_routes(app):
             
             # Verificar se o servidor já tem premium
             premium_check = """
-                SELECT id FROM servidores_premium 
+                SELECT id_servidor FROM servidores_premium 
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
             has_premium = db_manager.execute_one_sync(premium_check, int(server_id)) is not None
@@ -738,18 +757,34 @@ def setup_routes(app):
                     
                     try:
                         # Ativar premium no servidor específico
-                        activate_premium_query = """
-                            INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim, motivo, stripe_session_id)
-                            VALUES ($1, NOW(), $2, $3, $4)
-                            ON CONFLICT (id_servidor) 
-                            DO UPDATE SET 
-                                data_fim = EXCLUDED.data_fim,
-                                motivo = EXCLUDED.motivo,
-                                stripe_session_id = EXCLUDED.stripe_session_id
-                        """
-                        
-                        motivo = f"Premium {plan} ativado via Stripe"
-                        db_manager.execute_query_sync(activate_premium_query, int(server_id), data_fim, motivo, session['id'])
+                        # Primeiro, verificar se as colunas motivo e stripe_session_id existem
+                        try:
+                            # Tentar com todas as colunas
+                            activate_premium_query = """
+                                INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim, motivo, stripe_session_id)
+                                VALUES ($1, NOW(), $2, $3, $4)
+                                ON CONFLICT (id_servidor) 
+                                DO UPDATE SET 
+                                    data_fim = EXCLUDED.data_fim,
+                                    motivo = EXCLUDED.motivo,
+                                    stripe_session_id = EXCLUDED.stripe_session_id
+                            """
+                            
+                            motivo = f"Premium {plan} ativado via Stripe"
+                            db_manager.execute_query_sync(activate_premium_query, int(server_id), data_fim, motivo, session['id'])
+                            
+                        except Exception as schema_error:
+                            # Se falhar, usar apenas as colunas básicas
+                            logger.warning(f"Colunas motivo/stripe_session_id não existem, usando schema básico: {schema_error}")
+                            
+                            activate_premium_basic_query = """
+                                INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim)
+                                VALUES ($1, NOW(), $2)
+                                ON CONFLICT (id_servidor) 
+                                DO UPDATE SET data_fim = EXCLUDED.data_fim
+                            """
+                            
+                            db_manager.execute_query_sync(activate_premium_basic_query, int(server_id), data_fim)
                         
                         logger.info(f"✅ Premium ativado com sucesso!")
                         logger.info(f"- Usuário: {user_id}")
