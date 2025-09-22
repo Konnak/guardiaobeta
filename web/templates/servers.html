@@ -48,30 +48,70 @@
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="text-center">
-                                    <div class="text-primary">
-                                        <i class="bi bi-flag-fill" style="font-size: 1.5rem;"></i>
+                                    {% set denuncias_color = 'text-muted' %}
+                                    {% set denuncias_icon = 'bi-flag' %}
+                                    {% if server_info.denuncias_stats.pendentes > 0 %}
+                                        {% set denuncias_color = 'text-danger' %}
+                                        {% set denuncias_icon = 'bi-flag-fill' %}
+                                    {% elif server_info.denuncias_stats.analise > 0 %}
+                                        {% set denuncias_color = 'text-warning' %}
+                                        {% set denuncias_icon = 'bi-flag-fill' %}
+                                    {% endif %}
+                                    
+                                    <div class="{{ denuncias_color }}">
+                                        <i class="bi {{ denuncias_icon }}" style="font-size: 1.5rem;"></i>
                                     </div>
-                                    <small class="text-muted">Denúncias</small>
+                                    <small class="{{ denuncias_color }}">Denúncias</small>
+                                    {% if server_info.denuncias_stats.pendentes > 0 or server_info.denuncias_stats.analise > 0 %}
+                                        <div style="font-size: 0.7rem; margin-top: 2px;">
+                                            {% if server_info.denuncias_stats.pendentes > 0 %}
+                                                <span class="text-danger">{{ server_info.denuncias_stats.pendentes }} pendentes</span>
+                                            {% endif %}
+                                            {% if server_info.denuncias_stats.analise > 0 %}
+                                                <span class="text-warning">{{ server_info.denuncias_stats.analise }} análise</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="text-center">
-                                    <div class="text-success">
-                                        <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    <small class="text-muted">Protegido</small>
+                                    {% if server_info.bot_in_server %}
+                                        <div class="text-success">
+                                            <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <small class="text-success">Protegido</small>
+                                    {% else %}
+                                        <div class="text-muted">
+                                            <i class="bi bi-shield-x" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <small class="text-muted">Não Protegido</small>
+                                        <div style="margin-top: 4px;">
+                                            <a href="{{ get_bot_invite_url(server_info.guild.id) }}" class="btn btn-outline-primary" style="font-size: 0.7rem; padding: 2px 6px;" target="_blank">
+                                                + Bot
+                                            </a>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                         
-                        {% if server_info.is_premium %}
-                            <div class="alert alert-warning alert-sm mb-3">
-                                <small>
-                                    <i class="bi bi-info-circle"></i>
-                                    Premium até {{ server_info.premium_data.data_fim.strftime('%d/%m/%Y') }}
-                                </small>
-                            </div>
-                        {% endif %}
+                        <div class="text-center mb-3">
+                            {% if server_info.is_premium %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-star-fill me-1"></i>
+                                    Premium
+                                </span>
+                                <div style="font-size: 0.75rem; margin-top: 4px; color: #6c757d;">
+                                    até {{ server_info.premium_data.data_fim_br.strftime('%d/%m/%Y %H:%M') if server_info.premium_data.data_fim_br else server_info.premium_data.data_fim.strftime('%d/%m/%Y') }}
+                                </div>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-star me-1"></i>
+                                    Gratuito
+                                </span>
+                            {% endif %}
+                        </div>
                         
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('server_panel', server_id=server_info.guild.id) }}" class="btn btn-primary btn-sm">

@@ -225,19 +225,59 @@ def setup_routes(app):
             user_data = session['user']
             admin_guilds = get_user_guilds_admin()
             
-            # Busca informações de premium para cada servidor
+            # Busca informações completas para cada servidor
             servers_info = []
             for guild in admin_guilds:
+                guild_id = int(guild['id'])
+                
+                # Verificar premium
                 premium_query = """
-                    SELECT * FROM servidores_premium 
+                    SELECT *, 
+                           data_fim AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' as data_fim_br
+                    FROM servidores_premium 
                     WHERE id_servidor = $1 AND data_fim > NOW()
                 """
-                premium_data = db_manager.execute_one_sync(premium_query, int(guild['id']))
+                premium_data = db_manager.execute_one_sync(premium_query, guild_id)
+                
+                # Verificar se bot está no servidor (tentar buscar canais)
+                bot_in_server = False
+                try:
+                    import requests
+                    bot_token = os.getenv('DISCORD_BOT_TOKEN')
+                    if bot_token:
+                        headers = {'Authorization': f'Bot {bot_token}'}
+                        response = requests.get(f'https://discord.com/api/v10/guilds/{guild_id}/channels', headers=headers, timeout=5)
+                        bot_in_server = response.status_code == 200
+                except:
+                    bot_in_server = False
+                
+                # Buscar estatísticas de denúncias
+                denuncias_stats = {'pendentes': 0, 'analise': 0, 'total': 0}
+                try:
+                    stats_query = """
+                        SELECT 
+                            COUNT(*) as total,
+                            SUM(CASE WHEN status = 'Pendente' THEN 1 ELSE 0 END) as pendentes,
+                            SUM(CASE WHEN status = 'Em Análise' THEN 1 ELSE 0 END) as analise
+                        FROM denuncias 
+                        WHERE id_servidor = $1 AND status IN ('Pendente', 'Em Análise')
+                    """
+                    stats_result = db_manager.execute_one_sync(stats_query, guild_id)
+                    if stats_result:
+                        denuncias_stats = {
+                            'pendentes': stats_result['pendentes'] or 0,
+                            'analise': stats_result['analise'] or 0,
+                            'total': stats_result['total'] or 0
+                        }
+                except Exception as e:
+                    logger.error(f"Erro ao buscar stats de denúncias: {e}")
                 
                 servers_info.append({
                     'guild': guild,
                     'is_premium': premium_data is not None,
                     'premium_data': premium_data,
+                    'bot_in_server': bot_in_server,
+                    'denuncias_stats': denuncias_stats,
                     'icon_url': get_guild_icon_url(guild['id'], guild.get('icon'))
                 })
             
