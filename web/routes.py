@@ -552,7 +552,7 @@ def setup_routes(app):
             
             # Verificar se o servidor tem premium ativo
             premium_check = """
-                SELECT id FROM servidores_premium 
+                SELECT id_servidor FROM servidores_premium 
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
             premium_exists = db_manager.execute_one_sync(premium_check, server_id)
