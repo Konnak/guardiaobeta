@@ -28,6 +28,66 @@
         .breadcrumb { color: #7f8c8d; }
         .breadcrumb a { color: #3498db; text-decoration: none; }
         
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -244,7 +304,8 @@
                     <a href="/admin/dashboard">Dashboard</a> / Servidores Premium
                 </div>
             </div>
-            <div>
+            <div class="header-actions">
+                <a href="/admin/premium/add" class="btn btn-success">➕ Adicionar Servidor</a>
                 <a href="/admin/dashboard" class="btn btn-secondary">← Voltar</a>
             </div>
         </div>
@@ -369,19 +430,10 @@
                             </td>
                             <td>
                                 <div class="actions">
-                                    {% if server.status == 'Ativo' %}
-                                        <button class="btn btn-success" onclick="extendPremium({{ server.id_servidor }})">
-                                            ⏰ Estender
-                                        </button>
-                                        <button class="btn btn-warning" onclick="configurePremium({{ server.id_servidor }})">
-                                            ⚙️ Configurar
-                                        </button>
-                                    {% else %}
-                                        <button class="btn btn-success" onclick="reactivatePremium({{ server.id_servidor }})">
-                                            🔄 Reativar
-                                        </button>
-                                    {% endif %}
-                                    <button class="btn btn-danger" onclick="removePremium({{ server.id_servidor }})">
+                                    <button class="btn btn-sm btn-warning" onclick="showExtendModal({{ server.id_servidor }}, '{{ server.status }}')">
+                                        ⏰ Estender
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="showRemoveModal({{ server.id_servidor }})">
                                         🗑️ Remover
                                     </button>
                                 </div>
@@ -438,6 +490,62 @@
                 location.reload();
             }
         }, 300000); // 5 minutos
+        
+        function showExtendModal(serverId, status) {
+            const duration_type = prompt('Tipo de duração (days/weeks/months/years):', 'months');
+            const duration_value = prompt('Quantidade:', '1');
+            const reason = prompt('Motivo (opcional):', '');
+            
+            if (duration_type && duration_value && !isNaN(duration_value) && parseInt(duration_value) > 0) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/admin/premium/${serverId}/extend`;
+                
+                const typeInput = document.createElement('input');
+                typeInput.type = 'hidden';
+                typeInput.name = 'duration_type';
+                typeInput.value = duration_type;
+                form.appendChild(typeInput);
+                
+                const valueInput = document.createElement('input');
+                valueInput.type = 'hidden';
+                valueInput.name = 'duration_value';
+                valueInput.value = duration_value;
+                form.appendChild(valueInput);
+                
+                if (reason) {
+                    const reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    reasonInput.value = reason;
+                    form.appendChild(reasonInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function showRemoveModal(serverId) {
+            const reason = prompt('Motivo da remoção (opcional):', '');
+            
+            if (confirm(`Tem certeza que deseja remover o premium do servidor ${serverId}?\n\nEsta ação não pode ser desfeita!`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/admin/premium/${serverId}/remove`;
+                
+                if (reason) {
+                    const reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    reasonInput.value = reason;
+                    form.appendChild(reasonInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ Adicionar Servidor Premium - Admin Guardião</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+        
+        .breadcrumb {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover { text-decoration: underline; }
+        
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .duration-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .duration-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .duration-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .duration-option {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .duration-option:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .duration-option.selected {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        
+        .duration-option input[type="radio"] {
+            display: none;
+        }
+        
+        .duration-option .duration-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .duration-option .duration-desc {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .custom-duration {
+            display: none;
+            grid-column: 1 / -1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+        }
+        
+        .custom-duration.show {
+            display: block;
+        }
+        
+        .custom-duration h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .custom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .preview-section {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #27ae60;
+            display: none;
+        }
+        
+        .preview-section.show {
+            display: block;
+        }
+        
+        .preview-section h4 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        
+        .preview-info {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #424242;
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .duration-options { grid-template-columns: 1fr; }
+            .custom-grid { grid-template-columns: 1fr; }
+            .form-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="header">
+            <h1>⭐ Adicionar Servidor Premium</h1>
+            <div class="breadcrumb">
+                <a href="/admin/dashboard">Dashboard</a> / 
+                <a href="/admin/premium">Servidores Premium</a> / 
+                Adicionar
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <h2>📝 Informações do Servidor</h2>
+            
+            <div class="info-box">
+                <h4>ℹ️ Como obter o ID do servidor:</h4>
+                <p>1. No Discord, clique com botão direito no nome do servidor</p>
+                <p>2. Selecione "Copiar ID" (modo desenvolvedor deve estar ativo)</p>
+                <p>3. Cole o ID no campo abaixo</p>
+            </div>
+            
+            <form method="POST" id="premiumForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="server_id">ID do Servidor *</label>
+                        <input type="number" name="server_id" id="server_id" required 
+                               placeholder="Ex: 123456789012345678" onchange="updatePreview()">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="reason">Motivo (opcional)</label>
+                        <input type="text" name="reason" id="reason" 
+                               placeholder="Ex: Cliente premium, evento especial, etc.">
+                    </div>
+                </div>
+                
+                <div class="duration-section">
+                    <h3>⏰ Duração do Premium</h3>
+                    
+                    <div class="duration-options">
+                        <div class="duration-option" onclick="selectDuration('days', 7)">
+                            <input type="radio" name="duration_type" value="days" id="days_7">
+                            <div class="duration-title">7 Dias</div>
+                            <div class="duration-desc">Teste rápido</div>
+                        </div>
+                        
+                        <div class="duration-option" onclick="selectDuration('days', 30)">
+                            <input type="radio" name="duration_type" value="days" id="days_30">
+                            <div class="duration-title">30 Dias</div>
+                            <div class="duration-desc">1 Mês</div>
+                        </div>
+                        
+                        <div class="duration-option" onclick="selectDuration('months', 3)">
+                            <input type="radio" name="duration_type" value="months" id="months_3">
+                            <div class="duration-title">3 Meses</div>
+                            <div class="duration-desc">Trimestral</div>
+                        </div>
+                        
+                        <div class="duration-option" onclick="selectDuration('months', 6)">
+                            <input type="radio" name="duration_type" value="months" id="months_6">
+                            <div class="duration-title">6 Meses</div>
+                            <div class="duration-desc">Semestral</div>
+                        </div>
+                        
+                        <div class="duration-option" onclick="selectDuration('years', 1)">
+                            <input type="radio" name="duration_type" value="years" id="years_1">
+                            <div class="duration-title">1 Ano</div>
+                            <div class="duration-desc">Anual</div>
+                        </div>
+                        
+                        <div class="duration-option" onclick="selectCustomDuration()">
+                            <input type="radio" name="duration_type" value="custom" id="custom">
+                            <div class="duration-title">Personalizado</div>
+                            <div class="duration-desc">Definir manualmente</div>
+                        </div>
+                        
+                        <div class="custom-duration" id="customDuration">
+                            <h4>📅 Data e Hora de Expiração</h4>
+                            <div class="custom-grid">
+                                <div class="form-group">
+                                    <label for="custom_end_date">Data e Hora</label>
+                                    <input type="datetime-local" name="custom_end_date" id="custom_end_date" onchange="updatePreview()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden inputs for duration -->
+                    <input type="hidden" name="duration_value" id="duration_value">
+                </div>
+                
+                <div class="preview-section" id="previewSection">
+                    <h4>📊 Prévia</h4>
+                    <div class="preview-info" id="previewInfo">
+                        <!-- Conteúdo será preenchido via JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">⭐ Adicionar Premium</button>
+                    <a href="/admin/premium" class="btn btn-secondary">← Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let selectedDurationType = '';
+        let selectedDurationValue = 0;
+        
+        function selectDuration(type, value) {
+            // Remove seleção anterior
+            document.querySelectorAll('.duration-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Seleciona nova opção
+            event.currentTarget.classList.add('selected');
+            
+            // Atualiza valores
+            selectedDurationType = type;
+            selectedDurationValue = value;
+            
+            // Atualiza inputs hidden
+            document.getElementById('duration_value').value = value;
+            
+            // Esconde duração customizada
+            document.getElementById('customDuration').classList.remove('show');
+            
+            // Atualiza prévia
+            updatePreview();
+        }
+        
+        function selectCustomDuration() {
+            // Remove seleção anterior
+            document.querySelectorAll('.duration-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Seleciona opção customizada
+            event.currentTarget.classList.add('selected');
+            
+            // Mostra campos customizados
+            document.getElementById('customDuration').classList.add('show');
+            
+            // Atualiza valores
+            selectedDurationType = 'custom';
+            selectedDurationValue = 0;
+            
+            // Atualiza prévia
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const serverId = document.getElementById('server_id').value;
+            const previewSection = document.getElementById('previewSection');
+            const previewInfo = document.getElementById('previewInfo');
+            
+            if (!serverId || (!selectedDurationType && !document.getElementById('custom_end_date').value)) {
+                previewSection.classList.remove('show');
+                return;
+            }
+            
+            let endDate;
+            let durationText;
+            
+            if (selectedDurationType === 'custom') {
+                const customDate = document.getElementById('custom_end_date').value;
+                if (!customDate) {
+                    previewSection.classList.remove('show');
+                    return;
+                }
+                endDate = new Date(customDate);
+                durationText = 'Data customizada';
+            } else {
+                const now = new Date();
+                endDate = new Date(now);
+                
+                if (selectedDurationType === 'days') {
+                    endDate.setDate(now.getDate() + selectedDurationValue);
+                    durationText = `${selectedDurationValue} dia${selectedDurationValue > 1 ? 's' : ''}`;
+                } else if (selectedDurationType === 'weeks') {
+                    endDate.setDate(now.getDate() + (selectedDurationValue * 7));
+                    durationText = `${selectedDurationValue} semana${selectedDurationValue > 1 ? 's' : ''}`;
+                } else if (selectedDurationType === 'months') {
+                    endDate.setMonth(now.getMonth() + selectedDurationValue);
+                    durationText = `${selectedDurationValue} ${selectedDurationValue > 1 ? 'meses' : 'mês'}`;
+                } else if (selectedDurationType === 'years') {
+                    endDate.setFullYear(now.getFullYear() + selectedDurationValue);
+                    durationText = `${selectedDurationValue} ano${selectedDurationValue > 1 ? 's' : ''}`;
+                }
+            }
+            
+            const endDateFormatted = endDate.toLocaleString('pt-BR');
+            
+            previewInfo.innerHTML = `
+                <strong>Servidor:</strong> ${serverId}<br>
+                <strong>Duração:</strong> ${durationText}<br>
+                <strong>Expira em:</strong> ${endDateFormatted}
+            `;
+            
+            previewSection.classList.add('show');
+        }
+        
+        // Validação do formulário
+        document.getElementById('premiumForm').addEventListener('submit', function(e) {
+            const serverId = document.getElementById('server_id').value;
+            const durationType = selectedDurationType;
+            const customDate = document.getElementById('custom_end_date').value;
+            
+            if (!serverId) {
+                alert('ID do servidor é obrigatório!');
+                e.preventDefault();
+                return;
+            }
+            
+            if (durationType === 'custom' && !customDate) {
+                alert('Data customizada é obrigatória quando selecionada!');
+                e.preventDefault();
+                return;
+            }
+            
+            if (!durationType) {
+                alert('Selecione uma duração para o premium!');
+                e.preventDefault();
+                return;
+            }
+            
+            // Confirmação
+            if (!confirm(`Tem certeza que deseja adicionar o servidor ${serverId} como premium?`)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

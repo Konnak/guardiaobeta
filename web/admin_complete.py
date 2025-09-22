@@ -752,6 +752,204 @@ def setup_admin_complete(app):
             logger.error(f"Erro ao listar premium: {e}")
             return f"<h2>Erro: {e}</h2><a href='/admin/dashboard'>← Voltar</a>"
     
+    @app.route('/admin/premium/add', methods=['GET', 'POST'])
+    @admin_required_simple
+    def admin_premium_add():
+        """Adicionar servidor premium"""
+        if request.method == 'GET':
+            return render_template('admin/premium_add.html')
+        
+        try:
+            from datetime import datetime, timedelta
+            
+            # Pega dados do formulário
+            server_id = request.form.get('server_id', type=int)
+            duration_type = request.form.get('duration_type')
+            duration_value = request.form.get('duration_value', type=int)
+            custom_end_date = request.form.get('custom_end_date')
+            reason = request.form.get('reason', '').strip()
+            
+            if not server_id:
+                flash('ID do servidor é obrigatório.', 'error')
+                return redirect(url_for('admin_premium_add'))
+            
+            # Calcula data de fim
+            if duration_type == 'custom' and custom_end_date:
+                try:
+                    data_fim = datetime.strptime(custom_end_date, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    flash('Data customizada inválida.', 'error')
+                    return redirect(url_for('admin_premium_add'))
+            elif duration_type and duration_value:
+                if duration_type == 'days':
+                    data_fim = datetime.utcnow() + timedelta(days=duration_value)
+                elif duration_type == 'weeks':
+                    data_fim = datetime.utcnow() + timedelta(weeks=duration_value)
+                elif duration_type == 'months':
+                    data_fim = datetime.utcnow() + timedelta(days=duration_value * 30)
+                elif duration_type == 'years':
+                    data_fim = datetime.utcnow() + timedelta(days=duration_value * 365)
+                else:
+                    flash('Tipo de duração inválido.', 'error')
+                    return redirect(url_for('admin_premium_add'))
+            else:
+                flash('Duração é obrigatória.', 'error')
+                return redirect(url_for('admin_premium_add'))
+            
+            # Verifica se o servidor já é premium
+            existing_query = """
+                SELECT * FROM servidores_premium WHERE id_servidor = $1
+            """
+            existing = db_manager.execute_one_sync(existing_query, server_id)
+            
+            if existing:
+                # Atualiza servidor existente
+                update_query = """
+                    UPDATE servidores_premium 
+                    SET data_inicio = NOW(), data_fim = $1 
+                    WHERE id_servidor = $2
+                """
+                db_manager.execute_command_sync(update_query, data_fim, server_id)
+                action = "atualizado"
+            else:
+                # Adiciona novo servidor premium
+                insert_query = """
+                    INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim)
+                    VALUES ($1, NOW(), $2)
+                """
+                db_manager.execute_command_sync(insert_query, server_id, data_fim)
+                action = "adicionado"
+            
+            # Cria configuração padrão se não existir
+            config_exists = db_manager.execute_scalar_sync("""
+                SELECT EXISTS(SELECT 1 FROM configuracoes_servidor WHERE id_servidor = $1)
+            """, server_id)
+            
+            if not config_exists:
+                config_query = """
+                    INSERT INTO configuracoes_servidor (id_servidor, duracao_intimidou, duracao_intimidou_grave, duracao_grave, duracao_grave_4plus)
+                    VALUES ($1, 1, 6, 12, 24)
+                """
+                db_manager.execute_command_sync(config_query, server_id)
+            
+            # Log da ação
+            log_message = f"Servidor {server_id} {action} como premium até {data_fim.strftime('%d/%m/%Y %H:%M')}"
+            if reason:
+                log_message += f". Motivo: {reason}"
+            
+            logger.info(f"[ADMIN] {log_message}")
+            
+            flash(f'Servidor {server_id} {action} como premium com sucesso!', 'success')
+            return redirect(url_for('admin_premium_list'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao adicionar servidor premium: {e}")
+            flash(f'Erro ao adicionar servidor premium: {e}', 'error')
+            return redirect(url_for('admin_premium_add'))
+    
+    @app.route('/admin/premium/<int:server_id>/extend', methods=['POST'])
+    @admin_required_simple
+    def admin_premium_extend(server_id):
+        """Estender tempo de servidor premium"""
+        try:
+            from datetime import datetime, timedelta
+            
+            duration_type = request.form.get('duration_type')
+            duration_value = request.form.get('duration_value', type=int)
+            reason = request.form.get('reason', '').strip()
+            
+            if not duration_type or not duration_value:
+                flash('Duração é obrigatória.', 'error')
+                return redirect(url_for('admin_premium_list'))
+            
+            # Busca servidor atual
+            server_query = """
+                SELECT * FROM servidores_premium WHERE id_servidor = $1
+            """
+            server = db_manager.execute_one_sync(server_query, server_id)
+            
+            if not server:
+                flash('Servidor premium não encontrado.', 'error')
+                return redirect(url_for('admin_premium_list'))
+            
+            # Calcula nova data de fim (a partir da data atual de fim)
+            current_end = server['data_fim']
+            if current_end < datetime.utcnow():
+                # Se já expirou, estende a partir de agora
+                base_date = datetime.utcnow()
+            else:
+                # Se ainda ativo, estende a partir da data de fim atual
+                base_date = current_end
+            
+            if duration_type == 'days':
+                new_end = base_date + timedelta(days=duration_value)
+            elif duration_type == 'weeks':
+                new_end = base_date + timedelta(weeks=duration_value)
+            elif duration_type == 'months':
+                new_end = base_date + timedelta(days=duration_value * 30)
+            elif duration_type == 'years':
+                new_end = base_date + timedelta(days=duration_value * 365)
+            else:
+                flash('Tipo de duração inválido.', 'error')
+                return redirect(url_for('admin_premium_list'))
+            
+            # Atualiza no banco
+            update_query = """
+                UPDATE servidores_premium 
+                SET data_fim = $1 
+                WHERE id_servidor = $2
+            """
+            db_manager.execute_command_sync(update_query, new_end, server_id)
+            
+            # Log da ação
+            log_message = f"Premium do servidor {server_id} estendido até {new_end.strftime('%d/%m/%Y %H:%M')}"
+            if reason:
+                log_message += f". Motivo: {reason}"
+            
+            logger.info(f"[ADMIN] {log_message}")
+            
+            flash(f'Premium do servidor {server_id} estendido com sucesso!', 'success')
+            return redirect(url_for('admin_premium_list'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao estender premium: {e}")
+            flash(f'Erro ao estender premium: {e}', 'error')
+            return redirect(url_for('admin_premium_list'))
+    
+    @app.route('/admin/premium/<int:server_id>/remove', methods=['POST'])
+    @admin_required_simple
+    def admin_premium_remove(server_id):
+        """Remover servidor premium"""
+        try:
+            reason = request.form.get('reason', '').strip()
+            
+            # Remove servidor premium
+            delete_query = """
+                DELETE FROM servidores_premium WHERE id_servidor = $1
+            """
+            result = db_manager.execute_command_sync(delete_query, server_id)
+            
+            # Remove configurações também
+            config_delete_query = """
+                DELETE FROM configuracoes_servidor WHERE id_servidor = $1
+            """
+            db_manager.execute_command_sync(config_delete_query, server_id)
+            
+            # Log da ação
+            log_message = f"Servidor {server_id} removido do premium"
+            if reason:
+                log_message += f". Motivo: {reason}"
+            
+            logger.info(f"[ADMIN] {log_message}")
+            
+            flash(f'Servidor {server_id} removido do premium com sucesso!', 'success')
+            return redirect(url_for('admin_premium_list'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao remover premium: {e}")
+            flash(f'Erro ao remover premium: {e}', 'error')
+            return redirect(url_for('admin_premium_list'))
+    
     # ==================== API ENDPOINTS ====================
     @app.route('/admin/api/stats')
     @admin_required_simple
