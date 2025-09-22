@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações Premium - {{ server_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-color: #7289da;
+        --success-color: #43b581;
+        --warning-color: #faa61a;
+        --danger-color: #f04747;
+        --dark-bg: #2c2f33;
+        --darker-bg: #23272a;
+        --light-text: #ffffff;
+        --muted-text: #72767d;
+        --border-color: #40444b;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .premium-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .premium-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .premium-header h1 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .premium-badge {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .server-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(116, 75, 162, 0.1);
+        border-radius: 15px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .server-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-color);
+    }
+
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .config-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .config-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .config-card h3 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #34495e;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(114, 137, 218, 0.1);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(86, 171, 47, 0.4);
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: none;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: rgba(67, 181, 129, 0.1);
+        color: #27ae60;
+        border-left: 4px solid #27ae60;
+    }
+
+    .alert-danger {
+        background: rgba(240, 71, 71, 0.1);
+        color: #e74c3c;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-3px);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--primary-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .premium-container {
+            padding: 1rem;
+        }
+        
+        .config-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .server-info {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="premium-container">
+    <!-- Header -->
+    <div class="premium-header">
+        <h1>
+            🛡️ Configurações Premium
+            <span class="premium-badge">✨ Ativo</span>
+        </h1>
+        
+        <div class="server-info">
+            {% if server_icon %}
+            <img src="{{ server_icon }}" alt="Server Icon" class="server-icon">
+            {% else %}
+            <div class="server-icon" style="background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.5rem;">
+                {{ server_name[0].upper() }}
+            </div>
+            {% endif %}
+            <div>
+                <h3 style="margin: 0; color: #2c3e50;">{{ server_name }}</h3>
+                <p style="margin: 0; color: #6c757d;">ID: {{ server_id }}</p>
+                {% if premium_data %}
+                <p style="margin: 0; color: var(--success-color); font-weight: 600;">
+                    Premium até: {{ premium_data.data_fim_br.strftime('%d/%m/%Y %H:%M') if premium_data.data_fim_br else premium_data.data_fim.strftime('%d/%m/%Y') }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alertContainer"></div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Carregando configurações...</p>
+    </div>
+
+    <!-- Configuration Grid -->
+    <div class="config-grid">
+        <!-- Configurações Básicas -->
+        <div class="config-card">
+            <h3>⚙️ Configurações Básicas</h3>
+            
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="canalLog" class="form-label">📢 Canal de Log</label>
+                    <select class="form-control form-select" id="canalLog" name="canal_log">
+                        <option value="">Carregando canais...</option>
+                    </select>
+                    <div class="form-text">
+                        Canal onde serão enviadas notificações de punições e atividades do sistema
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracaoIntimidou" class="form-label">⚠️ Duração - Intimidação (horas)</label>
+                    <input type="number" class="form-control" id="duracaoIntimidou" 
+                           name="duracao_intimidou" value="{{ server_config.duracao_intimidou or 1 }}" 
+                           min="1" max="24" step="1">
+                    <div class="form-text">
+                        Tempo de timeout para usuários que intimidam outros (1-24 horas)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracaoGrave" class="form-label">🚨 Duração - Grave (horas)</label>
+                    <input type="number" class="form-control" id="duracaoGrave" 
+                           name="duracao_grave" value="{{ server_config.duracao_grave or 12 }}" 
+                           min="1" max="168" step="1">
+                    <div class="form-text">
+                        Tempo de timeout para infrações graves (1-168 horas / 7 dias)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracaoBan" class="form-label">🔨 Duração - Ban (horas)</label>
+                    <input type="number" class="form-control" id="duracaoBan" 
+                           name="duracao_ban" value="{{ server_config.duracao_ban or 24 }}" 
+                           min="1" max="8760" step="1">
+                    <div class="form-text">
+                        Tempo de banimento para infrações extremas (1-8760 horas / 1 ano)
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success" id="saveBtn">
+                    💾 Salvar Configurações
+                </button>
+            </form>
+        </div>
+
+        <!-- Recursos Premium -->
+        <div class="config-card">
+            <h3>✨ Recursos Premium Ativos</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Estatísticas Avançadas</div>
+                    <p style="font-size: 0.9rem; color: #6c757d;">Relatórios detalhados de moderação</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">Configurações Personalizadas</div>
+                    <p style="font-size: 0.9rem; color: #6c757d;">Ajuste durações e canais</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <div class="feature-title">Prioridade na Fila</div>
+                    <p style="font-size: 0.9rem; color: #6c757d;">Denúncias processadas mais rápido</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <div class="feature-title">Relatórios Mensais</div>
+                    <p style="font-size: 0.9rem; color: #6c757d;">Análises detalhadas mensais</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="config-card">
+            <h3>📈 Estatísticas do Servidor</h3>
+            
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalDenuncias">-</span>
+                    <span class="stat-label">Total de Denúncias</span>
+                </div>
+                
+                <div class="stat-card">
+                    <span class="stat-number" id="denunciasResolvidas">-</span>
+                    <span class="stat-label">Resolvidas</span>
+                </div>
+                
+                <div class="stat-card">
+                    <span class="stat-number" id="usuariosAtivos">-</span>
+                    <span class="stat-label">Usuários Ativos</span>
+                </div>
+                
+                <div class="stat-card">
+                    <span class="stat-number" id="guardioes">-</span>
+                    <span class="stat-label">Guardiões</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button class="btn btn-primary" onclick="loadStats()">
+                    🔄 Atualizar Estatísticas
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const serverId = {{ server_id }};
+let channels = [];
+
+// Carregar canais quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    loadChannels();
+    loadStats();
+    document.getElementById('loading').style.display = 'none';
+});
+
+// Carregar canais do servidor
+async function loadChannels() {
+    try {
+        const response = await fetch(`/api/server/${serverId}/channels`);
+        const data = await response.json();
+        
+        const channelSelect = document.getElementById('canalLog');
+        
+        if (data.success) {
+            channels = data.channels;
+            channelSelect.innerHTML = '<option value="">Selecione um canal...</option>';
+            
+            channels.forEach(channel => {
+                const option = document.createElement('option');
+                option.value = channel.id;
+                option.textContent = `# ${channel.name}`;
+                channelSelect.appendChild(option);
+            });
+            
+            // Selecionar canal atual se existir
+            const currentChannel = '{{ server_config.canal_log if server_config else "" }}';
+            if (currentChannel) {
+                channelSelect.value = currentChannel;
+            }
+        } else {
+            channelSelect.innerHTML = '<option value="">Erro ao carregar canais</option>';
+            showAlert('Erro ao carregar canais do servidor', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar canais:', error);
+        showAlert('Erro ao carregar canais do servidor', 'danger');
+    }
+}
+
+// Carregar estatísticas
+async function loadStats() {
+    try {
+        const response = await fetch(`/api/server/${serverId}/stats`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalDenuncias').textContent = data.stats.total_denuncias || '0';
+            document.getElementById('denunciasResolvidas').textContent = data.stats.denuncias_resolvidas || '0';
+            document.getElementById('usuariosAtivos').textContent = data.stats.usuarios_ativos || '0';
+            document.getElementById('guardioes').textContent = data.stats.guardioes || '0';
+        }
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+    }
+}
+
+// Salvar configurações
+document.getElementById('configForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '💾 Salvando...';
+    saveBtn.disabled = true;
+    
+    try {
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        const response = await fetch(`/api/server/${serverId}/config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(result.message, 'success');
+        } else {
+            showAlert(result.error || 'Erro ao salvar configurações', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar:', error);
+        showAlert('Erro ao salvar configurações', 'danger');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+});
+
+// Mostrar alertas
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alertDiv);
+    
+    // Remover alerta após 5 segundos
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Validação em tempo real
+document.getElementById('duracaoIntimidou').addEventListener('input', function() {
+    const value = parseInt(this.value);
+    if (value < 1 || value > 24) {
+        this.style.borderColor = '#e74c3c';
+    } else {
+        this.style.borderColor = '#e1e8ed';
+    }
+});
+
+document.getElementById('duracaoGrave').addEventListener('input', function() {
+    const value = parseInt(this.value);
+    if (value < 1 || value > 168) {
+        this.style.borderColor = '#e74c3c';
+    } else {
+        this.style.borderColor = '#e1e8ed';
+    }
+});
+
+document.getElementById('duracaoBan').addEventListener('input', function() {
+    const value = parseInt(this.value);
+    if (value < 1 || value > 8760) {
+        this.style.borderColor = '#e74c3c';
+    } else {
+        this.style.borderColor = '#e1e8ed';
+    }
+});
+</script>
+{% endblock %}

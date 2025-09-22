@@ -3,6 +3,7 @@ Rotas da Aplicação Web - Sistema Guardião BETA
 Implementa todas as rotas principais do site
 """
 
+import os
 import logging
 from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
@@ -250,6 +251,59 @@ def setup_routes(app):
             flash("Erro ao carregar lista de servidores.", "error")
             return redirect(url_for('dashboard'))
     
+    @app.route('/server/<int:server_id>/premium')
+    @login_required
+    def server_premium_config(server_id):
+        """Página de configurações premium do servidor"""
+        try:
+            # Verificar se o usuário tem acesso ao servidor
+            admin_guilds = get_user_guilds_admin()
+            server_found = None
+            for guild in admin_guilds:
+                if guild['id'] == str(server_id):
+                    server_found = guild
+                    break
+            
+            if not server_found:
+                flash('Você não tem permissão para acessar este servidor.', 'error')
+                return redirect(url_for('servers'))
+            
+            # Verificar se o servidor tem premium ativo
+            premium_query = """
+                SELECT *, 
+                       data_inicio AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' as data_inicio_br,
+                       data_fim AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' as data_fim_br
+                FROM servidores_premium 
+                WHERE id_servidor = $1 AND data_fim > NOW()
+            """
+            premium_data = db_manager.execute_one_sync(premium_query, server_id)
+            
+            if not premium_data:
+                flash('Este servidor não possui premium ativo.', 'warning')
+                return redirect(url_for('servers'))
+            
+            # Buscar configurações do servidor
+            config_query = """
+                SELECT * FROM configuracoes_servidor 
+                WHERE id_servidor = $1
+            """
+            server_config = db_manager.execute_one_sync(config_query, server_id)
+            
+            # Obter ícone do servidor
+            server_icon = get_guild_icon_url(server_id, server_found.get('icon'))
+            
+            return render_template('server_premium.html',
+                                 server_id=server_id,
+                                 server_name=server_found['name'],
+                                 server_icon=server_icon,
+                                 premium_data=premium_data,
+                                 server_config=server_config)
+            
+        except Exception as e:
+            logger.error(f"Erro na página premium do servidor: {e}")
+            flash("Erro ao carregar configurações premium.", "error")
+            return redirect(url_for('servers'))
+    
     @app.route('/premium')
     def premium():
         """Página de informações sobre premium"""
@@ -262,6 +316,127 @@ def setup_routes(app):
             return render_template('premium.html',
                                  bot_invite_url=get_bot_invite_url())
     
+    @app.route('/api/server/<int:server_id>/channels')
+    @login_required
+    def get_server_channels(server_id):
+        """API para obter canais de texto do servidor"""
+        try:
+            # Verificar se o usuário tem acesso ao servidor
+            admin_guilds = get_user_guilds_admin()
+            server_found = any(guild['id'] == str(server_id) for guild in admin_guilds)
+            
+            if not server_found:
+                return jsonify({'error': 'Acesso negado ao servidor'}), 403
+            
+            # Usar a API do Discord através do bot para obter canais
+            import requests
+            bot_token = os.getenv('DISCORD_BOT_TOKEN')
+            if not bot_token:
+                return jsonify({'error': 'Token do bot não configurado'}), 500
+                
+            headers = {'Authorization': f'Bot {bot_token}'}
+            response = requests.get(f'https://discord.com/api/v10/guilds/{server_id}/channels', headers=headers)
+            
+            if response.status_code == 200:
+                channels_data = response.json()
+                # Filtrar apenas canais de texto (tipo 0)
+                text_channels = [
+                    {
+                        'id': channel['id'],
+                        'name': channel['name'],
+                        'type': channel['type'],
+                        'position': channel.get('position', 0)
+                    }
+                    for channel in channels_data 
+                    if channel['type'] == 0  # GUILD_TEXT
+                ]
+                
+                # Ordenar por posição
+                text_channels.sort(key=lambda x: x['position'])
+                
+                return jsonify({
+                    'success': True,
+                    'channels': text_channels
+                })
+            else:
+                logger.error(f"Erro ao buscar canais do servidor {server_id}: {response.status_code}")
+                return jsonify({'error': 'Erro ao buscar canais do servidor'}), 500
+                
+        except Exception as e:
+            logger.error(f"Erro na API de canais: {e}")
+            return jsonify({'error': 'Erro interno do servidor'}), 500
+
+    @app.route('/api/server/<int:server_id>/config', methods=['POST'])
+    @login_required
+    def save_server_config(server_id):
+        """API para salvar configurações premium do servidor"""
+        try:
+            # Verificar se o usuário tem acesso ao servidor
+            admin_guilds = get_user_guilds_admin()
+            server_found = any(guild['id'] == str(server_id) for guild in admin_guilds)
+            
+            if not server_found:
+                return jsonify({'error': 'Acesso negado ao servidor'}), 403
+            
+            # Verificar se o servidor tem premium ativo
+            premium_check = """
+                SELECT id FROM servidores_premium 
+                WHERE id_servidor = $1 AND data_fim > NOW()
+            """
+            premium_exists = db_manager.execute_one_sync(premium_check, server_id)
+            
+            if not premium_exists:
+                return jsonify({'error': 'Servidor não possui premium ativo'}), 403
+            
+            # Obter dados do formulário
+            data = request.get_json()
+            canal_log = data.get('canal_log')
+            duracao_intimidou = data.get('duracao_intimidou', 1)
+            duracao_grave = data.get('duracao_grave', 12)
+            duracao_ban = data.get('duracao_ban', 24)
+            
+            # Validações
+            try:
+                duracao_intimidou = int(duracao_intimidou)
+                duracao_grave = int(duracao_grave) 
+                duracao_ban = int(duracao_ban)
+                
+                if not (1 <= duracao_intimidou <= 24):
+                    return jsonify({'error': 'Duração de intimidação deve estar entre 1 e 24 horas'}), 400
+                if not (1 <= duracao_grave <= 168):
+                    return jsonify({'error': 'Duração grave deve estar entre 1 e 168 horas'}), 400
+                if not (1 <= duracao_ban <= 8760):
+                    return jsonify({'error': 'Duração de ban deve estar entre 1 e 8760 horas'}), 400
+                    
+            except ValueError:
+                return jsonify({'error': 'Durações devem ser números válidos'}), 400
+            
+            # Salvar configurações no banco
+            upsert_config = """
+                INSERT INTO configuracoes_servidor (id_servidor, canal_log, duracao_intimidou, duracao_grave, duracao_ban)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id_servidor) 
+                DO UPDATE SET 
+                    canal_log = EXCLUDED.canal_log,
+                    duracao_intimidou = EXCLUDED.duracao_intimidou,
+                    duracao_grave = EXCLUDED.duracao_grave,
+                    duracao_ban = EXCLUDED.duracao_ban,
+                    atualizado_em = NOW()
+            """
+            
+            db_manager.execute_query_sync(upsert_config, server_id, canal_log, duracao_intimidou, duracao_grave, duracao_ban)
+            
+            logger.info(f"Configurações premium salvas para servidor {server_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Configurações salvas com sucesso!'
+            })
+            
+        except Exception as e:
+            logger.error(f"Erro ao salvar configurações: {e}")
+            return jsonify({'error': 'Erro interno do servidor'}), 500
+
     @app.route('/api/server/<int:server_id>/stats')
     @login_required
     def api_server_stats(server_id):

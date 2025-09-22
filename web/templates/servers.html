@@ -77,7 +77,11 @@
                             <a href="{{ url_for('server_panel', server_id=server_info.guild.id) }}" class="btn btn-primary btn-sm">
                                 <i class="bi bi-gear"></i> Gerenciar
                             </a>
-                            {% if not server_info.is_premium %}
+                            {% if server_info.is_premium %}
+                                <a href="{{ url_for('server_premium_config', server_id=server_info.guild.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-star-fill"></i> Premium
+                                </a>
+                            {% else %}
                                 <a href="{{ url_for('premium') }}" class="btn btn-outline-warning btn-sm">
                                     <i class="bi bi-star"></i> Upgrade
                                 </a>
