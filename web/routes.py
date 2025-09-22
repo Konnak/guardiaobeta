@@ -357,6 +357,64 @@ def setup_routes(app):
             return render_template('premium.html',
                                  bot_invite_url=get_bot_invite_url())
     
+    @app.route('/premium/select-server')
+    @login_required
+    def premium_select_server():
+        """Página para selecionar servidor antes do pagamento"""
+        try:
+            user_data = session['user']
+            admin_guilds = get_user_guilds_admin()
+            
+            # Filtrar apenas servidores onde o bot está presente e que não têm premium
+            available_servers = []
+            for guild in admin_guilds:
+                guild_id = int(guild['id'])
+                
+                # Verificar se bot está no servidor
+                bot_in_server = False
+                try:
+                    import requests
+                    bot_token = os.getenv('DISCORD_BOT_TOKEN')
+                    if bot_token:
+                        headers = {'Authorization': f'Bot {bot_token}'}
+                        response = requests.get(f'https://discord.com/api/v10/guilds/{guild_id}/channels', headers=headers, timeout=5)
+                        bot_in_server = response.status_code == 200
+                except:
+                    bot_in_server = False
+                
+                # Verificar se já tem premium ativo
+                premium_query = """
+                    SELECT id FROM servidores_premium 
+                    WHERE id_servidor = $1 AND data_fim > NOW()
+                """
+                has_premium = db_manager.execute_one_sync(premium_query, guild_id) is not None
+                
+                if bot_in_server and not has_premium:
+                    available_servers.append({
+                        'guild': guild,
+                        'icon_url': get_guild_icon_url(guild['id'], guild.get('icon'))
+                    })
+            
+            if not available_servers:
+                flash('Nenhum servidor disponível para premium. Certifique-se de que o bot está nos servidores e que eles não têm premium ativo.', 'warning')
+                return redirect(url_for('servers'))
+            
+            # Obter plano da query string
+            plan = request.args.get('plan', 'monthly')
+            if plan not in ['monthly', 'quarterly', 'yearly']:
+                plan = 'monthly'
+            
+            return render_template('premium_select_server.html',
+                                 user=user_data,
+                                 servers=available_servers,
+                                 selected_plan=plan,
+                                 avatar_url=get_user_avatar_url(str(user_data['id']), user_data.get('avatar'), user_data.get('discriminator')))
+            
+        except Exception as e:
+            logger.error(f"Erro na seleção de servidor: {e}")
+            flash("Erro ao carregar servidores disponíveis.", "error")
+            return redirect(url_for('premium'))
+    
     @app.route('/api/server/<int:server_id>/channels')
     @login_required
     def get_server_channels(server_id):
@@ -497,8 +555,29 @@ def setup_routes(app):
             
             data = request.get_json()
             plan = data.get('plan')
+            server_id = data.get('server_id')
             
-            logger.info(f"Criando checkout para plano: {plan}")
+            logger.info(f"Criando checkout para plano: {plan}, servidor: {server_id}")
+            
+            if not server_id:
+                return jsonify({'success': False, 'error': 'ID do servidor é obrigatório'}), 400
+            
+            # Verificar se o usuário tem acesso ao servidor
+            admin_guilds = get_user_guilds_admin()
+            server_found = any(guild['id'] == str(server_id) for guild in admin_guilds)
+            
+            if not server_found:
+                return jsonify({'success': False, 'error': 'Acesso negado ao servidor'}), 403
+            
+            # Verificar se o servidor já tem premium
+            premium_check = """
+                SELECT id FROM servidores_premium 
+                WHERE id_servidor = $1 AND data_fim > NOW()
+            """
+            has_premium = db_manager.execute_one_sync(premium_check, int(server_id)) is not None
+            
+            if has_premium:
+                return jsonify({'success': False, 'error': 'Este servidor já possui premium ativo'}), 400
             
             # Definir produtos e preços
             plans_config = {
@@ -554,7 +633,8 @@ def setup_routes(app):
                 metadata={
                     'user_id': str(user_data['id']),
                     'username': user_data['username'],
-                    'plan': plan
+                    'plan': plan,
+                    'server_id': str(server_id)
                 }
             )
             
@@ -641,8 +721,9 @@ def setup_routes(app):
                 # Extrair dados do cliente
                 user_id = session['metadata'].get('user_id')
                 plan = session['metadata'].get('plan')
+                server_id = session['metadata'].get('server_id')
                 
-                if user_id and plan:
+                if user_id and plan and server_id:
                     # Calcular data de expiração baseada no plano
                     from datetime import datetime, timedelta
                     
@@ -655,11 +736,32 @@ def setup_routes(app):
                     else:
                         data_fim = datetime.utcnow() + timedelta(days=30)
                     
-                    # Ativar premium no banco (aqui você precisa escolher o servidor)
-                    # Por enquanto, vamos logar e deixar para ativação manual
-                    logger.info(f"Premium ativado para usuário {user_id} (plano: {plan}) até {data_fim}")
-                    
-                    # TODO: Implementar seleção de servidor ou ativação automática
+                    try:
+                        # Ativar premium no servidor específico
+                        activate_premium_query = """
+                            INSERT INTO servidores_premium (id_servidor, data_inicio, data_fim, motivo, stripe_session_id)
+                            VALUES ($1, NOW(), $2, $3, $4)
+                            ON CONFLICT (id_servidor) 
+                            DO UPDATE SET 
+                                data_fim = EXCLUDED.data_fim,
+                                motivo = EXCLUDED.motivo,
+                                stripe_session_id = EXCLUDED.stripe_session_id
+                        """
+                        
+                        motivo = f"Premium {plan} ativado via Stripe"
+                        db_manager.execute_query_sync(activate_premium_query, int(server_id), data_fim, motivo, session['id'])
+                        
+                        logger.info(f"✅ Premium ativado com sucesso!")
+                        logger.info(f"- Usuário: {user_id}")
+                        logger.info(f"- Servidor: {server_id}")
+                        logger.info(f"- Plano: {plan}")
+                        logger.info(f"- Válido até: {data_fim}")
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Erro ao ativar premium: {e}")
+                        # Mesmo com erro na ativação, retornamos 200 para não reprocessar o webhook
+                else:
+                    logger.warning(f"Dados incompletos no webhook: user_id={user_id}, plan={plan}, server_id={server_id}")
                     
             elif event['type'] == 'invoice.payment_succeeded':
                 # Renovação automática

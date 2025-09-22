@@ -597,7 +597,7 @@
                     </li>
                 </ul>
                 
-                <button class="plan-button primary" onclick="createCheckout('monthly')">
+                <button class="plan-button primary" onclick="selectPlan('monthly')">
                     <i class="bi bi-credit-card me-2"></i>
                     Assinar Agora
                 </button>
@@ -643,7 +643,7 @@
                     </li>
                 </ul>
                 
-                <button class="plan-button primary" onclick="createCheckout('quarterly')">
+                <button class="plan-button primary" onclick="selectPlan('quarterly')">
                     <i class="bi bi-star-fill me-2"></i>
                     Escolher Trimestral
                 </button>
@@ -689,7 +689,7 @@
                     </li>
                 </ul>
                 
-                <button class="plan-button primary" onclick="createCheckout('yearly')">
+                <button class="plan-button primary" onclick="selectPlan('yearly')">
                     <i class="bi bi-gem me-2"></i>
                     Melhor Valor
                 </button>
@@ -809,7 +809,7 @@
             </p>
             
             <div class="cta-buttons">
-                <button class="plan-button primary" onclick="createCheckout('quarterly')" style="width: auto; min-width: 200px;">
+                <button class="plan-button primary" onclick="selectPlan('quarterly')" style="width: auto; min-width: 200px;">
                     <i class="bi bi-star-fill me-2"></i>
                     Começar Agora
                 </button>
@@ -848,36 +848,10 @@ function toggleFaq(element) {
     }
 }
 
-// Stripe Checkout
-async function createCheckout(plan) {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    loadingOverlay.style.display = 'flex';
-    
-    try {
-        const response = await fetch('/api/create-checkout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ plan: plan })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Redirecionar para o Stripe Checkout
-            console.log('Redirecionando para Stripe Checkout:', data.checkout_url);
-            window.location.href = data.checkout_url;
-        } else {
-            console.error('Erro na resposta:', data);
-            alert('Erro ao criar sessão de pagamento: ' + (data.error || 'Erro desconhecido'));
-            loadingOverlay.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Erro na requisição:', error);
-        alert('Erro ao processar solicitação. Tente novamente.');
-        loadingOverlay.style.display = 'none';
-    }
+// Seleção de Plano
+function selectPlan(plan) {
+    // Redirecionar para seleção de servidor
+    window.location.href = `/premium/select-server?plan=${plan}`;
 }
 
 // Smooth scrolling for anchor links

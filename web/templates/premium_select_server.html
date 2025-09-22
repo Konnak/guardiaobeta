@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Selecionar Servidor - Premium{% endblock %}
+
+{% block main_class %}premium-select-page{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        /* Paleta baseada na logo - Azul petróleo e dourado */
+        --primary-teal: #1e5a5a;
+        --primary-teal-dark: #0f3d3d;
+        --primary-teal-light: #2d7a7a;
+        --primary-gold: #ffb800;
+        --primary-gold-dark: #e6a600;
+        --primary-gold-light: #ffcc33;
+        
+        /* Cores de apoio */
+        --dark-bg: #0d1117;
+        --dark-card: #161b22;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: #8b949e;
+        --shadow-glow: 0 20px 40px rgba(255, 184, 0, 0.15);
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-teal-dark) 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .premium-select-page {
+        min-height: 100vh;
+        padding-top: 2rem;
+    }
+
+    /* Header */
+    .select-header {
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+        border-radius: 25px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .select-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(255, 184, 0, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .select-header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .select-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .select-header p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0;
+    }
+
+    /* Plan Info */
+    .plan-info {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .plan-badge {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        color: var(--dark-bg);
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .plan-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Server Grid */
+    .servers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .server-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .server-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-gold);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .server-card.selected {
+        border-color: var(--primary-gold);
+        background: linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 184, 0, 0.05) 100%);
+    }
+
+    .server-card.selected::before {
+        content: '✓';
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--primary-gold);
+        color: var(--dark-bg);
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .server-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        margin: 0 auto 1rem;
+        border: 3px solid var(--primary-gold);
+        filter: drop-shadow(0 0 15px rgba(255, 184, 0, 0.3));
+    }
+
+    .server-name {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .server-id {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-family: monospace;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        color: var(--dark-bg);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 184, 0, 0.4);
+        background: linear-gradient(135deg, var(--primary-gold-light) 0%, var(--primary-gold) 100%);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
+    }
+
+    /* Loading */
+    .loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top: 4px solid var(--primary-gold);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .select-header h1 {
+            font-size: 2rem;
+        }
+        
+        .servers-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="select-header">
+        <div class="select-header-content">
+            <h1>
+                <i class="bi bi-server me-2"></i>
+                Selecionar Servidor
+            </h1>
+            <p>Escolha o servidor onde deseja ativar o premium</p>
+        </div>
+    </div>
+
+    <!-- Plan Info -->
+    <div class="plan-info">
+        <div class="plan-badge">
+            {% if selected_plan == 'monthly' %}
+                Premium Mensal
+            {% elif selected_plan == 'quarterly' %}
+                Premium Trimestral - MAIS POPULAR
+            {% elif selected_plan == 'yearly' %}
+                Premium Anual - MELHOR VALOR
+            {% endif %}
+        </div>
+        
+        <div class="plan-price">
+            {% if selected_plan == 'monthly' %}
+                R$ 9,90/mês
+            {% elif selected_plan == 'quarterly' %}
+                R$ 24,90/3 meses
+                <small style="color: var(--text-secondary); font-size: 0.8em; display: block;">(17% de desconto)</small>
+            {% elif selected_plan == 'yearly' %}
+                R$ 89,90/ano
+                <small style="color: var(--text-secondary); font-size: 0.8em; display: block;">(25% de desconto)</small>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Servers Grid -->
+    {% if servers %}
+        <div class="servers-grid">
+            {% for server_info in servers %}
+                <div class="server-card" onclick="selectServer('{{ server_info.guild.id }}', '{{ server_info.guild.name }}')">
+                    <img src="{{ server_info.icon_url }}" alt="Server Icon" class="server-icon">
+                    <div class="server-name">{{ server_info.guild.name }}</div>
+                    <div class="server-id">ID: {{ server_info.guild.id }}</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('premium') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Voltar
+            </a>
+            
+            <button id="continueBtn" class="btn btn-primary" disabled onclick="proceedToPayment()">
+                <i class="bi bi-credit-card"></i>
+                Continuar para Pagamento
+            </button>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <i class="bi bi-server" style="font-size: 4rem; margin-bottom: 2rem;"></i>
+            <h3>Nenhum servidor disponível</h3>
+            <p>Para ativar o premium, você precisa:</p>
+            <ul style="text-align: left; max-width: 400px; margin: 2rem auto;">
+                <li>Ser administrador do servidor</li>
+                <li>O bot Guardião deve estar no servidor</li>
+                <li>O servidor não deve ter premium ativo</li>
+            </ul>
+            <a href="{{ url_for('servers') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i>
+                Voltar aos Servidores
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading" id="loadingOverlay">
+    <div style="text-align: center; color: white;">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem;">Criando sessão de pagamento...</p>
+    </div>
+</div>
+
+<script>
+let selectedServerId = null;
+let selectedServerName = null;
+const selectedPlan = '{{ selected_plan }}';
+
+function selectServer(serverId, serverName) {
+    // Remover seleção anterior
+    document.querySelectorAll('.server-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Selecionar novo servidor
+    event.currentTarget.classList.add('selected');
+    
+    selectedServerId = serverId;
+    selectedServerName = serverName;
+    
+    // Habilitar botão continuar
+    const continueBtn = document.getElementById('continueBtn');
+    continueBtn.disabled = false;
+    
+    console.log(`Servidor selecionado: ${serverName} (${serverId})`);
+}
+
+async function proceedToPayment() {
+    if (!selectedServerId) {
+        alert('Por favor, selecione um servidor primeiro.');
+        return;
+    }
+    
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    loadingOverlay.style.display = 'flex';
+    
+    try {
+        const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                plan: selectedPlan,
+                server_id: selectedServerId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Redirecionando para Stripe Checkout:', data.checkout_url);
+            window.location.href = data.checkout_url;
+        } else {
+            console.error('Erro na resposta:', data);
+            alert('Erro ao criar sessão de pagamento: ' + (data.error || 'Erro desconhecido'));
+            loadingOverlay.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        alert('Erro ao processar solicitação. Tente novamente.');
+        loadingOverlay.style.display = 'none';
+    }
+}
+
+// Auto-selecionar se houver apenas um servidor
+document.addEventListener('DOMContentLoaded', function() {
+    const serverCards = document.querySelectorAll('.server-card');
+    if (serverCards.length === 1) {
+        serverCards[0].click();
+    }
+});
+</script>
+{% endblock %}
