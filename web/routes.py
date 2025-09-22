@@ -369,6 +369,11 @@ def setup_routes(app):
             available_servers = []
             logger.info(f"🔍 Verificando {len(admin_guilds)} servidores para seleção premium...")
             
+            # Obter token uma vez
+            bot_token = os.getenv('DISCORD_BOT_TOKEN')
+            if not bot_token:
+                logger.warning("⚠️ DISCORD_BOT_TOKEN não encontrado no .env - assumindo bot presente em todos os servidores")
+            
             for guild in admin_guilds:
                 guild_id = int(guild['id'])
                 guild_name = guild.get('name', 'Servidor Desconhecido')
@@ -377,17 +382,24 @@ def setup_routes(app):
                 
                 # Verificar se bot está no servidor
                 bot_in_server = False
-                try:
-                    import requests
-                    bot_token = os.getenv('DISCORD_BOT_TOKEN')
-                    if bot_token:
+                if bot_token:
+                    try:
+                        import requests
+                        logger.info(f"  🔑 Token encontrado: {bot_token[:20]}...")
                         headers = {'Authorization': f'Bot {bot_token}'}
                         response = requests.get(f'https://discord.com/api/v10/guilds/{guild_id}/channels', headers=headers, timeout=5)
                         bot_in_server = response.status_code == 200
+                        logger.info(f"  📡 Discord API response: {response.status_code}")
+                        if response.status_code != 200:
+                            logger.warning(f"  ⚠️ Discord API error: {response.text[:200]}")
                         logger.info(f"  🤖 Bot no servidor: {'✅ Sim' if bot_in_server else '❌ Não'}")
-                except Exception as e:
-                    logger.warning(f"  ⚠️ Erro ao verificar bot: {e}")
-                    bot_in_server = False
+                    except Exception as e:
+                        logger.warning(f"  ⚠️ Erro ao verificar bot: {e}")
+                        bot_in_server = False
+                else:
+                    # Se não tem token, assumir que bot está presente
+                    logger.warning(f"  ⚠️ Sem token, assumindo bot presente")
+                    bot_in_server = True
                 
                 # Verificar se já tem premium ativo
                 has_premium = False
@@ -403,6 +415,7 @@ def setup_routes(app):
                     has_premium = False  # Se erro, assume que não tem premium
                 
                 # Adicionar à lista se elegível
+                
                 if bot_in_server and not has_premium:
                     available_servers.append({
                         'guild': guild,
@@ -410,7 +423,12 @@ def setup_routes(app):
                     })
                     logger.info(f"  ✅ Servidor adicionado à lista de elegíveis!")
                 else:
-                    logger.info(f"  ❌ Servidor não elegível")
+                    reason = []
+                    if not bot_in_server:
+                        reason.append("bot não presente")
+                    if has_premium:
+                        reason.append("já tem premium")
+                    logger.info(f"  ❌ Servidor não elegível: {', '.join(reason)}")
             
             logger.info(f"📋 Total de servidores elegíveis: {len(available_servers)}")
             
