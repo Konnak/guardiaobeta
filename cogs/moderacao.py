@@ -629,6 +629,58 @@ class ModeracaoCog(commands.Cog):
         self.timeout_check.start()
         self.inactivity_check.start()
     
+    async def _check_denuncias_limits(self, server_id: int, is_premium: bool) -> dict:
+        """Verifica se o servidor pode criar mais denúncias baseado nos limites do plano"""
+        try:
+            # Limites baseados no plano
+            if is_premium:
+                max_pendentes = 15
+                max_analise = 10
+            else:
+                max_pendentes = 5
+                max_analise = 5
+            
+            # Conta denúncias atuais
+            count_query = """
+                SELECT 
+                    COUNT(CASE WHEN status = 'Pendente' THEN 1 END) as pendentes,
+                    COUNT(CASE WHEN status = 'Em Análise' THEN 1 END) as analise
+                FROM denuncias 
+                WHERE id_servidor = $1 AND status IN ('Pendente', 'Em Análise')
+            """
+            counts = db_manager.execute_one_sync(count_query, server_id)
+            
+            if not counts:
+                return {'allowed': True, 'message': ''}
+            
+            pendentes = counts.get('pendentes', 0)
+            analise = counts.get('analise', 0)
+            
+            # Verifica limites
+            if pendentes >= max_pendentes:
+                plano = "Premium" if is_premium else "Gratuito"
+                return {
+                    'allowed': False,
+                    'message': f"Limite de denúncias pendentes atingido!\n\n"
+                              f"**Plano {plano}:** {pendentes}/{max_pendentes} pendentes\n"
+                              f"Aguarde algumas denúncias serem processadas."
+                }
+            
+            if analise >= max_analise:
+                plano = "Premium" if is_premium else "Gratuito"
+                return {
+                    'allowed': False,
+                    'message': f"Limite de denúncias em análise atingido!\n\n"
+                              f"**Plano {plano}:** {analise}/{max_analise} em análise\n"
+                              f"Aguarde algumas denúncias serem finalizadas."
+                }
+            
+            return {'allowed': True, 'message': ''}
+            
+        except Exception as e:
+            logger.error(f"Erro ao verificar limites de denúncias: {e}")
+            return {'allowed': True, 'message': ''}  # Em caso de erro, permite a denúncia
+    
     @app_commands.command(
         name="report",
         description="Denuncie um usuário por violação das regras"
@@ -676,6 +728,26 @@ class ModeracaoCog(commands.Cog):
                 WHERE id_servidor = $1 AND data_fim > NOW()
             """
             is_premium = db_manager.execute_scalar_sync(premium_query, interaction.guild.id) is not None
+            
+            # Verifica limites de denúncias baseado no plano
+            limits_check = await self._check_denuncias_limits(interaction.guild.id, is_premium)
+            if not limits_check['allowed']:
+                embed = discord.Embed(
+                    title="⚠️ Limite de Denúncias Atingido",
+                    description=limits_check['message'],
+                    color=0xffa500
+                )
+                if not is_premium:
+                    embed.add_field(
+                        name="💎 Upgrade para Premium",
+                        value="Tenha mais denúncias simultâneas com o plano Premium!\n"
+                              "• **15** denúncias pendentes\n"
+                              "• **10** denúncias em análise\n"
+                              "• Prioridade na análise",
+                        inline=False
+                    )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
             
             # Insere a denúncia no banco
             denuncia_query = """
