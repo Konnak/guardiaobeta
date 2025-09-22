@@ -789,22 +789,16 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                {% if user.avatar %}
-                                                    <img src="https://cdn.discordapp.com/avatars/{{ user.id_denunciado }}/{{ user.avatar }}.png?size=32" 
-                                                         alt="Avatar" class="rounded-circle me-2" width="32" height="32">
-                                                {% else %}
-                                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
-                                                         style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                                        <i class="bi bi-person-fill"></i>
-                                                    </div>
-                                                {% endif %}
+                                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 32px; height: 32px; font-size: 0.8rem; color: white;">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
                                                 <div>
                                                     <div class="fw-medium">
-                                                        {% if user.username %}
+                                                        {% if user.display_name %}
+                                                            {{ user.display_name }}
+                                                        {% elif user.username %}
                                                             {{ user.username }}
-                                                            {% if user.discriminator and user.discriminator != '0' %}
-                                                                <span class="text-muted">#{{ user.discriminator }}</span>
-                                                            {% endif %}
                                                         {% else %}
                                                             <span class="text-muted">Usuário Desconhecido</span>
                                                         {% endif %}

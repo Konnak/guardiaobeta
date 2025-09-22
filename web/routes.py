@@ -988,9 +988,8 @@ def setup_routes(app):
                 where_conditions.append(f"status = ${param_count}")
                 params.append(status)
             
-            # Filtro por período
-            param_count += 1
-            where_conditions.append(f"data_criacao >= NOW() - INTERVAL '{periodo} days'")
+            # Filtro por período (fixo em 90 dias)
+            where_conditions.append("data_criacao >= NOW() - INTERVAL '90 days'")
             
             # Query principal
             query = f"""
@@ -1112,8 +1111,7 @@ def get_server_stats(server_id: int) -> dict:
             SELECT 
                 d.id_denunciado,
                 u.username,
-                u.avatar,
-                u.discriminator,
+                u.display_name,
                 COUNT(*) as denuncias_count,
                 CASE 
                     WHEN u.categoria = 'Banido' THEN 'BANIDO'
@@ -1125,7 +1123,7 @@ def get_server_stats(server_id: int) -> dict:
             LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
             WHERE d.id_servidor = $1 
             AND d.data_criacao >= NOW() - INTERVAL '30 days'
-            GROUP BY d.id_denunciado, u.username, u.avatar, u.discriminator, u.categoria
+            GROUP BY d.id_denunciado, u.username, u.display_name, u.categoria
             ORDER BY denuncias_count DESC
             LIMIT 10
         """
