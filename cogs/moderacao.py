@@ -630,6 +630,242 @@ class ModeracaoCog(commands.Cog):
         self.inactivity_check.start()
     
     @app_commands.command(
+        name="denuncias",
+        description="Ver denúncias pendentes para votação (apenas Guardiões)"
+    )
+    async def denuncias_pendentes(self, interaction: discord.Interaction):
+        """
+        Comando para Guardiões verem denúncias pendentes e votarem
+        """
+        try:
+            # Verifica se o usuário é Guardião
+            user_data = await get_user_by_discord_id(interaction.user.id)
+            if not user_data or user_data['categoria'] != 'Guardião':
+                embed = discord.Embed(
+                    title="❌ Acesso Negado",
+                    description="Apenas Guardiões podem ver denúncias pendentes.",
+                    color=0xff0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
+            # Busca denúncias pendentes que o guardião ainda não votou
+            denuncias_query = """
+                SELECT d.*, 
+                       COALESCE(v.votos_count, 0) as votos_atuais,
+                       u1.username as denunciante_name,
+                       u2.username as denunciado_name
+                FROM denuncias d
+                LEFT JOIN usuarios u1 ON d.id_denunciante = u1.id_discord
+                LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
+                LEFT JOIN (
+                    SELECT id_denuncia, COUNT(*) as votos_count 
+                    FROM votos_guardioes 
+                    GROUP BY id_denuncia
+                ) v ON d.id = v.id_denuncia
+                WHERE d.status IN ('Pendente', 'Em Análise', 'Apelada')
+                  AND COALESCE(v.votos_count, 0) < $1
+                  AND d.id NOT IN (
+                      SELECT id_denuncia FROM votos_guardioes 
+                      WHERE id_guardiao = $2
+                  )
+                ORDER BY d.e_premium DESC, d.data_criacao ASC
+                LIMIT 5
+            """
+            
+            denuncias = db_manager.execute_query_sync(
+                denuncias_query, REQUIRED_VOTES_FOR_DECISION, interaction.user.id
+            )
+            
+            if not denuncias:
+                embed = discord.Embed(
+                    title="✅ Nenhuma Denúncia Pendente",
+                    description="Não há denúncias disponíveis para votação no momento.",
+                    color=0x00ff00
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+            
+            # Cria embed com lista de denúncias
+            embed = discord.Embed(
+                title="📋 Denúncias Pendentes para Votação",
+                description=f"Encontradas **{len(denuncias)}** denúncias aguardando seus votos:",
+                color=0xff6600
+            )
+            
+            for i, denuncia in enumerate(denuncias, 1):
+                # Converte para horário de Brasília
+                data_brasilia = denuncia['data_criacao'] - timedelta(hours=3)
+                
+                # Determina prioridade
+                prioridade = "⭐ Premium" if denuncia['e_premium'] else "📋 Normal"
+                
+                embed.add_field(
+                    name=f"{i}. Hash: `{denuncia['hash_denuncia']}`",
+                    value=f"**Motivo:** {denuncia['motivo']}\n"
+                          f"**Status:** {denuncia['status']}\n"
+                          f"**Votos:** {denuncia['votos_atuais']}/{REQUIRED_VOTES_FOR_DECISION}\n"
+                          f"**Prioridade:** {prioridade}\n"
+                          f"**Data:** {data_brasilia.strftime('%d/%m/%Y às %H:%M')}",
+                    inline=False
+                )
+            
+            embed.add_field(
+                name="🗳️ Como Votar",
+                value="Use o comando `/votar <hash>` para votar em uma denúncia específica.\n"
+                      f"Exemplo: `/votar {denuncias[0]['hash_denuncia']}`",
+                inline=False
+            )
+            
+            embed.set_footer(text="Sistema Guardião BETA - Votação Rápida")
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"Erro no comando denuncias: {e}")
+            embed = discord.Embed(
+                title="❌ Erro no Sistema",
+                description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(
+        name="votar",
+        description="Votar em uma denúncia específica (apenas Guardiões)"
+    )
+    @app_commands.describe(hash_denuncia="Hash da denúncia para votar")
+    async def votar_denuncia(self, interaction: discord.Interaction, hash_denuncia: str):
+        """
+        Comando para Guardiões votarem diretamente em denúncias
+        """
+        try:
+            # Verifica se o usuário é Guardião
+            user_data = await get_user_by_discord_id(interaction.user.id)
+            if not user_data or user_data['categoria'] != 'Guardião':
+                embed = discord.Embed(
+                    title="❌ Acesso Negado",
+                    description="Apenas Guardiões podem votar em denúncias.",
+                    color=0xff0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
+            # Verifica se a denúncia existe e está disponível para votação
+            denuncia_query = """
+                SELECT d.*, 
+                       COALESCE(v.votos_count, 0) as votos_atuais,
+                       u1.username as denunciante_name,
+                       u2.username as denunciado_name
+                FROM denuncias d
+                LEFT JOIN usuarios u1 ON d.id_denunciante = u1.id_discord
+                LEFT JOIN usuarios u2 ON d.id_denunciado = u2.id_discord
+                LEFT JOIN (
+                    SELECT id_denuncia, COUNT(*) as votos_count 
+                    FROM votos_guardioes 
+                    GROUP BY id_denuncia
+                ) v ON d.id = v.id_denuncia
+                WHERE d.hash_denuncia = $1
+                  AND d.status IN ('Pendente', 'Em Análise', 'Apelada')
+                  AND COALESCE(v.votos_count, 0) < $2
+            """
+            
+            denuncia = db_manager.execute_one_sync(denuncia_query, hash_denuncia, REQUIRED_VOTES_FOR_DECISION)
+            
+            if not denuncia:
+                embed = discord.Embed(
+                    title="❌ Denúncia Não Encontrada",
+                    description="Esta denúncia não existe ou já foi finalizada.",
+                    color=0xff0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+            
+            # Verifica se o guardião já votou nesta denúncia
+            voto_existente_query = """
+                SELECT id FROM votos_guardioes 
+                WHERE id_guardiao = $1 AND id_denuncia = $2
+            """
+            voto_existente = db_manager.execute_scalar_sync(voto_existente_query, interaction.user.id, denuncia['id'])
+            
+            if voto_existente:
+                embed = discord.Embed(
+                    title="❌ Voto Já Registrado",
+                    description="Você já votou nesta denúncia.",
+                    color=0xff0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+            
+            # Busca as mensagens capturadas
+            mensagens_query = """
+                SELECT * FROM mensagens_capturadas 
+                WHERE id_denuncia = $1 
+                ORDER BY timestamp_mensagem DESC
+            """
+            mensagens = db_manager.execute_query_sync(mensagens_query, denuncia['id'])
+            
+            # Cria o embed com os detalhes da denúncia
+            embed = discord.Embed(
+                title="🗳️ Votação Rápida - Análise Requerida",
+                description="Analise cuidadosamente as evidências antes de votar.",
+                color=0xff6600
+            )
+            
+            # Converte data da denúncia para horário de Brasília
+            data_brasilia = denuncia['data_criacao'] - timedelta(hours=3)
+            embed.add_field(
+                name="📋 Informações da Denúncia",
+                value=f"**Hash:** `{hash_denuncia}`\n"
+                      f"**Motivo:** {denuncia['motivo']}\n"
+                      f"**Votos Atuais:** {denuncia['votos_atuais']}/{REQUIRED_VOTES_FOR_DECISION}\n"
+                      f"**Data:** {data_brasilia.strftime('%d/%m/%Y às %H:%M')}",
+                inline=False
+            )
+            
+            # Adiciona as mensagens capturadas (anonimizadas)
+            if mensagens:
+                # Reutiliza a função de anonimização da classe ReportView
+                report_view = ReportView(hash_denuncia)
+                mensagens_anonimizadas = report_view._anonymize_messages(mensagens, denuncia['id_denunciado'])
+                
+                # Divide em chunks para não exceder limite do Discord
+                chunks = report_view._split_into_chunks(mensagens_anonimizadas, 1000)
+                
+                for i, chunk in enumerate(chunks):
+                    field_name = f"💬 Mensagens Capturadas" if i == 0 else f"💬 Mensagens (cont. {i+1})"
+                    embed.add_field(name=field_name, value=chunk, inline=False)
+            else:
+                embed.add_field(
+                    name="💬 Mensagens Capturadas",
+                    value="Nenhuma mensagem foi encontrada no histórico das últimas 24 horas.",
+                    inline=False
+                )
+            
+            embed.add_field(
+                name="⚠️ Importante",
+                value="• Analise todas as evidências\n"
+                      "• Seja imparcial em seu julgamento\n"
+                      "• Considere o contexto e as regras do servidor\n"
+                      "• Seu voto é definitivo",
+                inline=False
+            )
+            
+            # Cria a view de votação
+            vote_view = VoteView(hash_denuncia, interaction.user.id)
+            
+            await interaction.response.send_message(embed=embed, view=vote_view, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"Erro no comando votar: {e}")
+            embed = discord.Embed(
+                title="❌ Erro no Sistema",
+                description="Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(
         name="report",
         description="Denuncie um usuário por violação das regras"
     )
