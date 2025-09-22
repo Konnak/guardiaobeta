@@ -769,8 +769,15 @@ def setup_admin_complete(app):
             custom_end_date = request.form.get('custom_end_date')
             reason = request.form.get('reason', '').strip()
             
+            # Debug - log dos dados recebidos
+            logger.info(f"Dados recebidos no formulário: server_id={server_id}, duration_type={duration_type}, duration_value={duration_value}, custom_end_date={custom_end_date}")
+            
             if not server_id:
                 flash('ID do servidor é obrigatório.', 'error')
+                return redirect(url_for('admin_premium_add'))
+            
+            if not duration_type:
+                flash('Tipo de duração é obrigatório. Selecione uma opção de duração.', 'error')
                 return redirect(url_for('admin_premium_add'))
             
             # Calcula data de fim
@@ -780,7 +787,11 @@ def setup_admin_complete(app):
                 except ValueError:
                     flash('Data customizada inválida.', 'error')
                     return redirect(url_for('admin_premium_add'))
-            elif duration_type and duration_value:
+            elif duration_type in ['days', 'weeks', 'months', 'years']:
+                if not duration_value or duration_value <= 0:
+                    flash(f'Valor de duração inválido para {duration_type}. Tente selecionar a opção novamente.', 'error')
+                    return redirect(url_for('admin_premium_add'))
+                
                 if duration_type == 'days':
                     data_fim = datetime.utcnow() + timedelta(days=duration_value)
                 elif duration_type == 'weeks':
@@ -789,11 +800,8 @@ def setup_admin_complete(app):
                     data_fim = datetime.utcnow() + timedelta(days=duration_value * 30)
                 elif duration_type == 'years':
                     data_fim = datetime.utcnow() + timedelta(days=duration_value * 365)
-                else:
-                    flash('Tipo de duração inválido.', 'error')
-                    return redirect(url_for('admin_premium_add'))
             else:
-                flash('Duração é obrigatória.', 'error')
+                flash(f'Tipo de duração inválido: {duration_type}. Selecione uma opção válida.', 'error')
                 return redirect(url_for('admin_premium_add'))
             
             # Verifica se o servidor já é premium

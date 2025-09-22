@@ -425,8 +425,19 @@
                 option.classList.remove('selected');
             });
             
+            // Remove seleção dos radio buttons
+            document.querySelectorAll('input[name="duration_type"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
             // Seleciona nova opção
             event.currentTarget.classList.add('selected');
+            
+            // Marca o radio button correspondente
+            const radioButton = event.currentTarget.querySelector('input[type="radio"]');
+            if (radioButton) {
+                radioButton.checked = true;
+            }
             
             // Atualiza valores
             selectedDurationType = type;
@@ -448,8 +459,19 @@
                 option.classList.remove('selected');
             });
             
+            // Remove seleção dos radio buttons
+            document.querySelectorAll('input[name="duration_type"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
             // Seleciona opção customizada
             event.currentTarget.classList.add('selected');
+            
+            // Marca o radio button de custom
+            const customRadio = document.getElementById('custom');
+            if (customRadio) {
+                customRadio.checked = true;
+            }
             
             // Mostra campos customizados
             document.getElementById('customDuration').classList.add('show');
@@ -516,26 +538,46 @@
         // Validação do formulário
         document.getElementById('premiumForm').addEventListener('submit', function(e) {
             const serverId = document.getElementById('server_id').value;
-            const durationType = selectedDurationType;
             const customDate = document.getElementById('custom_end_date').value;
             
+            // Verifica se o servidor foi preenchido
             if (!serverId) {
                 alert('ID do servidor é obrigatório!');
                 e.preventDefault();
                 return;
             }
             
-            if (durationType === 'custom' && !customDate) {
+            // Verifica se alguma duração foi selecionada
+            const durationTypeChecked = document.querySelector('input[name="duration_type"]:checked');
+            if (!durationTypeChecked) {
+                alert('Selecione uma duração para o premium!');
+                e.preventDefault();
+                return;
+            }
+            
+            // Se for custom, verifica se a data foi preenchida
+            if (durationTypeChecked.value === 'custom' && !customDate) {
                 alert('Data customizada é obrigatória quando selecionada!');
                 e.preventDefault();
                 return;
             }
             
-            if (!durationType) {
-                alert('Selecione uma duração para o premium!');
-                e.preventDefault();
-                return;
+            // Se não for custom, verifica se duration_value foi preenchido
+            if (durationTypeChecked.value !== 'custom') {
+                const durationValue = document.getElementById('duration_value').value;
+                if (!durationValue || durationValue <= 0) {
+                    alert('Valor de duração inválido! Tente selecionar a opção novamente.');
+                    e.preventDefault();
+                    return;
+                }
             }
+            
+            // Debug - mostra os valores que serão enviados
+            console.log('Dados do formulário:');
+            console.log('Server ID:', serverId);
+            console.log('Duration Type:', durationTypeChecked.value);
+            console.log('Duration Value:', document.getElementById('duration_value').value);
+            console.log('Custom Date:', customDate);
             
             // Confirmação
             if (!confirm(`Tem certeza que deseja adicionar o servidor ${serverId} como premium?`)) {
