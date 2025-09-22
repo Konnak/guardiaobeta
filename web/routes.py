@@ -202,6 +202,12 @@ def setup_routes(app):
                 server_config = db_manager.execute_one_sync(config_query, server_id)
             
             logger.info(f"📤 Passando server_id para template: {server_id}")
+            logger.info(f"📤 Tipo do server_id: {type(server_id)}")
+            logger.info(f"📤 Guild ID: {guild.get('id') if guild else 'None'}")
+            logger.info(f"📤 Todas as variáveis do template:")
+            logger.info(f"   - server_id: {server_id}")
+            logger.info(f"   - guild: {guild}")
+            
             return render_template('server_panel.html',
                                  user=user_data,
                                  guild=guild,
