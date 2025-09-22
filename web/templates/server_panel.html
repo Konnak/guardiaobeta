@@ -6,54 +6,51 @@
 
 {% block extra_head %}
 <style>
+    :root {
+        /* Paleta baseada na logo - Azul petróleo e dourado */
+        --primary-teal: #1e5a5a;
+        --primary-teal-dark: #0f3d3d;
+        --primary-teal-light: #2d7a7a;
+        --primary-gold: #ffb800;
+        --primary-gold-dark: #e6a600;
+        --primary-gold-light: #ffcc33;
+        
+        /* Cores de apoio */
+        --dark-bg: #0d1117;
+        --dark-card: #161b22;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: #8b949e;
+        --shadow-glow: 0 20px 40px rgba(255, 184, 0, 0.15);
+        
+        /* Status colors */
+        --success-color: #238636;
+        --warning-color: #d29922;
+        --danger-color: #da3633;
+        --info-color: var(--primary-teal);
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-teal-dark) 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
     .server-panel-page {
-        background: var(--dark-bg);
         min-height: 100vh;
         padding-top: 2rem;
     }
 
-    /* Glass morphism cards */
-    .glass-card {
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 2rem;
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .glass-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 184, 0, 0.1), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .glass-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-glow);
-        border-color: var(--primary-gold);
-    }
-
-    .glass-card:hover::before {
-        left: 100%;
-    }
-
-    /* Server header */
+    /* Header do servidor */
     .server-header {
-        background: linear-gradient(135deg, var(--primary-teal-dark), var(--primary-teal));
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
         border-radius: 25px;
         padding: 2.5rem;
         margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 20px 40px rgba(30, 90, 90, 0.3);
     }
 
     .server-header::before {
@@ -88,184 +85,370 @@
         filter: drop-shadow(0 0 25px rgba(255, 184, 0, 0.8));
     }
 
-    /* Override Bootstrap cards with glass design */
-    .card {
-        background: var(--glass-bg) !important;
+    /* Cards principais */
+    .main-card {
+        background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 20px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 2rem;
         transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
     }
 
-    .card:hover {
+    .main-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 184, 0, 0.1), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .main-card:hover {
         transform: translateY(-5px);
-        box-shadow: var(--shadow-glow) !important;
-        border-color: var(--primary-gold) !important;
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
     }
 
-    .card-title {
-        color: var(--text-primary) !important;
+    .main-card:hover::before {
+        left: 100%;
     }
 
-    .card-text {
-        color: var(--text-secondary) !important;
+    /* Stats cards */
+    .stat-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* Stats improvements */
-    .text-primary { color: var(--primary-gold) !important; }
-    .text-success { color: #00ff88 !important; }
-    .text-warning { color: var(--primary-gold) !important; }
-    .text-info { color: var(--primary-teal) !important; }
-
-    /* Premium badge */
-    .badge.bg-warning {
-        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark)) !important;
-        color: var(--dark-bg) !important;
-        border-radius: 15px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-gold);
+        box-shadow: 0 15px 30px rgba(255, 184, 0, 0.2);
     }
 
-    /* Alert styling */
-    .alert {
-        background: var(--glass-bg) !important;
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 20px !important;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        color: var(--text-primary) !important;
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
     }
 
-    .alert-warning {
-        border-color: var(--primary-gold) !important;
-        background: rgba(255, 184, 0, 0.1) !important;
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1);
     }
 
-    .alert-info {
-        border-color: var(--primary-teal) !important;
-        background: rgba(30, 90, 90, 0.1) !important;
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        margin-bottom: 0.5rem;
+        display: block;
     }
 
-    /* Table styling */
-    .table {
-        color: var(--text-primary) !important;
-    }
-
-    .table th {
-        color: var(--primary-gold) !important;
-        border-color: var(--glass-border) !important;
-    }
-
-    .table td {
-        border-color: var(--glass-border) !important;
-    }
-
-    .table-hover tbody tr:hover {
-        background: var(--glass-bg) !important;
-        color: var(--text-primary) !important;
-    }
-
-    /* Button improvements */
-    .btn-outline-secondary {
-        color: var(--text-primary) !important;
-        border-color: var(--glass-border) !important;
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
-
-    .btn-outline-secondary:hover {
-        background: var(--primary-gold) !important;
-        color: var(--dark-bg) !important;
-        border-color: var(--primary-gold) !important;
-        transform: translateY(-2px);
-    }
-
-    .btn-sm {
-        border-radius: 10px;
-    }
-
-    .btn-outline-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Badge improvements */
-    .badge {
-        border-radius: 10px;
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
         font-weight: 500;
-        padding: 0.5rem 0.75rem;
+    }
+
+    /* Premium section */
+    .premium-section {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: var(--dark-bg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .premium-section.disabled {
+        background: linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 184, 0, 0.05) 100%);
+        border: 2px dashed var(--primary-gold);
+        color: var(--text-primary);
+    }
+
+    .premium-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+
+    .premium-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .premium-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: inherit;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .premium-section.disabled .premium-badge {
+        background: rgba(255, 184, 0, 0.2);
+        color: var(--primary-gold);
     }
 
     /* Form styling */
-    .form-control, .form-select {
-        background: var(--glass-bg) !important;
-        border: 1px solid var(--glass-border) !important;
-        color: var(--text-primary) !important;
-        border-radius: 10px;
-    }
-
-    .form-control:focus, .form-select:focus {
-        background: var(--glass-bg) !important;
-        border-color: var(--primary-gold) !important;
-        color: var(--text-primary) !important;
-        box-shadow: 0 0 0 0.2rem rgba(255, 184, 0, 0.25) !important;
+    .form-group {
+        margin-bottom: 1.5rem;
     }
 
     .form-label {
-        color: var(--text-primary) !important;
-        font-weight: 500;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--primary-gold);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(255, 184, 0, 0.25);
+    }
+
+    .form-control:disabled, .form-select:disabled {
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        cursor: not-allowed;
     }
 
     .form-text {
-        color: var(--text-secondary) !important;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
     }
 
-    /* Modal styling */
-    .modal-content {
-        background: var(--dark-card) !important;
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 20px;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+    /* Buttons */
+    .btn {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .modal-header, .modal-footer {
-        border-color: var(--glass-border) !important;
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+        color: white;
     }
 
-    .modal-title {
-        color: var(--text-primary) !important;
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(30, 90, 90, 0.4);
+        background: linear-gradient(135deg, var(--primary-teal-light) 0%, var(--primary-teal) 100%);
     }
 
-    /* Pagination */
-    .pagination .page-link {
-        background: var(--glass-bg) !important;
-        border: 1px solid var(--glass-border) !important;
-        color: var(--text-primary) !important;
-        border-radius: 10px;
-        margin: 0 2px;
+    .btn-warning {
+        background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-dark) 100%);
+        color: var(--dark-bg);
     }
 
-    .pagination .page-link:hover {
-        background: var(--primary-gold) !important;
-        color: var(--dark-bg) !important;
-        border-color: var(--primary-gold) !important;
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 184, 0, 0.4);
+        background: linear-gradient(135deg, var(--primary-gold-light) 0%, var(--primary-gold) 100%);
+    }
+
+    .btn-outline-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--primary-gold);
+        color: var(--dark-bg);
+        border-color: var(--primary-gold);
         transform: translateY(-2px);
     }
 
-    .pagination .page-item.active .page-link {
-        background: var(--primary-gold) !important;
-        border-color: var(--primary-gold) !important;
-        color: var(--dark-bg) !important;
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Tables */
+    .table {
+        color: var(--text-primary);
+        background: transparent;
+    }
+
+    .table th {
+        color: var(--primary-gold);
+        border-color: rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table td {
+        border-color: rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    .table-hover tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-primary);
+    }
+
+    /* Badges */
+    .badge {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge.bg-success { background: var(--success-color) !important; }
+    .badge.bg-warning { background: var(--warning-color) !important; }
+    .badge.bg-danger { background: var(--danger-color) !important; }
+    .badge.bg-info { background: var(--info-color) !important; }
+
+    /* Alerts */
+    .alert {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        color: var(--text-primary);
+        border-left: 4px solid var(--primary-gold);
+    }
+
+    .alert-warning {
+        background: rgba(255, 184, 0, 0.1);
+        border-color: var(--primary-gold);
+        color: var(--text-primary);
+    }
+
+    .alert-info {
+        background: rgba(30, 90, 90, 0.1);
+        border-color: var(--primary-teal);
+        color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .server-header {
+            padding: 1.5rem;
+        }
+        
+        .main-card {
+            padding: 1.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .premium-section {
+            padding: 1.5rem;
+        }
+    }
+
+    /* Loading states */
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+
+    .spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--primary-gold);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-right: 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Premium propaganda overlay */
+    .premium-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        z-index: 10;
+    }
+
+    .premium-promo {
+        text-align: center;
+        color: white;
+        padding: 2rem;
+    }
+
+    .premium-promo h4 {
+        color: var(--primary-gold);
+        margin-bottom: 1rem;
+    }
+
+    .premium-promo .btn {
+        margin-top: 1rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- Server Header -->
+    <!-- Header do Servidor -->
     <div class="server-header">
         <div class="server-header-content">
             <div class="row align-items-center">
@@ -278,303 +461,293 @@
                         <i class="bi bi-server me-1"></i>
                         Painel de Controle do Servidor
                         {% if is_premium %}
-                            <span class="badge bg-warning ms-2">
-                                <i class="bi bi-star-fill"></i> Premium
+                            <span class="premium-badge ms-2">
+                                <i class="bi bi-star-fill"></i> Premium Ativo
                             </span>
                         {% endif %}
                     </p>
                 </div>
                 <div class="col-auto">
-                    <a href="{{ url_for('servers') }}" class="btn btn-custom-secondary">
-                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    <a href="{{ url_for('servers') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar
                     </a>
                 </div>
                 <div class="col-auto">
                     <img src="{{ url_for('static', filename='img/logoguardiao.png') }}" 
-                         alt="Logo" width="60" height="60" 
+                         alt="Logo Guardião" width="60" height="60" 
                          style="filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Premium Banner -->
-    {% if is_premium %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-warning" role="alert">
-                    <h4 class="alert-heading">
-                        <i class="bi bi-star-fill"></i> Servidor Premium Ativo
-                    </h4>
-                    <p class="mb-0">
-                        Este servidor possui assinatura premium válida até 
-                        <strong>{{ premium_data.data_fim.strftime('%d/%m/%Y às %H:%M') }}</strong>.
-                        Denúncias têm prioridade na análise.
-                    </p>
-                </div>
-            </div>
-        </div>
-    {% else %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-info" role="alert">
-                    <h4 class="alert-heading">
-                        <i class="bi bi-info-circle"></i> Upgrade para Premium
-                    </h4>
-                    <p class="mb-0">
-                        Torne-se premium e tenha prioridade nas análises de denúncias, 
-                        configurações personalizadas e muito mais!
-                        <a href="{{ url_for('premium') }}" class="alert-link">Saiba mais</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    {% endif %}
+    <!-- Alertas do Sistema -->
+    <div id="alertContainer"></div>
 
-    <!-- Stats Cards -->
+    <!-- Estatísticas Principais -->
     <div class="row g-4 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="text-primary mb-2">
-                        <i class="bi bi-flag-fill" style="font-size: 2rem;"></i>
-                    </div>
-                    <h3 class="card-title">{{ stats.general.total_denuncias or 0 }}</h3>
-                    <p class="card-text text-muted">Total de Denúncias</p>
+            <div class="stat-card">
+                <div class="stat-icon text-info">
+                    <i class="bi bi-flag-fill"></i>
                 </div>
+                <span class="stat-number">{{ stats.general.total_denuncias or 0 }}</span>
+                <div class="stat-label">Total de Denúncias</div>
             </div>
         </div>
         
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="text-success mb-2">
-                        <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
-                    </div>
-                    <h3 class="card-title">{{ stats.general.denuncias_finalizadas or 0 }}</h3>
-                    <p class="card-text text-muted">Finalizadas</p>
+            <div class="stat-card">
+                <div class="stat-icon text-success">
+                    <i class="bi bi-check-circle-fill"></i>
                 </div>
+                <span class="stat-number">{{ stats.general.denuncias_finalizadas or 0 }}</span>
+                <div class="stat-label">Finalizadas</div>
             </div>
         </div>
         
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="text-warning mb-2">
-                        <i class="bi bi-clock-fill" style="font-size: 2rem;"></i>
-                    </div>
-                    <h3 class="card-title">{{ stats.general.denuncias_pendentes or 0 }}</h3>
-                    <p class="card-text text-muted">Pendentes</p>
+            <div class="stat-card">
+                <div class="stat-icon text-warning">
+                    <i class="bi bi-clock-fill"></i>
                 </div>
+                <span class="stat-number">{{ stats.general.denuncias_pendentes or 0 }}</span>
+                <div class="stat-label">Pendentes</div>
             </div>
         </div>
         
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="text-info mb-2">
-                        <i class="bi bi-eye-fill" style="font-size: 2rem;"></i>
-                    </div>
-                    <h3 class="card-title">{{ stats.general.denuncias_analise or 0 }}</h3>
-                    <p class="card-text text-muted">Em Análise</p>
+            <div class="stat-card">
+                <div class="stat-icon text-info">
+                    <i class="bi bi-eye-fill"></i>
                 </div>
+                <span class="stat-number">{{ stats.general.denuncias_analise or 0 }}</span>
+                <div class="stat-label">Em Análise</div>
             </div>
         </div>
     </div>
 
-    <!-- Results Chart -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-pie-chart"></i> Resultados das Denúncias
-                    </h5>
-                    <div style="position: relative; height: 200px;">
-                        <canvas id="resultsChart"></canvas>
-                    </div>
+    <!-- Seção de Configurações Premium -->
+    <div class="premium-section {% if not is_premium %}disabled{% endif %}">
+        <div class="premium-content">
+            <div class="row align-items-center mb-3">
+                <div class="col">
+                    <h3 class="mb-0">
+                        <i class="bi bi-star-fill me-2"></i>
+                        Configurações Premium
+                    </h3>
+                    <p class="mb-0 mt-1" style="opacity: 0.8;">
+                        {% if is_premium %}
+                            Configure as opções avançadas do seu servidor premium
+                        {% else %}
+                            Desbloqueie configurações avançadas com o Premium
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-auto">
+                    {% if is_premium %}
+                        <span class="premium-badge">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Ativo até {{ premium_data.data_fim.strftime('%d/%m/%Y') if premium_data else 'N/A' }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('premium') }}" class="btn btn-warning">
+                            <i class="bi bi-star"></i> Upgrade Agora
+                        </a>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-graph-up"></i> Atividade dos Últimos 7 Dias
-                    </h5>
-                    <div style="position: relative; height: 200px;">
-                        <canvas id="activityChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Denuncias Table -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-list-ul"></i> Denúncias Recentes
-                        </h5>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filterDenuncias('all')">Todas</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filterDenuncias('pendente')">Pendentes</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filterDenuncias('finalizada')">Finalizadas</button>
+            <form id="premiumConfigForm" {% if not is_premium %}style="position: relative;"{% endif %}>
+                {% if not is_premium %}
+                <div class="premium-overlay">
+                    <div class="premium-promo">
+                        <h4><i class="bi bi-lock-fill"></i> Premium Necessário</h4>
+                        <p>Desbloqueie configurações avançadas, prioridade nas denúncias e muito mais!</p>
+                        <a href="{{ url_for('premium') }}" class="btn btn-warning">
+                            <i class="bi bi-star"></i> Assinar Premium
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="canalLog" class="form-label">
+                                <i class="bi bi-megaphone"></i> Canal de Log
+                            </label>
+                            <select class="form-select" id="canalLog" name="canal_log" {% if not is_premium %}disabled{% endif %}>
+                                <option value="">{% if is_premium %}Carregando canais...{% else %}Selecione um canal...{% endif %}</option>
+                            </select>
+                            <div class="form-text">
+                                Canal onde serão enviadas notificações de punições e atividades do sistema
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="denunciasTable">
-                            <thead>
-                                <tr>
-                                    <th>Hash</th>
-                                    <th>Status</th>
-                                    <th>Motivo</th>
-                                    <th>Data</th>
-                                    <th>Resultado</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="6" class="text-center">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="visually-hidden">Carregando...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <nav aria-label="Paginação das denúncias">
-                        <ul class="pagination justify-content-center" id="denunciasPagination">
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Top Denunciados -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-exclamation-triangle"></i> Usuários Mais Denunciados (30 dias)
-                    </h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>Denúncias</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in stats.top_denunciados %}
-                                    <tr>
-                                        <td>
-                                            <i class="bi bi-person-circle"></i>
-                                            Usuário ID: {{ user.id_denunciado }}
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-warning">{{ user.denuncias_count }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary">Ativo</span>
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted">
-                                            Nenhum usuário denunciado nos últimos 30 dias
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Premium Settings -->
-    {% if is_premium %}
-        <div class="row">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-gear"></i> Configurações Premium
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="premiumSettings">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="canalLog" class="form-label">Canal de Log</label>
-                                    <select class="form-select" id="canalLog" name="canal_log">
-                                        <option value="">Selecione um canal...</option>
-                                        <!-- Channels would be loaded here -->
-                                    </select>
-                                    <div class="form-text">
-                                        Canal onde serão enviadas notificações de punições
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <label for="duracaoIntimidou" class="form-label">Duração - Intimidação (horas)</label>
-                                    <input type="number" class="form-control" id="duracaoIntimidou" 
-                                           name="duracao_intimidou" value="{{ server_config.duracao_intimidou or 1 }}" min="1" max="24">
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <label for="duracaoGrave" class="form-label">Duração - Grave (horas)</label>
-                                    <input type="number" class="form-control" id="duracaoGrave" 
-                                           name="duracao_grave" value="{{ server_config.duracao_grave or 12 }}" min="1" max="168">
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <label for="duracaoBan" class="form-label">Duração - Ban (horas)</label>
-                                    <input type="number" class="form-control" id="duracaoBan" 
-                                           name="duracao_grave_4plus" value="{{ server_config.duracao_grave_4plus or 24 }}" min="1" max="168">
-                                </div>
-                                
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check"></i> Salvar Configurações
-                                    </button>
-                                </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="duracaoIntimidou" class="form-label">
+                                <i class="bi bi-exclamation-triangle"></i> Duração - Intimidação (horas)
+                            </label>
+                            <input type="number" class="form-control" id="duracaoIntimidou" 
+                                   name="duracao_intimidou" value="{{ server_config.duracao_intimidou or 1 }}" 
+                                   min="1" max="24" step="1" {% if not is_premium %}disabled{% endif %}>
+                            <div class="form-text">
+                                Tempo de timeout para usuários que intimidam outros (1-24 horas)
                             </div>
-                        </form>
+                        </div>
                     </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="duracaoGrave" class="form-label">
+                                <i class="bi bi-shield-exclamation"></i> Duração - Grave (horas)
+                            </label>
+                            <input type="number" class="form-control" id="duracaoGrave" 
+                                   name="duracao_grave" value="{{ server_config.duracao_grave or 12 }}" 
+                                   min="1" max="168" step="1" {% if not is_premium %}disabled{% endif %}>
+                            <div class="form-text">
+                                Tempo de timeout para infrações graves (1-168 horas / 7 dias)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="duracaoBan" class="form-label">
+                                <i class="bi bi-ban"></i> Duração - Ban (horas)
+                            </label>
+                            <input type="number" class="form-control" id="duracaoBan" 
+                                   name="duracao_ban" value="{{ server_config.duracao_ban or 24 }}" 
+                                   min="1" max="8760" step="1" {% if not is_premium %}disabled{% endif %}>
+                            <div class="form-text">
+                                Tempo de banimento para infrações extremas (1-8760 horas / 1 ano)
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if is_premium %}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary" id="saveConfigBtn">
+                            <i class="bi bi-check-circle"></i> Salvar Configurações
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Denúncias Recentes -->
+    <div class="main-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="bi bi-list-ul me-2" style="color: var(--primary-gold);"></i>
+                Denúncias Recentes
+            </h4>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm active" onclick="filterDenuncias('all')">
+                    Todas
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filterDenuncias('pendente')">
+                    Pendentes
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="filterDenuncias('finalizada')">
+                    Finalizadas
+                </button>
             </div>
         </div>
-    {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="denunciasTable">
+                <thead>
+                    <tr>
+                        <th>Hash</th>
+                        <th>Status</th>
+                        <th>Motivo</th>
+                        <th>Data</th>
+                        <th>Resultado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Carregando denúncias...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <nav aria-label="Paginação das denúncias">
+            <ul class="pagination justify-content-center" id="denunciasPagination">
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Usuários Mais Denunciados -->
+    <div class="main-card">
+        <h4 class="mb-3">
+            <i class="bi bi-exclamation-triangle me-2" style="color: var(--primary-gold);"></i>
+            Usuários Mais Denunciados (30 dias)
+        </h4>
+        
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Denúncias</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in stats.top_denunciados %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-person-circle me-2"></i>
+                                Usuário ID: {{ user.id_denunciado }}
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">{{ user.denuncias_count }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">Ativo</span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Nenhum usuário denunciado nos últimos 30 dias
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<!-- Denuncia Details Modal -->
+<!-- Modal de Detalhes da Denúncia -->
 <div class="modal fade" id="denunciaModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content" style="background: var(--dark-card); border: 1px solid var(--primary-gold);">
             <div class="modal-header">
-                <h5 class="modal-title">Detalhes da Denúncia</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" style="color: var(--primary-gold);">Detalhes da Denúncia</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="denunciaModalBody">
-                <!-- Content loaded dynamically -->
+                <!-- Conteúdo carregado dinamicamente -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
@@ -583,136 +756,95 @@
 
 {% block extra_scripts %}
 <script>
+const serverId = {{ server_id }};
+const isPremium = {{ is_premium|tojson }};
 let currentPage = 1;
 let currentFilter = 'all';
 
-// Load denuncias on page load
+// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     loadDenuncias();
-    // Use intersection observer to load charts when visible
-    const chartsContainer = document.querySelector('.row.g-4.mb-4');
-    if (chartsContainer) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadCharts();
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-        
-        observer.observe(chartsContainer);
-    } else {
-        // Fallback if observer isn't supported
-        setTimeout(loadCharts, 500);
+    
+    if (isPremium) {
+        loadChannels();
     }
 });
 
-// Charts
-let resultsChart = null;
-let activityChart = null;
-
-// Function to destroy existing charts
-function destroyCharts() {
-    if (resultsChart) {
-        resultsChart.destroy();
-        resultsChart = null;
-    }
-    if (activityChart) {
-        activityChart.destroy();
-        activityChart = null;
-    }
-}
-
-function loadCharts() {
+// Carregar canais do servidor (apenas para premium)
+async function loadChannels() {
+    if (!isPremium) return;
+    
     try {
-        // Results Chart
-        const resultsCtx = document.getElementById('resultsChart');
-        if (resultsCtx && !resultsChart) {
-            resultsChart = new Chart(resultsCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Improcedentes', 'Intimidações', 'Graves'],
-                datasets: [{
-                    data: [
-                        {{ stats.results.improcedentes or 0 }},
-                        {{ stats.results.intimidoes or 0 }},
-                        {{ stats.results.graves or 0 }}
-                    ],
-                    backgroundColor: [
-                        'rgb(40, 167, 69)',
-                        'rgb(255, 193, 7)',
-                        'rgb(220, 53, 69)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                animation: {
-                    duration: 1000
-                }
+        const response = await fetch(`/api/server/${serverId}/channels`);
+        const data = await response.json();
+        
+        const channelSelect = document.getElementById('canalLog');
+        
+        if (data.success) {
+            channelSelect.innerHTML = '<option value="">Selecione um canal...</option>';
+            
+            data.channels.forEach(channel => {
+                const option = document.createElement('option');
+                option.value = channel.id;
+                option.textContent = `# ${channel.name}`;
+                channelSelect.appendChild(option);
+            });
+            
+            // Selecionar canal atual se existir
+            const currentChannel = '{{ server_config.canal_log if server_config else "" }}';
+            if (currentChannel) {
+                channelSelect.value = currentChannel;
             }
-        });
-    }
-
-    // Activity Chart
-    const activityCtx = document.getElementById('activityChart');
-    if (activityCtx && !activityChart) {
-        const periodData = {{ stats.period | tojson }};
-        const labels = periodData.map(item => new Date(item.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-        const quantities = periodData.map(item => item.quantidade);
-
-        activityChart = new Chart(activityCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Denúncias',
-                    data: quantities,
-                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
-                    borderColor: 'rgb(13, 110, 253)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1000
-                }
-            }
-        });
+        } else {
+            channelSelect.innerHTML = '<option value="">Erro ao carregar canais</option>';
+            showAlert('Erro ao carregar canais do servidor', 'danger');
         }
     } catch (error) {
-        console.error('Erro ao carregar gráficos:', error);
-        // Fallback: try to destroy and recreate
-        destroyCharts();
+        console.error('Erro ao carregar canais:', error);
+        showAlert('Erro ao carregar canais do servidor', 'danger');
     }
 }
 
-// Clean up charts when page is unloaded
-window.addEventListener('beforeunload', destroyCharts);
+// Salvar configurações premium
+document.getElementById('premiumConfigForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!isPremium) return;
+    
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Salvando...';
+    saveBtn.disabled = true;
+    
+    try {
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        const response = await fetch(`/api/server/${serverId}/config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(result.message, 'success');
+        } else {
+            showAlert(result.error || 'Erro ao salvar configurações', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar:', error);
+        showAlert('Erro ao salvar configurações', 'danger');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+});
 
-// Load denuncias
+// Carregar denúncias
 function loadDenuncias(page = 1, filter = 'all') {
     currentPage = page;
     currentFilter = filter;
@@ -720,26 +852,29 @@ function loadDenuncias(page = 1, filter = 'all') {
     const tbody = document.querySelector('#denunciasTable tbody');
     const pagination = document.getElementById('denunciasPagination');
     
-    // Show loading
+    // Mostrar loading
     tbody.innerHTML = `
         <tr>
             <td colspan="6" class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Carregando...</span>
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Carregando denúncias...
                 </div>
             </td>
         </tr>
     `;
     
-    // Fetch data
-    fetch(`/api/server/{{ server_id }}/denuncias?page=${page}&per_page=10&status=${filter === 'all' ? '' : filter}`)
+    // Buscar dados
+    fetch(`/api/server/${serverId}/denuncias?page=${page}&per_page=10&status=${filter === 'all' ? '' : filter}`)
         .then(response => response.json())
         .then(data => {
             if (data.denuncias && data.denuncias.length > 0) {
                 tbody.innerHTML = data.denuncias.map(denuncia => `
                     <tr>
                         <td>
-                            <code>${denuncia.hash_denuncia}</code>
+                            <code style="background: rgba(255, 184, 0, 0.1); color: var(--primary-gold); padding: 0.25rem 0.5rem; border-radius: 6px;">
+                                ${denuncia.hash_denuncia}
+                            </code>
                         </td>
                         <td>
                             <span class="badge bg-${getStatusColor(denuncia.status)}">
@@ -751,23 +886,24 @@ function loadDenuncias(page = 1, filter = 'all') {
                         <td>
                             ${denuncia.resultado_final ? 
                                 `<span class="badge bg-${getResultColor(denuncia.resultado_final)}">${denuncia.resultado_final}</span>` : 
-                                '-'
+                                '<span class="text-muted">-</span>'
                             }
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDenunciaDetails('${denuncia.hash_denuncia}')">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="showDenunciaDetails('${denuncia.hash_denuncia}')">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </td>
                     </tr>
                 `).join('');
                 
-                // Update pagination
+                // Atualizar paginação
                 updatePagination(data.pagination);
             } else {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6" class="text-center text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
                             Nenhuma denúncia encontrada
                         </td>
                     </tr>
@@ -780,6 +916,7 @@ function loadDenuncias(page = 1, filter = 'all') {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center text-danger">
+                        <i class="bi bi-exclamation-circle me-2"></i>
                         Erro ao carregar denúncias
                     </td>
                 </tr>
@@ -787,7 +924,7 @@ function loadDenuncias(page = 1, filter = 'all') {
         });
 }
 
-// Helper functions
+// Funções auxiliares
 function getStatusColor(status) {
     const colors = {
         'Pendente': 'warning',
@@ -816,12 +953,10 @@ function updatePagination(pagination) {
     const paginationEl = document.getElementById('denunciasPagination');
     let html = '';
     
-    // Previous button
     if (pagination.page > 1) {
         html += `<li class="page-item"><a class="page-link" href="#" onclick="loadDenuncias(${pagination.page - 1}, '${currentFilter}')">Anterior</a></li>`;
     }
     
-    // Page numbers
     for (let i = 1; i <= pagination.pages; i++) {
         if (i === pagination.page) {
             html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
@@ -830,7 +965,6 @@ function updatePagination(pagination) {
         }
     }
     
-    // Next button
     if (pagination.page < pagination.pages) {
         html += `<li class="page-item"><a class="page-link" href="#" onclick="loadDenuncias(${pagination.page + 1}, '${currentFilter}')">Próximo</a></li>`;
     }
@@ -838,29 +972,48 @@ function updatePagination(pagination) {
     paginationEl.innerHTML = html;
 }
 
-// Filter functions
 function filterDenuncias(filter) {
     loadDenuncias(1, filter);
     
-    // Update button states
+    // Atualizar estados dos botões
     document.querySelectorAll('[onclick^="filterDenuncias"]').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
 }
 
-// Show denuncia details
 function showDenunciaDetails(hash) {
-    // This would fetch and show detailed information about a specific denuncia
     alert(`Detalhes da denúncia ${hash} em desenvolvimento.`);
 }
 
-// Premium settings
-document.getElementById('premiumSettings')?.addEventListener('submit', function(e) {
-    e.preventDefault();
+// Mostrar alertas
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
     
-    // This would save the premium settings
-    alert('Configurações salvas com sucesso!');
-});
+    alertContainer.appendChild(alertDiv);
+    
+    // Remover alerta após 5 segundos
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// CSS para animação de spin
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spin { animation: spin 1s linear infinite; }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
