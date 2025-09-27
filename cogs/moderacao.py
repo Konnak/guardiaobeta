@@ -650,6 +650,11 @@ class VoteView(ui.View):
                 try:
                     logger.info("📝 Tentando enviar log de falha na punição...")
                     from main import bot
+                    
+                    # Lista servidores conectados para debug
+                    connected_guilds = [f"{guild.name} ({guild.id})" for guild in bot.guilds]
+                    logger.info(f"📝 Servidores conectados: {connected_guilds}")
+                    
                     guild = bot.get_guild(server_id)
                     if guild:
                         logger.info(f"📝 Servidor encontrado: {guild.name}")
@@ -661,7 +666,8 @@ class VoteView(ui.View):
                         else:
                             logger.warning(f"📝 Membro {member_id} não encontrado no servidor")
                     else:
-                        logger.warning(f"📝 Servidor {server_id} não encontrado")
+                        logger.warning(f"📝 Servidor {server_id} não encontrado - Bot não está neste servidor")
+                        logger.warning(f"📝 Servidores disponíveis: {connected_guilds}")
                 except Exception as log_error:
                     logger.error(f"❌ Erro ao enviar log de falha: {log_error}")
                 
