@@ -145,28 +145,49 @@ def setup_routes(app):
                 logger.warning(f"Bot está fechado")
                 return False
             
-            # NOVO: Aguarda o bot estar completamente sincronizado
-            import time
-            max_attempts = 10
+            # NOVO: Abordagem simplificada - busca usuário diretamente via API
             user = None
             
-            for attempt in range(max_attempts):
+            # Tenta buscar no cache primeiro
+            try:
+                user = bot.get_user(user_id)
+                if user:
+                    logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
+                else:
+                    logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache, buscando via API...")
+            except Exception as e:
+                logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
+            
+            # Se não encontrou no cache, busca via API usando loop isolado
+            if not user:
                 try:
-                    user = bot.get_user(user_id)
+                    logger.info(f"Buscando {user_type} {user_id} via API do Discord...")
+                    
+                    # Cria um novo loop para esta operação
+                    def run_fetch_user():
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            return loop.run_until_complete(bot.fetch_user(user_id))
+                        finally:
+                            loop.close()
+                    
+                    # Executa em uma thread separada
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(run_fetch_user)
+                        user = future.result(timeout=10)
+                    
                     if user:
-                        logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
-                        break
+                        logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
                     else:
-                        logger.info(f"Tentativa {attempt + 1}/{max_attempts} - {user_type.capitalize()} {user_id} não encontrado no cache")
-                        if attempt < max_attempts - 1:
-                            time.sleep(1)  # Aguarda 1 segundo antes da próxima tentativa
+                        logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
+                        
                 except Exception as e:
-                    logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
-                    if attempt < max_attempts - 1:
-                        time.sleep(1)
+                    logger.warning(f"Erro ao buscar {user_type} {user_id} via API: {e}")
             
             if not user:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado após {max_attempts} tentativas")
+                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
                 return False
             
             # NOVO: Envia DM usando abordagem dos cogs - mais simples
