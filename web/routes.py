@@ -1590,6 +1590,15 @@ def setup_routes(app):
         logger.info("🚀 ROTA admin_system_message CHAMADA!")
         import asyncio
         
+        # Importa o bot do main.py FORA da função async
+        from main import bot
+        logger.info("🤖 Bot importado com sucesso")
+        
+        if not bot:
+            logger.warning("⚠️ Bot Discord não está disponível")
+            flash("Bot Discord não está disponível.", "error")
+            return redirect(url_for('admin_system'))
+        
         async def send_message_async():
             try:
                 logger.info("🔄 Função send_message_async iniciada!")
@@ -1606,15 +1615,6 @@ def setup_routes(app):
                 if not all([target_type, message_title, message_content]):
                     logger.warning("⚠️ Campos obrigatórios não preenchidos!")
                     flash("Campos obrigatórios não preenchidos.", "error")
-                    return redirect(url_for('admin_system'))
-                
-                # Importa o bot do main.py
-                from main import bot
-                logger.info("🤖 Bot importado com sucesso")
-                
-                if not bot:
-                    logger.warning("⚠️ Bot Discord não está disponível")
-                    flash("Bot Discord não está disponível.", "error")
                     return redirect(url_for('admin_system'))
                 
                 # Aguarda o bot estar pronto (como fazem nos cogs)
