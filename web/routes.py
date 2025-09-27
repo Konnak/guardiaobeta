@@ -127,112 +127,38 @@ def setup_routes(app):
         return None
     
     async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico de forma robusta"""
+        """Envia DM para um usuário específico usando a mesma abordagem dos cogs"""
         try:
-            # NOVO: Logs detalhados para debug
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
-            logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
-            logger.info(f"🔍 Bot user: {bot.user}")
-            logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
-            logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
-            logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
-            logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
-            logger.info(f"🔍 Loop rodando: N/A (não acessível em contexto síncrono)")
-            logger.info(f"🔍 Usuários no cache: {len(bot.users)}")
             
-            # NOVO: Verificação mais flexível - se bot não está fechado, tenta usar
-            if bot.is_closed():
-                logger.warning(f"Bot está fechado")
-                return False
+            # NOVO: Usa a mesma abordagem que funciona nos cogs
+            # Primeiro tenta buscar no cache (como nos cogs)
+            user = bot.get_user(user_id)
             
-            # NOVO: Abordagem simplificada - busca usuário diretamente via API
-            user = None
-            
-            # Tenta buscar no cache primeiro
-            try:
-                user = bot.get_user(user_id)
-                if user:
-                    logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
-                else:
-                    logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache, buscando via API...")
-            except Exception as e:
-                logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
-            
-            # Se não encontrou no cache, busca via API usando loop isolado
             if not user:
-                try:
-                    logger.info(f"Buscando {user_type} {user_id} via API do Discord...")
-                    
-                    # NOVO: Importa asyncio aqui
-                    import asyncio
-                    import concurrent.futures
-                    
-                    # Cria um novo loop para esta operação
-                    def run_fetch_user():
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        try:
-                            return loop.run_until_complete(bot.fetch_user(user_id))
-                        finally:
-                            loop.close()
-                    
-                    # Executa em uma thread separada
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(run_fetch_user)
-                        user = future.result(timeout=10)
-                    
-                    if user:
-                        logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-                    else:
-                        logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
-                        
-                except Exception as e:
-                    logger.warning(f"Erro ao buscar {user_type} {user_id} via API: {e}")
+                # Se não encontrou no cache, busca via API (como nos cogs)
+                logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache, buscando via API...")
+                user = await bot.fetch_user(user_id)
             
             if not user:
                 logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
                 return False
             
-            # NOVO: Envia DM usando abordagem dos cogs - mais simples
-            try:
-                logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
+            logger.info(f"{user_type.capitalize()} encontrado: {user.name}")
+            
+            # NOVO: Envia DM usando a mesma abordagem dos cogs
+            await user.send(embed=embed)
+            logger.info(f"Mensagem enviada para {user_type} {user_id}")
+            return True
                 
-                # Cria um novo loop para esta operação (como nos cogs)
-                def run_send_dm():
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        async def send_dm():
-                            dm_channel = await user.create_dm()
-                            logger.info(f"Canal DM criado: {dm_channel.id}")
-                            await dm_channel.send(embed=embed)
-                            logger.info(f"Mensagem enviada para {user_type} {user_id}")
-                            return True
-                        
-                        return loop.run_until_complete(send_dm())
-                    finally:
-                        loop.close()
-                
-                # Executa em uma thread separada
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(run_send_dm)
-                    result = future.result(timeout=10)
-                
-                return result
-                
-            except discord.Forbidden:
-                logger.warning(f"Não foi possível enviar DM para {user.name} - DMs bloqueados")
-                return False
-            except discord.HTTPException as e:
-                logger.error(f"Erro HTTP ao enviar DM para {user.name}: {e}")
-                return False
-            except Exception as e:
-                logger.error(f"Erro ao enviar DM para {user.name}: {e}")
-                return False
-                
+        except discord.Forbidden:
+            logger.warning(f"Não foi possível enviar DM para {user_type} {user_id} - DMs bloqueados")
+            return False
+        except discord.HTTPException as e:
+            logger.error(f"Erro HTTP ao enviar DM para {user_type} {user_id}: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Erro geral ao enviar DM para {user_type} {user_id}: {e}")
+            logger.error(f"Erro ao enviar DM para {user_type} {user_id}: {e}")
             return False
     logger.info("🚀 Iniciando configuração de rotas...")
     
