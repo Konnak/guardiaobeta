@@ -147,6 +147,12 @@ def setup_routes(app):
     async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
         """Envia DM para um usuário específico de forma robusta"""
         try:
+            # Aguarda o bot estar realmente pronto
+            if not bot.is_ready():
+                logger.warning(f"Bot não está pronto, aguardando...")
+                await bot.wait_until_ready()
+                logger.info(f"Bot agora está pronto!")
+            
             # Tenta buscar usuário no cache primeiro
             user = bot.get_user(user_id)
             if not user:
