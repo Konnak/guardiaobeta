@@ -106,9 +106,10 @@ class GuardiaoBot:
         """Carrega todos os cogs do sistema"""
         cogs_to_load = [
             'cogs.cadastro',
-            'cogs.guardiao', 
+            'cogs.guardiao',
             'cogs.stats',
-            'cogs.moderacao'
+            'cogs.moderacao',
+            'cogs.captcha_system'
         ]
         
         for cog in cogs_to_load:
