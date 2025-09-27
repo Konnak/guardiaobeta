@@ -1019,7 +1019,16 @@ class ModeracaoCog(commands.Cog):
             
             if total_guardians == 0:
                 logger.warning("Nenhum guardião está em serviço!")
-                return
+                # Se não há guardiões, verifica se há moderadores em serviço
+                moderators_count_query = "SELECT COUNT(*) FROM usuarios WHERE em_servico = TRUE AND categoria = 'Moderador'"
+                total_moderators = db_manager.execute_scalar_sync(moderators_count_query)
+                logger.info(f"Total de moderadores em serviço: {total_moderators}")
+                
+                if total_moderators == 0:
+                    logger.warning("Nenhum guardião ou moderador está em serviço!")
+                    return
+                else:
+                    logger.info("Nenhum guardião em serviço, mas há moderadores disponíveis. Continuando distribuição...")
             
             # Verifica se a tabela mensagens_guardioes existe
             table_exists_query = """
@@ -1121,21 +1130,62 @@ class ModeracaoCog(commands.Cog):
                         logger.info(f"Incluindo moderadores para denúncia {denuncia['hash_denuncia']} - {should_include_moderators['reason']}")
                         moderators = await self._get_available_moderators(denuncia['id'], mensagens_necessarias - len(guardians))
                         guardians.extend(moderators)
+                
+                # NOVA FUNCIONALIDADE: Se não há guardiões em serviço, busca apenas moderadores
+                if total_guardians == 0 and len(guardians) == 0:
+                    logger.info("Nenhum guardião em serviço, buscando apenas moderadores...")
+                    moderators_query = """
+                        SELECT id_discord, categoria FROM usuarios 
+                        WHERE em_servico = TRUE 
+                        AND categoria = 'Moderador'
+                        AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                        AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                        AND id_discord NOT IN (
+                            SELECT id_guardiao FROM votos_guardioes 
+                            WHERE id_denuncia = $1
+                        )
+                        AND id_discord NOT IN (
+                            SELECT id_guardiao FROM mensagens_guardioes 
+                            WHERE id_denuncia = $1 AND status = 'Enviada' AND timeout_expira > NOW()
+                        )
+                        ORDER BY RANDOM()
+                        LIMIT $2
+                    """
+                    guardians = db_manager.execute_query_sync(moderators_query, denuncia['id'], mensagens_necessarias)
+                    logger.info(f"Encontrados {len(guardians)} moderadores para denúncia {denuncia['hash_denuncia']}")
             else:
                 # Versão simplificada usando cache temporário para evitar spam
-                guardians_query = """
-                SELECT id_discord FROM usuarios 
-                WHERE em_servico = TRUE 
-                AND categoria = 'Guardião'
-                AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
-                AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
-                AND id_discord NOT IN (
-                    SELECT id_guardiao FROM votos_guardioes 
-                    WHERE id_denuncia = $1
-                )
-                ORDER BY RANDOM()
-                LIMIT $2
-            """
+                if total_guardians == 0:
+                    # Se não há guardiões, busca apenas moderadores
+                    logger.info("Nenhum guardião em serviço, buscando apenas moderadores (versão simplificada)...")
+                    guardians_query = """
+                    SELECT id_discord FROM usuarios 
+                    WHERE em_servico = TRUE 
+                    AND categoria = 'Moderador'
+                    AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                    AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                    AND id_discord NOT IN (
+                        SELECT id_guardiao FROM votos_guardioes 
+                        WHERE id_denuncia = $1
+                    )
+                    ORDER BY RANDOM()
+                    LIMIT $2
+                """
+                else:
+                    # Busca guardiões normalmente
+                    guardians_query = """
+                    SELECT id_discord FROM usuarios 
+                    WHERE em_servico = TRUE 
+                    AND categoria = 'Guardião'
+                    AND (cooldown_dispensa IS NULL OR cooldown_dispensa <= NOW())
+                    AND (cooldown_inativo IS NULL OR cooldown_inativo <= NOW())
+                    AND id_discord NOT IN (
+                        SELECT id_guardiao FROM votos_guardioes 
+                        WHERE id_denuncia = $1
+                    )
+                    ORDER BY RANDOM()
+                    LIMIT $2
+                """
                 all_guardians = db_manager.execute_query_sync(guardians_query, denuncia['id'], MAX_GUARDIANS_PER_REPORT)
                 
                 # Filtra guardiões que NÃO têm mensagens ativas (não reenvia para o mesmo guardião)
