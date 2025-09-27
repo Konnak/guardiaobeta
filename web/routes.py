@@ -1441,6 +1441,7 @@ def get_server_stats(server_id: int) -> dict:
     # Rota /admin sem dependências problemáticas
     @app.route('/admin')
     @app.route('/admin/dashboard')
+    @admin_required
     def admin_dashboard():
         """Painel administrativo principal"""
         logger.info("🔧 Rota /admin/dashboard acessada!")
