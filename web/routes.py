@@ -1599,12 +1599,6 @@ def setup_routes(app):
             flash("Bot Discord não está disponível.", "error")
             return redirect(url_for('admin_system'))
         
-        # Verifica se o bot está pronto
-        if not bot.is_ready():
-            logger.warning("⚠️ Bot Discord não está pronto")
-            flash("Bot Discord não está pronto. Tente novamente em alguns segundos.", "error")
-            return redirect(url_for('admin_system'))
-        
         async def send_message_async():
             try:
                 logger.info("🔄 Função send_message_async iniciada!")
@@ -1623,12 +1617,13 @@ def setup_routes(app):
                     flash("Campos obrigatórios não preenchidos.", "error")
                     return redirect(url_for('admin_system'))
                 
-                logger.info("✅ Bot está pronto e conectado")
-                
                 # Logs de debug do bot
-                logger.info(f"Bot está pronto: {bot.is_ready()}")
-                logger.info(f"Bot conectado: {bot.is_connected()}")
-                logger.info(f"Loop do bot: {bot.loop}")
+                logger.info(f"🔍 Bot está pronto: {bot.is_ready()}")
+                logger.info(f"🔍 Bot user: {bot.user}")
+                logger.info(f"🔍 Bot guilds: {len(bot.guilds)}")
+                logger.info(f"🔍 Bot websocket: {bot.ws}")
+                
+                logger.info("✅ Bot está pronto e conectado")
                 logger.info(f"Loop rodando: {bot.loop.is_running() if bot.loop else 'N/A'}")
                 logger.info(f"Usuários no cache: {len(bot.users)}")
                 sent_count = 0
