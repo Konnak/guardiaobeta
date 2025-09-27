@@ -1633,7 +1633,10 @@ def setup_routes(app):
                 )
                 embed.set_footer(text="Sistema Guardião BETA - Mensagem Administrativa")
                 
+                logger.info(f"🔍 Verificando target_type: {target_type}")
+                
                 if target_type == 'user':
+                    logger.info("🎯 Entrando na seção de usuário específico...")
                     if not target_user_id:
                         flash("ID do usuário é obrigatório para envio individual.", "error")
                         return redirect(url_for('admin_system'))
@@ -1654,6 +1657,7 @@ def setup_routes(app):
                         return redirect(url_for('admin_system'))
                 
                 elif target_type == 'guardians':
+                    logger.info("🎯 Entrando na seção de guardiões...")
                     # Busca todos os guardiões
                     guardians_query = """
                         SELECT id_discord, categoria FROM usuarios 
@@ -1764,6 +1768,7 @@ def setup_routes(app):
                     logger.info(f"Mensagem enviada para {sent_count} moderadores")
                 
                 elif target_type == 'administrators':
+                    logger.info("🎯 Entrando na seção de administradores...")
                     # Busca todos os administradores
                     admins_query = """
                         SELECT id_discord, categoria FROM usuarios 
@@ -1816,6 +1821,7 @@ def setup_routes(app):
                     logger.info(f"Mensagem enviada para {sent_count} administradores")
                 
                 elif target_type == 'server':
+                    logger.info("🎯 Entrando na seção de servidor...")
                     if not target_server_id:
                         flash("ID do servidor é obrigatório para envio em servidor.", "error")
                         return redirect(url_for('admin_system'))
@@ -1839,6 +1845,9 @@ def setup_routes(app):
                         logger.error(f"Erro ao enviar mensagem para servidor {target_server_id}: {e}")
                         flash(f"Erro ao enviar mensagem para servidor: {e}", "error")
                         return redirect(url_for('admin_system'))
+                
+                else:
+                    logger.warning(f"⚠️ Target type não reconhecido: {target_type}")
                 
                 logger.info(f"📊 Total de mensagens enviadas: {sent_count}")
                 if sent_count > 0:
