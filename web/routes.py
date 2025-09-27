@@ -1654,16 +1654,30 @@ def setup_routes(app):
                     for guardian in guardians:
                         try:
                             logger.info(f"Tentando enviar mensagem para guardião {guardian['id_discord']} ({guardian['categoria']})")
+                            
+                            # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(guardian['id_discord'])
+                            if not user:
+                                # Se não encontrou no cache, tenta buscar via API
+                                try:
+                                    user = await bot.fetch_user(guardian['id_discord'])
+                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                except Exception as e:
+                                    logger.warning(f"Erro ao buscar usuário via API: {e}")
+                                    user = None
+                            
                             if user:
                                 logger.info(f"Usuário encontrado no Discord: {user.name}")
-                                dm_channel = await user.create_dm()
-                                logger.info(f"Canal DM criado: {dm_channel.id}")
-                                await dm_channel.send(embed=embed)
-                                sent_count += 1
-                                logger.info(f"Mensagem enviada para guardião {guardian['id_discord']} ({guardian['categoria']})")
+                                try:
+                                    dm_channel = await user.create_dm()
+                                    logger.info(f"Canal DM criado: {dm_channel.id}")
+                                    await dm_channel.send(embed=embed)
+                                    sent_count += 1
+                                    logger.info(f"Mensagem enviada para guardião {guardian['id_discord']} ({guardian['categoria']})")
+                                except Exception as e:
+                                    logger.error(f"Erro ao enviar DM para {user.name}: {e}")
                             else:
-                                logger.warning(f"Usuário {guardian['id_discord']} não encontrado no Discord")
+                                logger.warning(f"Usuário {guardian['id_discord']} não encontrado no Discord (cache nem API)")
                         except Exception as e:
                             logger.error(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
                             continue
@@ -1683,16 +1697,30 @@ def setup_routes(app):
                     for moderator in moderators:
                         try:
                             logger.info(f"Tentando enviar mensagem para moderador {moderator['id_discord']} ({moderator['categoria']})")
+                            
+                            # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(moderator['id_discord'])
+                            if not user:
+                                # Se não encontrou no cache, tenta buscar via API
+                                try:
+                                    user = await bot.fetch_user(moderator['id_discord'])
+                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                except Exception as e:
+                                    logger.warning(f"Erro ao buscar usuário via API: {e}")
+                                    user = None
+                            
                             if user:
                                 logger.info(f"Usuário encontrado no Discord: {user.name}")
-                                dm_channel = await user.create_dm()
-                                logger.info(f"Canal DM criado: {dm_channel.id}")
-                                await dm_channel.send(embed=embed)
-                                sent_count += 1
-                                logger.info(f"Mensagem enviada para moderador {moderator['id_discord']} ({moderator['categoria']})")
+                                try:
+                                    dm_channel = await user.create_dm()
+                                    logger.info(f"Canal DM criado: {dm_channel.id}")
+                                    await dm_channel.send(embed=embed)
+                                    sent_count += 1
+                                    logger.info(f"Mensagem enviada para moderador {moderator['id_discord']} ({moderator['categoria']})")
+                                except Exception as e:
+                                    logger.error(f"Erro ao enviar DM para {user.name}: {e}")
                             else:
-                                logger.warning(f"Usuário {moderator['id_discord']} não encontrado no Discord")
+                                logger.warning(f"Usuário {moderator['id_discord']} não encontrado no Discord (cache nem API)")
                         except Exception as e:
                             logger.error(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
                             continue
@@ -1711,14 +1739,33 @@ def setup_routes(app):
                     
                     for admin in admins:
                         try:
+                            logger.info(f"Tentando enviar mensagem para admin {admin['id_discord']} ({admin['categoria']})")
+                            
+                            # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(admin['id_discord'])
+                            if not user:
+                                # Se não encontrou no cache, tenta buscar via API
+                                try:
+                                    user = await bot.fetch_user(admin['id_discord'])
+                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                except Exception as e:
+                                    logger.warning(f"Erro ao buscar usuário via API: {e}")
+                                    user = None
+                            
                             if user:
-                                dm_channel = await user.create_dm()
-                                await dm_channel.send(embed=embed)
-                                sent_count += 1
-                                logger.info(f"Mensagem enviada para admin {admin['id_discord']} ({admin['categoria']})")
+                                logger.info(f"Usuário encontrado no Discord: {user.name}")
+                                try:
+                                    dm_channel = await user.create_dm()
+                                    logger.info(f"Canal DM criado: {dm_channel.id}")
+                                    await dm_channel.send(embed=embed)
+                                    sent_count += 1
+                                    logger.info(f"Mensagem enviada para admin {admin['id_discord']} ({admin['categoria']})")
+                                except Exception as e:
+                                    logger.error(f"Erro ao enviar DM para {user.name}: {e}")
+                            else:
+                                logger.warning(f"Usuário {admin['id_discord']} não encontrado no Discord (cache nem API)")
                         except Exception as e:
-                            logger.warning(f"Erro ao enviar mensagem para admin {admin['id_discord']}: {e}")
+                            logger.error(f"Erro ao enviar mensagem para admin {admin['id_discord']}: {e}")
                             continue
                     
                     logger.info(f"Mensagem enviada para {sent_count} administradores")
