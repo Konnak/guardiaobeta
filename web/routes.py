@@ -82,7 +82,8 @@ def setup_routes(app):
                 logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
                 logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
                 logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
-                logger.info(f"🔍 Bot loop running: {bot.loop.is_running() if hasattr(bot, 'loop') and bot.loop else 'N/A'}")
+                # Não podemos acessar bot.loop.is_running() em contexto não-assíncrono
+                logger.info(f"🔍 Bot loop running: N/A (não acessível em contexto síncrono)")
                 
                 # Verifica se o bot está conectado - critério mais flexível
                 if bot.user is not None and not bot.is_closed():
