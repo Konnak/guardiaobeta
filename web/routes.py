@@ -126,8 +126,8 @@ def setup_routes(app):
         logger.warning(f"⏰ Timeout: Bot não ficou pronto em {timeout_seconds} segundos")
         return None
     
-    async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico usando a mesma abordagem dos cogs"""
+    def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
+        """Envia DM para um usuário específico usando abordagem correta"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
@@ -138,7 +138,10 @@ def setup_routes(app):
             if not user:
                 # Se não encontrou no cache, busca via API (como nos cogs)
                 logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache, buscando via API...")
-                user = await bot.fetch_user(user_id)
+                # NOVO: Usa asyncio.run_coroutine_threadsafe para executar em contexto assíncrono
+                import asyncio
+                future = asyncio.run_coroutine_threadsafe(bot.fetch_user(user_id), bot.loop)
+                user = future.result(timeout=10)
             
             if not user:
                 logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
@@ -147,7 +150,8 @@ def setup_routes(app):
             logger.info(f"{user_type.capitalize()} encontrado: {user.name}")
             
             # NOVO: Envia DM usando a mesma abordagem dos cogs
-            await user.send(embed=embed)
+            future = asyncio.run_coroutine_threadsafe(user.send(embed=embed), bot.loop)
+            future.result(timeout=10)
             logger.info(f"Mensagem enviada para {user_type} {user_id}")
             return True
                 
