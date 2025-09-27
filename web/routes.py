@@ -1607,6 +1607,18 @@ def setup_routes(app):
                 if not bot:
                     flash("Bot Discord não está disponível.", "error")
                     return redirect(url_for('admin_system'))
+                
+                # Verifica se o bot está conectado
+                if not bot.is_ready():
+                    flash("Bot Discord não está conectado.", "error")
+                    return redirect(url_for('admin_system'))
+                
+                # Logs de debug do bot
+                logger.info(f"Bot está pronto: {bot.is_ready()}")
+                logger.info(f"Bot conectado: {bot.is_connected()}")
+                logger.info(f"Loop do bot: {bot.loop}")
+                logger.info(f"Loop rodando: {bot.loop.is_running() if bot.loop else 'N/A'}")
+                logger.info(f"Usuários no cache: {len(bot.users)}")
                 sent_count = 0
                 
                 # Cria embed da mensagem
@@ -1658,11 +1670,16 @@ def setup_routes(app):
                             # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(guardian['id_discord'])
                             if not user:
-                                # Se não encontrou no cache, tenta buscar via API
+                                # Se não encontrou no cache, tenta buscar via API usando o loop do bot
                                 try:
-                                    # Usa o contexto correto do bot
-                                    user = await bot.fetch_user(guardian['id_discord'])
-                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                    # Usa o loop de eventos do bot para evitar problemas de contexto
+                                    loop = bot.loop
+                                    if loop and loop.is_running():
+                                        user = await bot.fetch_user(guardian['id_discord'])
+                                        logger.info(f"Usuário encontrado via API: {user.name}")
+                                    else:
+                                        logger.warning(f"Loop do bot não está rodando")
+                                        user = None
                                 except discord.NotFound:
                                     logger.warning(f"Usuário {guardian['id_discord']} não encontrado na API do Discord")
                                     user = None
@@ -1705,11 +1722,16 @@ def setup_routes(app):
                             # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(moderator['id_discord'])
                             if not user:
-                                # Se não encontrou no cache, tenta buscar via API
+                                # Se não encontrou no cache, tenta buscar via API usando o loop do bot
                                 try:
-                                    # Usa o contexto correto do bot
-                                    user = await bot.fetch_user(moderator['id_discord'])
-                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                    # Usa o loop de eventos do bot para evitar problemas de contexto
+                                    loop = bot.loop
+                                    if loop and loop.is_running():
+                                        user = await bot.fetch_user(moderator['id_discord'])
+                                        logger.info(f"Usuário encontrado via API: {user.name}")
+                                    else:
+                                        logger.warning(f"Loop do bot não está rodando")
+                                        user = None
                                 except discord.NotFound:
                                     logger.warning(f"Usuário {moderator['id_discord']} não encontrado na API do Discord")
                                     user = None
@@ -1752,11 +1774,16 @@ def setup_routes(app):
                             # Tenta buscar usuário no cache primeiro
                             user = bot.get_user(admin['id_discord'])
                             if not user:
-                                # Se não encontrou no cache, tenta buscar via API
+                                # Se não encontrou no cache, tenta buscar via API usando o loop do bot
                                 try:
-                                    # Usa o contexto correto do bot
-                                    user = await bot.fetch_user(admin['id_discord'])
-                                    logger.info(f"Usuário encontrado via API: {user.name}")
+                                    # Usa o loop de eventos do bot para evitar problemas de contexto
+                                    loop = bot.loop
+                                    if loop and loop.is_running():
+                                        user = await bot.fetch_user(admin['id_discord'])
+                                        logger.info(f"Usuário encontrado via API: {user.name}")
+                                    else:
+                                        logger.warning(f"Loop do bot não está rodando")
+                                        user = None
                                 except discord.NotFound:
                                     logger.warning(f"Usuário {admin['id_discord']} não encontrado na API do Discord")
                                     user = None
