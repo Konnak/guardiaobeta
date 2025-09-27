@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS servidores_premium (
 -- Tabela de configurações dos servidores (para servidores premium)
 CREATE TABLE IF NOT EXISTS configuracoes_servidor (
     id SERIAL PRIMARY KEY,
-    id_servidor BIGINT NOT NULL,
+    id_servidor BIGINT NOT NULL UNIQUE,
     canal_log BIGINT,
     duracao_intimidou INTEGER DEFAULT 1 NOT NULL,
     duracao_intimidou_grave INTEGER DEFAULT 6 NOT NULL,
