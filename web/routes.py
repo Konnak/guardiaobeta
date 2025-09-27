@@ -145,21 +145,28 @@ def setup_routes(app):
                 logger.warning(f"Bot está fechado")
                 return False
             
-            # NOVO: Abordagem baseada nos cogs - usa bot.get_user() diretamente
+            # NOVO: Aguarda o bot estar completamente sincronizado
+            import time
+            max_attempts = 10
             user = None
             
-            # Tenta buscar no cache primeiro (como nos cogs)
-            try:
-                user = bot.get_user(user_id)
-                if user:
-                    logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
-                else:
-                    logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache")
-            except Exception as e:
-                logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
+            for attempt in range(max_attempts):
+                try:
+                    user = bot.get_user(user_id)
+                    if user:
+                        logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
+                        break
+                    else:
+                        logger.info(f"Tentativa {attempt + 1}/{max_attempts} - {user_type.capitalize()} {user_id} não encontrado no cache")
+                        if attempt < max_attempts - 1:
+                            time.sleep(1)  # Aguarda 1 segundo antes da próxima tentativa
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
+                    if attempt < max_attempts - 1:
+                        time.sleep(1)
             
             if not user:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
+                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado após {max_attempts} tentativas")
                 return False
             
             # NOVO: Envia DM usando abordagem dos cogs - mais simples
