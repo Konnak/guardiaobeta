@@ -120,8 +120,8 @@ def setup_routes(app):
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return None
     
-    def wait_for_bot_ready(timeout_seconds=10):
-        """Aguarda o bot estar pronto com timeout"""
+    def wait_for_bot_ready(timeout_seconds=30):
+        """Aguarda o bot estar pronto com timeout estendido"""
         import time
         start_time = time.time()
         
@@ -132,7 +132,7 @@ def setup_routes(app):
                 return bot
             
             logger.info(f"⏳ Aguardando bot estar pronto... ({time.time() - start_time:.1f}s)")
-            time.sleep(1)
+            time.sleep(2)  # Aumenta o intervalo de espera
         
         logger.warning(f"⏰ Timeout: Bot não ficou pronto em {timeout_seconds} segundos")
         return None
