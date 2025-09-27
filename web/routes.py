@@ -1600,8 +1600,11 @@ def setup_routes(app):
                 message_content = request.form.get('message_content')
                 
                 logger.info(f"📝 Dados recebidos: target_type={target_type}, title={message_title}")
+                logger.info(f"📝 Campos completos: target_type='{target_type}', message_title='{message_title}', message_content='{message_content}'")
+                logger.info(f"📝 Validação all(): {all([target_type, message_title, message_content])}")
                 
                 if not all([target_type, message_title, message_content]):
+                    logger.warning("⚠️ Campos obrigatórios não preenchidos!")
                     flash("Campos obrigatórios não preenchidos.", "error")
                     return redirect(url_for('admin_system'))
                 
