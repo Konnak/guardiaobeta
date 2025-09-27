@@ -499,6 +499,14 @@ class VoteView(ui.View):
             from main import bot  # Import local para evitar circular
             server_id = int(denuncia['id_servidor'])  # Converte para inteiro
             
+            # Aguarda o bot estar completamente pronto
+            if not bot.is_ready():
+                logger.info("Aguardando bot estar pronto...")
+                await bot.wait_until_ready()
+            
+            # Aguarda um pouco mais para garantir sincronização completa
+            await asyncio.sleep(2)
+            
             # Tenta buscar o servidor com fallback
             guild = bot.get_guild(server_id)
             if not guild:
@@ -523,6 +531,9 @@ class VoteView(ui.View):
                     logger.info(f"Membro {member_id} encontrado via fetch")
                 except Exception as fetch_error:
                     logger.warning(f"Membro {member_id} não encontrado no servidor: {fetch_error}")
+                    # Lista membros disponíveis para debug
+                    available_members = [m.id for m in guild.members[:10]]  # Primeiros 10 para não sobrecarregar
+                    logger.info(f"Alguns membros disponíveis: {available_members}")
                     return
             
             # Aplica a punição
