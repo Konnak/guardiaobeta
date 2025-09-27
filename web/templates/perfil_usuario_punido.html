@@ -85,7 +85,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <strong style="color: var(--text-secondary);">Primeira Punição:</strong>
-                                    <p class="mb-0" style="color: var(--text-primary);">{{ usuario.data_punicao.strftime('%d/%m/%Y às %H:%M') }}</p>
+                                    <p class="mb-0" style="color: var(--text-primary);">{{ usuario.data_punicao.astimezone().strftime('%d/%m/%Y às %H:%M') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -128,7 +128,7 @@
                                         </span>
                                     </td>
                                     <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">{{ punicao.duracao }}</td>
-                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">{{ punicao.data_punicao.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">{{ punicao.data_punicao.astimezone().strftime('%d/%m/%Y %H:%M') }}</td>
                                     <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">
                                         {% if punicao.ativa %}
                                         <span class="badge" style="background: #28a745 !important; color: white !important; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; border: none;">Ativa</span>
