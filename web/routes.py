@@ -36,14 +36,16 @@ except Exception as e:
     logger.error(f"❌ Erro ao importar web.auth: {e}")
     # Decoradores de fallback
     def login_required(f):
-        def wrapper(*args, **kwargs):
+        def login_wrapper(*args, **kwargs):
             return f(*args, **kwargs)
-        return wrapper
+        login_wrapper.__name__ = f.__name__
+        return login_wrapper
     
     def admin_required(f):
-        def wrapper(*args, **kwargs):
+        def admin_wrapper(*args, **kwargs):
             return f(*args, **kwargs)
-        return wrapper
+        admin_wrapper.__name__ = f.__name__
+        return admin_wrapper
     
     # Funções de fallback
     def get_user_guilds_admin(): return []
