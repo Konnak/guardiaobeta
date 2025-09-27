@@ -1602,13 +1602,11 @@ def setup_routes(app):
                     return redirect(url_for('admin_system'))
                 
                 # Importa o bot do main.py
-                from main import guardiao_bot
+                from main import bot
                 
-                if not guardiao_bot or not guardiao_bot.bot:
+                if not bot:
                     flash("Bot Discord não está disponível.", "error")
                     return redirect(url_for('admin_system'))
-                
-                bot = guardiao_bot.bot
                 sent_count = 0
                 
                 # Cria embed da mensagem
