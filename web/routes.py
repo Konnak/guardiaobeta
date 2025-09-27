@@ -99,6 +99,13 @@ def setup_routes(app):
                     if bot.user is not None:
                         logger.info("✅ Bot agora está logado!")
                         return bot
+                    
+                    # NOVO: Mesmo que bot.user seja None, vamos tentar usar o bot
+                    # se ele não estiver fechado, pois pode estar funcionando
+                    if not bot.is_closed():
+                        logger.warning("⚠️ Bot.user é None mas bot não está fechado - tentando usar mesmo assim")
+                        return bot
+                    
                     return None
                 elif bot.is_closed():
                     logger.warning("⚠️ Bot está fechado")
