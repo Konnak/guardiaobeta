@@ -1764,7 +1764,7 @@ def setup_routes(app):
                         flash("ID do usuário é obrigatório para envio individual.", "error")
                         return redirect(url_for('admin_system'))
                     
-                    success = await send_dm_to_user(bot, int(target_user_id), embed, "usuário")
+                    success = send_dm_to_user(bot, int(target_user_id), embed, "usuário")
                     if success:
                         sent_count = 1
                         logger.info(f"Mensagem enviada para usuário {target_user_id}")
@@ -1791,7 +1791,7 @@ def setup_routes(app):
                         try:
                             logger.info(f"Tentando enviar mensagem para guardião {guardian['id_discord']} ({guardian['categoria']})")
                             
-                            success = await send_dm_to_user(bot, guardian['id_discord'], embed, "guardião")
+                            success = send_dm_to_user(bot, guardian['id_discord'], embed, "guardião")
                             if success:
                                 sent_count += 1
                                 logger.info(f"Mensagem enviada para guardião {guardian['id_discord']} ({guardian['categoria']})")
@@ -1819,7 +1819,7 @@ def setup_routes(app):
                         try:
                             logger.info(f"Tentando enviar mensagem para moderador {moderator['id_discord']} ({moderator['categoria']})")
                             
-                            success = await send_dm_to_user(bot, moderator['id_discord'], embed, "moderador")
+                            success = send_dm_to_user(bot, moderator['id_discord'], embed, "moderador")
                             if success:
                                 sent_count += 1
                                 logger.info(f"Mensagem enviada para moderador {moderator['id_discord']} ({moderator['categoria']})")
@@ -1846,7 +1846,7 @@ def setup_routes(app):
                         try:
                             logger.info(f"Tentando enviar mensagem para admin {admin['id_discord']} ({admin['categoria']})")
                             
-                            success = await send_dm_to_user(bot, admin['id_discord'], embed, "administrador")
+                            success = send_dm_to_user(bot, admin['id_discord'], embed, "administrador")
                             if success:
                                 sent_count += 1
                                 logger.info(f"Mensagem enviada para admin {admin['id_discord']} ({admin['categoria']})")
