@@ -123,7 +123,7 @@ def setup_routes(app):
             logger.info(f"⏳ Aguardando bot estar pronto... ({time.time() - start_time:.1f}s)")
             time.sleep(2)  # Aumenta o intervalo de espera
         
-        logger.warning(f"⏰ Timeout: Bot não ficou pronto em {timeout_seconds} segundos")
+        logger.warning(f"⏰ Timeout:: Bot não ficou pronto em {timeout_seconds} segundos")
         return None
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
