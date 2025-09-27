@@ -1610,15 +1610,20 @@ def setup_routes(app):
                 
                 # Importa o bot do main.py
                 from main import bot
+                logger.info("🤖 Bot importado com sucesso")
                 
                 if not bot:
+                    logger.warning("⚠️ Bot Discord não está disponível")
                     flash("Bot Discord não está disponível.", "error")
                     return redirect(url_for('admin_system'))
                 
                 # Verifica se o bot está conectado
                 if not bot.is_ready():
+                    logger.warning("⚠️ Bot Discord não está conectado")
                     flash("Bot Discord não está conectado.", "error")
                     return redirect(url_for('admin_system'))
+                
+                logger.info("✅ Bot está pronto e conectado")
                 
                 # Logs de debug do bot
                 logger.info(f"Bot está pronto: {bot.is_ready()}")
@@ -1637,6 +1642,7 @@ def setup_routes(app):
                 embed.set_footer(text="Sistema Guardião BETA - Mensagem Administrativa")
                 
                 logger.info(f"🔍 Verificando target_type: {target_type}")
+                logger.info("🎯 Chegou nas condições de envio!")
                 
                 if target_type == 'user':
                     logger.info("🎯 Entrando na seção de usuário específico...")
