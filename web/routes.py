@@ -61,11 +61,17 @@ def setup_routes(app):
     def get_bot_instance():
         """Obtém a instância do bot de forma segura"""
         try:
+            logger.info("🔍 INÍCIO: get_bot_instance()")
+            
             # Tenta importar o bot
             import sys
+            logger.info(f"🔍 sys.modules tem 'main': {'main' in sys.modules}")
+            
             if 'main' in sys.modules:
+                logger.info("🔍 Usando bot de sys.modules['main']")
                 bot = sys.modules['main'].bot
             else:
+                logger.info("🔍 Importando bot diretamente de main")
                 from main import bot
             
             logger.info(f"🔍 Bot importado: {bot is not None}")
@@ -75,13 +81,24 @@ def setup_routes(app):
                 logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
                 logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
                 logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
+                logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
+                logger.info(f"🔍 Bot loop running: {bot.loop.is_running() if hasattr(bot, 'loop') and bot.loop else 'N/A'}")
                 
-                # Verifica se o bot está conectado (não precisa estar "ready" para enviar DMs)
-                if bot.user and not bot.is_closed():
+                # Verifica se o bot está conectado - critério mais flexível
+                if bot.user is not None and not bot.is_closed():
                     logger.info("✅ Bot está conectado e funcionando")
                     return bot
+                elif bot.user is None:
+                    logger.warning("⚠️ Bot ainda não está logado (bot.user é None)")
+                    logger.warning("⚠️ Isso pode indicar que o bot ainda está inicializando")
+                    return None
+                elif bot.is_closed():
+                    logger.warning("⚠️ Bot está fechado")
+                    return None
                 else:
                     logger.warning("⚠️ Bot não está conectado adequadamente")
+                    logger.warning(f"⚠️ bot.user: {bot.user}")
+                    logger.warning(f"⚠️ bot.is_closed(): {bot.is_closed()}")
                     return None
             else:
                 logger.warning("⚠️ Bot é None")
@@ -91,7 +108,26 @@ def setup_routes(app):
             return None
         except Exception as e:
             logger.error(f"❌ Erro ao acessar bot: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return None
+    
+    def wait_for_bot_ready(timeout_seconds=10):
+        """Aguarda o bot estar pronto com timeout"""
+        import time
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout_seconds:
+            bot = get_bot_instance()
+            if bot:
+                logger.info("✅ Bot está pronto!")
+                return bot
+            
+            logger.info(f"⏳ Aguardando bot estar pronto... ({time.time() - start_time:.1f}s)")
+            time.sleep(1)
+        
+        logger.warning(f"⏰ Timeout: Bot não ficou pronto em {timeout_seconds} segundos")
+        return None
     
     async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
         """Envia DM para um usuário específico de forma robusta"""
@@ -1671,11 +1707,12 @@ def setup_routes(app):
         logger.info("🚀 ROTA admin_system_message CHAMADA!")
         import asyncio
         
-        # Obtém a instância do bot de forma segura
-        bot = get_bot_instance()
+        # Aguarda o bot estar pronto com timeout
+        logger.info("⏳ Aguardando bot estar pronto...")
+        bot = wait_for_bot_ready(timeout_seconds=15)
         if not bot:
-            logger.warning("⚠️ Bot Discord não está disponível ou não está conectado")
-            flash("Bot Discord não está disponível ou não está conectado. Aguarde alguns segundos e tente novamente.", "error")
+            logger.warning("⚠️ Bot Discord não ficou pronto no tempo esperado")
+            flash("Bot Discord ainda está inicializando. Aguarde alguns segundos e tente novamente.", "error")
             return redirect(url_for('admin_system'))
         
         async def send_message_async():
