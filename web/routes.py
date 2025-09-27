@@ -163,6 +163,10 @@ def setup_routes(app):
                 try:
                     logger.info(f"Buscando {user_type} {user_id} via API do Discord...")
                     
+                    # NOVO: Importa asyncio aqui
+                    import asyncio
+                    import concurrent.futures
+                    
                     # Cria um novo loop para esta operação
                     def run_fetch_user():
                         loop = asyncio.new_event_loop()
@@ -173,7 +177,6 @@ def setup_routes(app):
                             loop.close()
                     
                     # Executa em uma thread separada
-                    import concurrent.futures
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(run_fetch_user)
                         user = future.result(timeout=10)
