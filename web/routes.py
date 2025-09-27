@@ -1617,6 +1617,15 @@ def setup_routes(app):
                     flash("Bot Discord não está disponível.", "error")
                     return redirect(url_for('admin_system'))
                 
+                # Aguarda o bot estar pronto (máximo 10 segundos)
+                import time
+                max_wait = 10
+                wait_time = 0
+                while not bot.user and wait_time < max_wait:
+                    logger.info(f"⏳ Aguardando bot conectar... ({wait_time}s)")
+                    time.sleep(1)
+                    wait_time += 1
+                
                 # Verifica se o bot está conectado
                 logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
                 logger.info(f"🔍 Bot user: {bot.user}")
@@ -1625,8 +1634,8 @@ def setup_routes(app):
                 
                 # Verifica se o bot está conectado (mais flexível)
                 if not bot.user:
-                    logger.warning("⚠️ Bot Discord não está conectado")
-                    flash("Bot Discord não está conectado.", "error")
+                    logger.warning("⚠️ Bot Discord não está conectado após aguardar")
+                    flash("Bot Discord não está conectado. Tente novamente em alguns segundos.", "error")
                     return redirect(url_for('admin_system'))
                 
                 logger.info("✅ Bot está pronto e conectado")
