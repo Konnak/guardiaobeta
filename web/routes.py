@@ -1679,5 +1679,6 @@ def get_server_stats(server_id: int) -> dict:
         </html>
         """
     
+    
     logger.info("✅ Rota /admin registrada com sucesso no final!")
     logger.info("✅ Configuração de rotas concluída com sucesso!")
