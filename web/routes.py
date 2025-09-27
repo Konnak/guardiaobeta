@@ -2364,11 +2364,11 @@ def setup_mural_routes(app):
                     'id_servidor': punicao['id_servidor']
                 })
             
-            return render_template('mural_vergonha.html', usuarios_punidos=usuarios_punidos)
+                return render_template('mural_vergonha.html', usuarios_punidos=usuarios_punidos, timedelta=timedelta)
             
         except Exception as e:
             logger.error(f"Erro ao carregar mural da vergonha: {e}")
-            return render_template('mural_vergonha.html', usuarios_punidos=[], error=str(e))
+            return render_template('mural_vergonha.html', usuarios_punidos=[], error=str(e), timedelta=timedelta)
 
     @app.route('/mural-vergonha/<int:user_id>')
     def perfil_usuario_punido(user_id):
@@ -2448,10 +2448,11 @@ def setup_mural_routes(app):
                     'data_remocao': punicao['data_remocao']
                 })
             
-            return render_template('perfil_usuario_punido.html', 
-                                   usuario=usuario_data, 
-                                   punicoes=punicoes_data,
-                                   total_punicoes=total_punicoes)
+                return render_template('perfil_usuario_punido.html', 
+                                       usuario=usuario_data, 
+                                       punicoes=punicoes_data,
+                                       total_punicoes=total_punicoes,
+                                       timedelta=timedelta)
             
         except Exception as e:
             logger.error(f"Erro ao carregar perfil do usuário {user_id}: {e}")
@@ -2459,5 +2460,6 @@ def setup_mural_routes(app):
                                    usuario=None, 
                                    punicoes=[], 
                                    total_punicoes=0,
-                                   error=str(e))
+                                   error=str(e),
+                                   timedelta=timedelta)
 
