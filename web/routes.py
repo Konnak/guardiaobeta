@@ -2414,6 +2414,7 @@ def setup_mural_routes(app):
             """
             
             punicoes = db_manager.execute_query_sync(query_punicoes, user_id)
+            logger.info(f"🔍 Punições encontradas para usuário {user_id}: {len(punicoes)}")
             
             # Conta total de punições
             query_total = """
@@ -2437,7 +2438,9 @@ def setup_mural_routes(app):
             
             # Processa punições
             punicoes_data = []
-            for punicao in punicoes:
+            logger.info(f"🔍 Processando {len(punicoes)} punições...")
+            for i, punicao in enumerate(punicoes):
+                logger.info(f"🔍 Punição {i+1}: {punicao['tipo_punicao']} - {punicao['data_punicao']}")
                 punicoes_data.append({
                     'tipo_punicao': punicao['tipo_punicao'],
                     'motivo': punicao['motivo'],
@@ -2447,6 +2450,7 @@ def setup_mural_routes(app):
                     'ativa': punicao['ativa'],
                     'data_remocao': punicao['data_remocao']
                 })
+            logger.info(f"🔍 Total de punições processadas: {len(punicoes_data)}")
             
                 return render_template('perfil_usuario_punido.html', 
                                        usuario=usuario_data, 
