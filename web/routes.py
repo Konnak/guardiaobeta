@@ -1440,10 +1440,59 @@ def get_server_stats(server_id: int) -> dict:
     
     # Rota /admin sem dependências problemáticas
     @app.route('/admin')
+    @app.route('/admin/dashboard')
     def admin_dashboard():
-        """Painel administrativo principal - VERSÃO SIMPLES"""
-        logger.info("🔧 Rota /admin acessada!")
-        return """
+        """Painel administrativo principal"""
+        logger.info("🔧 Rota /admin/dashboard acessada!")
+
+        try:
+            # Busca estatísticas gerais para o dashboard
+            stats = {}
+            recent_users = []
+            recent_denuncias = []
+
+            if db_manager and db_manager.pool:
+                # Estatísticas básicas
+                stats_query = """
+                    SELECT
+                        (SELECT COUNT(*) FROM usuarios) as total_usuarios,
+                        (SELECT COUNT(*) FROM usuarios WHERE categoria = 'Guardião') as total_guardioes,
+                        (SELECT COUNT(*) FROM denuncias) as total_denuncias,
+                        (SELECT COUNT(*) FROM denuncias WHERE status = 'Pendente') as denuncias_pendentes,
+                        (SELECT COUNT(*) FROM denuncias WHERE status = 'Finalizada') as denuncias_resolvidas,
+                        (SELECT COUNT(*) FROM votos_guardioes) as total_votos
+                """
+                stats_result = db_manager.execute_query_sync(stats_query)
+                if stats_result:
+                    stats = stats_result[0]
+
+                # Usuários recentes
+                recent_users_query = """
+                    SELECT id_discord, username, display_name, categoria, data_criacao_registro
+                    FROM usuarios
+                    ORDER BY data_criacao_registro DESC
+                    LIMIT 5
+                """
+                recent_users = db_manager.execute_query_sync(recent_users_query) or []
+
+                # Denúncias recentes
+                recent_denuncias_query = """
+                    SELECT d.id, d.id_denunciado, d.motivo, d.status, d.data_criacao
+                    FROM denuncias d
+                    ORDER BY d.data_criacao DESC
+                    LIMIT 5
+                """
+                recent_denuncias = db_manager.execute_query_sync(recent_denuncias_query) or []
+
+            return render_template('admin/dashboard.html',
+                                 stats=stats,
+                                 recent_users=recent_users,
+                                 recent_denuncias=recent_denuncias)
+
+        except Exception as e:
+            logger.error(f"Erro no dashboard admin: {e}")
+            # Fallback para HTML simples em caso de erro
+            return """
         <!DOCTYPE html>
         <html>
         <head>
