@@ -608,6 +608,18 @@ class VoteView(ui.View):
                         display_name = 'Usuário Desconhecido'
                         avatar_url = None
                     
+                    # Determina quem aplicou a punição
+                    aplicado_por_id = 1418660046610370751  # ID do bot por padrão
+                    aplicado_por_tipo = "Sistema"
+                    
+                    # Verifica se foi aplicada por um guardião ou moderador específico
+                    if 'aplicado_por' in result:
+                        aplicado_por_id = result['aplicado_por']
+                        aplicado_por_tipo = "Guardião" if result.get('aplicado_por_tipo') == 'guardian' else "Moderador"
+                    
+                    # Cria motivo detalhado
+                    motivo_detalhado = f"Punição ({aplicado_por_tipo}) - {result.get('type', 'N/A')}"
+                    
                     # Insere log no banco de dados
                     insert_log = """
                         INSERT INTO logs_punicoes (
@@ -624,10 +636,10 @@ class VoteView(ui.View):
                         display_name,
                         avatar_url,
                         result.get('type', 'N/A'),
-                        f"Punição automática - {result.get('type', 'N/A')}",
+                        motivo_detalhado,
                         f"{result.get('duration', 0)} segundos",
                         result.get('duration', 0),
-                        1418660046610370751,  # ID do bot
+                        aplicado_por_id,
                         server_id,
                         True
                     )

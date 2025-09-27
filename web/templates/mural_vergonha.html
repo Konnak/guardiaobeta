@@ -7,12 +7,21 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-shame text-danger me-2"></i>
-                    Mural da Vergonha
-                </h1>
-                <div class="text-muted">
-                    <small>Últimos 10 usuários punidos</small>
+                <div>
+                    <h1 class="h2 mb-1 text-gradient">
+                        <i class="fas fa-shame me-2"></i>
+                        Mural da Vergonha
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-list me-1"></i>
+                        Últimos usuários punidos no sistema
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-danger fs-6 px-3 py-2">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Sistema de Punições
+                    </div>
                 </div>
             </div>
 
@@ -93,61 +102,75 @@
             <div class="row">
                 {% for usuario in usuarios_punidos %}
                 <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
+                    <div class="card h-100 shadow-lg border-0 punishment-card">
+                        <div class="card-header bg-gradient-danger text-white">
+                            <div class="d-flex align-items-center">
                                 <img src="{{ usuario.avatar_url }}" 
                                      alt="{{ usuario.display_name }}" 
                                      class="rounded-circle me-3" 
-                                     width="50" 
-                                     height="50"
+                                     width="45" 
+                                     height="45"
                                      onerror="this.src='/static/img/default-avatar.png'">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-bold">{{ usuario.display_name }}</h6>
-                                    <small class="text-muted">@{{ usuario.username }}</small>
+                                    <h6 class="mb-1 fw-bold text-white">{{ usuario.display_name }}</h6>
+                                    <small class="text-white-50">@{{ usuario.username }}</small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge bg-{% if usuario.tipo_punicao == 'Intimidou' %}warning{% elif usuario.tipo_punicao == 'Grave' %}danger{% else %}secondary{% endif %}">
+                                    <span class="badge bg-{% if usuario.tipo_punicao == 'Intimidou' %}warning{% elif usuario.tipo_punicao == 'Grave' %}danger{% else %}secondary{% endif %} fs-6">
+                                        <i class="fas fa-{% if usuario.tipo_punicao == 'Intimidou' %}exclamation-triangle{% elif usuario.tipo_punicao == 'Grave' %}ban{% else %}gavel{% endif %} me-1"></i>
                                         {{ usuario.tipo_punicao }}
                                     </span>
                                 </div>
                             </div>
-                            
+                        </div>
+                        
+                        <div class="card-body">
                             <div class="mb-3">
-                                <small class="text-muted d-block">Motivo:</small>
-                                <p class="mb-0 small">{{ usuario.motivo[:100] }}{% if usuario.motivo|length > 100 %}...{% endif %}</p>
-                            </div>
-                            
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Duração</small>
-                                    <span class="fw-bold">{{ usuario.duracao }}</span>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-info-circle text-primary me-2"></i>
+                                    <small class="text-muted fw-bold">Motivo da Punição:</small>
                                 </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Data</small>
-                                    <span class="fw-bold">{{ usuario.data_punicao.strftime('%d/%m/%Y') }}</span>
+                                <div class="bg-light rounded p-2">
+                                    <p class="mb-0 small text-dark">{{ usuario.motivo[:120] }}{% if usuario.motivo|length > 120 %}...{% endif %}</p>
                                 </div>
                             </div>
                             
-                            <div class="mt-3">
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-warning bg-opacity-10 rounded">
+                                        <i class="fas fa-clock text-warning mb-1"></i>
+                                        <div class="small text-muted">Duração</div>
+                                        <div class="fw-bold text-warning">{{ usuario.duracao }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-info bg-opacity-10 rounded">
+                                        <i class="fas fa-calendar text-info mb-1"></i>
+                                        <div class="small text-muted">Data</div>
+                                        <div class="fw-bold text-info">{{ usuario.data_punicao.strftime('%d/%m/%Y') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
                                 <a href="/mural-vergonha/{{ usuario.id_usuario }}" 
-                                   class="btn btn-outline-primary btn-sm w-100">
+                                   class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-user me-1"></i>
                                     Ver Perfil Completo
                                 </a>
                             </div>
                         </div>
                         
-                        <div class="card-footer bg-light">
+                        <div class="card-footer bg-light border-0">
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-hashtag me-1"></i>
-                                    ID: {{ usuario.id_usuario }}
-                                </small>
-                                <small class="text-muted">
-                                    <i class="fas fa-clock me-1"></i>
-                                    {{ usuario.data_punicao.strftime('%H:%M') }}
-                                </small>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-hashtag text-muted me-1"></i>
+                                    <small class="text-muted font-monospace">{{ usuario.id_usuario }}</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock text-muted me-1"></i>
+                                    <small class="text-muted">{{ usuario.data_punicao.strftime('%H:%M') }}</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -178,24 +201,149 @@
 </div>
 
 <style>
-.card {
-    transition: transform 0.2s ease-in-out;
+/* Gradientes personalizados */
+.text-gradient {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.card:hover {
-    transform: translateY(-2px);
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
 }
 
+/* Cards de punição */
+.punishment-card {
+    transition: all 0.3s ease;
+    border-radius: 15px !important;
+    overflow: hidden;
+}
+
+.punishment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.2) !important;
+}
+
+.punishment-card .card-header {
+    border-radius: 0 !important;
+    border: none;
+    padding: 1rem;
+}
+
+.punishment-card .card-body {
+    padding: 1.25rem;
+}
+
+.punishment-card .card-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Badges melhorados */
 .badge {
     font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
 }
 
-.text-muted {
+/* Ícones coloridos */
+.fa-exclamation-triangle {
+    color: #ffc107 !important;
+}
+
+.fa-ban {
+    color: #dc3545 !important;
+}
+
+.fa-gavel {
     color: #6c757d !important;
 }
 
-.bg-light {
-    background-color: #f8f9fa !important;
+/* Campos de informação */
+.bg-warning.bg-opacity-10 {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border: 1px solid rgba(255, 193, 7, 0.2);
 }
+
+.bg-info.bg-opacity-10 {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border: 1px solid rgba(13, 202, 240, 0.2);
+}
+
+/* Botões melhorados */
+.btn-outline-primary {
+    border-radius: 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Formulário de pesquisa melhorado */
+.card {
+    border-radius: 15px !important;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Alertas melhorados */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .punishment-card {
+        margin-bottom: 1rem;
+    }
+    
+    .text-gradient {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.punishment-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.punishment-card:nth-child(1) { animation-delay: 0.1s; }
+.punishment-card:nth-child(2) { animation-delay: 0.2s; }
+.punishment-card:nth-child(3) { animation-delay: 0.3s; }
+.punishment-card:nth-child(4) { animation-delay: 0.4s; }
+.punishment-card:nth-child(5) { animation-delay: 0.5s; }
 </style>
 {% endblock %}
