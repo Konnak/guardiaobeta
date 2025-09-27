@@ -648,14 +648,22 @@ class VoteView(ui.View):
                 
                 # Enviar log de falha na punição
                 try:
+                    logger.info("📝 Tentando enviar log de falha na punição...")
                     from main import bot
                     guild = bot.get_guild(server_id)
                     if guild:
+                        logger.info(f"📝 Servidor encontrado: {guild.name}")
                         member = guild.get_member(member_id)
                         if member:
+                            logger.info(f"📝 Membro encontrado: {member.display_name}")
                             await self._send_punishment_log(guild, member, result, "❌ Falha na Aplicação")
+                            logger.info("📝 Log de falha enviado com sucesso!")
+                        else:
+                            logger.warning(f"📝 Membro {member_id} não encontrado no servidor")
+                    else:
+                        logger.warning(f"📝 Servidor {server_id} não encontrado")
                 except Exception as log_error:
-                    logger.warning(f"Erro ao enviar log de falha: {log_error}")
+                    logger.error(f"❌ Erro ao enviar log de falha: {log_error}")
                 
                 return False
             else:
@@ -732,6 +740,8 @@ class VoteView(ui.View):
     async def _send_punishment_log(self, guild: discord.Guild, member: discord.Member, result: Dict, action: str):
         """Envia log da punição para o canal configurado"""
         try:
+            logger.info(f"📝 Iniciando envio de log para servidor {guild.id} - Ação: {action}")
+            
             # Buscar canal de log configurado
             config_query = """
                 SELECT canal_log FROM configuracoes_servidor 
@@ -740,16 +750,20 @@ class VoteView(ui.View):
             config = db_manager.execute_one_sync(config_query, guild.id)
             
             if not config or not config['canal_log']:
-                logger.debug(f"Nenhum canal de log configurado para servidor {guild.id}")
+                logger.warning(f"📝 Nenhum canal de log configurado para servidor {guild.id}")
                 return
+            
+            logger.info(f"📝 Canal de log encontrado: {config['canal_log']}")
             
             # Buscar o canal
             log_channel_id = int(config['canal_log'])
             log_channel = guild.get_channel(log_channel_id)
             
             if not log_channel:
-                logger.warning(f"Canal de log {log_channel_id} não encontrado no servidor {guild.id}")
+                logger.warning(f"📝 Canal de log {log_channel_id} não encontrado no servidor {guild.id}")
                 return
+            
+            logger.info(f"📝 Canal de log encontrado: {log_channel.name}")
             
             # Criar embed de log
             embed = discord.Embed(
@@ -779,11 +793,14 @@ class VoteView(ui.View):
             embed.set_footer(text="Sistema Guardião BETA", icon_url=guild.icon.url if guild.icon else None)
             
             # Enviar para o canal de log
+            logger.info(f"📝 Enviando embed para canal {log_channel.name}...")
             await log_channel.send(embed=embed)
-            logger.info(f"Log de punição enviado para canal {log_channel.name} no servidor {guild.name}")
+            logger.info(f"✅ Log de punição enviado com sucesso para canal {log_channel.name} no servidor {guild.name}")
             
         except Exception as e:
-            logger.error(f"Erro ao enviar log de punição: {e}")
+            logger.error(f"❌ Erro ao enviar log de punição: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
     
     async def _distribute_experience(self):
         """Distribui experiência para os guardiões que votaram"""
