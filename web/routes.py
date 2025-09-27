@@ -85,17 +85,15 @@ def setup_routes(app):
                 # Não podemos acessar bot.loop.is_running() em contexto não-assíncrono
                 logger.info(f"🔍 Bot loop running: N/A (não acessível em contexto síncrono)")
                 
-                # NOVO: Verifica se o bot tem um loop ativo e não está fechado
-                if not bot.is_closed() and bot.loop is not None:
-                    logger.info("✅ Bot está disponível (não fechado e com loop)")
+                # SOLUÇÃO DEFINITIVA: Verifica se bot está REALMENTE pronto
+                if bot.is_ready() and bot.user is not None and not bot.is_closed():
+                    logger.info("✅ Bot está REALMENTE pronto (is_ready + user + não fechado)")
                     return bot
-                elif bot.is_closed():
-                    logger.warning("⚠️ Bot está fechado")
-                    return None
                 else:
-                    logger.warning("⚠️ Bot não está disponível adequadamente")
-                    logger.warning(f"⚠️ bot.user: {bot.user}")
-                    logger.warning(f"⚠️ bot.is_closed(): {bot.is_closed()}")
+                    logger.warning("⚠️ Bot não está REALMENTE pronto")
+                    logger.warning(f"⚠️ is_ready(): {bot.is_ready()}")
+                    logger.warning(f"⚠️ user: {bot.user}")
+                    logger.warning(f"⚠️ is_closed(): {bot.is_closed()}")
                     return None
             else:
                 logger.warning("⚠️ Bot é None")
