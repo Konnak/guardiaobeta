@@ -301,18 +301,23 @@ class CaptchaSystemCog(commands.Cog):
                 return
             
             # Busca guardiões em serviço há mais de 3 horas que não têm captcha pendente
+            # E que não responderam captcha nas últimas 3+ horas
             query = """
                 SELECT u.id_discord, u.username, u.ultimo_turno_inicio
                 FROM usuarios u
-                LEFT JOIN captchas_guardioes c ON u.id_discord = c.id_guardiao 
-                    AND c.status = 'Pendente' 
-                    AND c.data_envio > NOW() - INTERVAL '1 hour'
+                LEFT JOIN captchas_guardioes c_pendente ON u.id_discord = c_pendente.id_guardiao 
+                    AND c_pendente.status = 'Pendente' 
+                    AND c_pendente.data_envio > NOW() - INTERVAL '1 hour'
+                LEFT JOIN captchas_guardioes c_respondido ON u.id_discord = c_respondido.id_guardiao 
+                    AND c_respondido.status = 'Respondido' 
+                    AND c_respondido.data_resposta > NOW() - INTERVAL '%s hours'
                 WHERE u.em_servico = TRUE 
                     AND u.categoria IN ('Guardião', 'Moderador', 'Administrador')
                     AND u.ultimo_turno_inicio IS NOT NULL
                     AND u.ultimo_turno_inicio <= NOW() - INTERVAL '%s hours'
-                    AND c.id IS NULL
-            """ % CAPTCHA_SERVICE_HOURS
+                    AND c_pendente.id IS NULL
+                    AND c_respondido.id IS NULL
+            """ % (CAPTCHA_SERVICE_HOURS, CAPTCHA_SERVICE_HOURS)
             
             guardians = await db_manager.execute_query(query)
             
