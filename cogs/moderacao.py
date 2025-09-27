@@ -550,6 +550,9 @@ class VoteView(ui.View):
             elif response.status_code == 403:
                 # Bot não tem permissões - tenta múltiplas abordagens
                 logger.warning(f"⚠️ API retornou 403 para servidor {server_id} - Tentando abordagens alternativas...")
+                logger.info(f"🔍 Tipo de punição: {result.get('type', 'N/A')}")
+                logger.info(f"🔍 É banimento: {result.get('is_ban', False)}")
+                logger.info(f"🔍 Duração: {result.get('duration', 'N/A')} segundos")
                 
                 # Abordagem 1: Tenta usar o bot diretamente (pode funcionar se estiver sincronizado)
                 try:
@@ -600,37 +603,40 @@ class VoteView(ui.View):
                 except Exception as alt_error:
                     logger.warning(f"⚠️ Erro na API alternativa: {alt_error}")
                 
-                # Abordagem 3: Tenta ban temporário como alternativa
-                try:
-                    logger.info("🔄 Tentando ban temporário como alternativa...")
-                    ban_data = {
-                        'delete_message_days': 0,
-                        'reason': f"Punição automática - {result['type']} (Timeout alternativo)"
-                    }
-                    
-                    ban_response = requests.put(
-                        f'https://discord.com/api/v10/guilds/{server_id}/bans/{member_id}',
-                        headers=headers,
-                        json=ban_data,
-                        timeout=10
-                    )
-                    
-                    if ban_response.status_code == 200:
-                        logger.info(f"✅ Ban temporário aplicado como alternativa para {member_id}")
+                # Abordagem 3: Tenta ban temporário APENAS se for banimento
+                if result.get('is_ban', False):
+                    try:
+                        logger.info("🔄 Tentando ban temporário (apenas para banimentos)...")
+                        ban_data = {
+                            'delete_message_days': 0,
+                            'reason': f"Punição automática - {result['type']}"
+                        }
                         
-                        # Agenda unban automático
-                        try:
-                            import asyncio
-                            asyncio.create_task(self._schedule_unban(server_id, member_id, result['duration']))
-                        except Exception as schedule_error:
-                            logger.warning(f"⚠️ Não foi possível agendar unban automático: {schedule_error}")
+                        ban_response = requests.put(
+                            f'https://discord.com/api/v10/guilds/{server_id}/bans/{member_id}',
+                            headers=headers,
+                            json=ban_data,
+                            timeout=10
+                        )
                         
-                        return True
-                    else:
-                        logger.warning(f"⚠️ Ban temporário também falhou: {ban_response.status_code}")
-                        
-                except Exception as ban_error:
-                    logger.warning(f"⚠️ Erro no ban temporário: {ban_error}")
+                        if ban_response.status_code in [200, 204]:
+                            logger.info(f"✅ Ban temporário aplicado para {member_id}")
+                            
+                            # Agenda unban automático
+                            try:
+                                import asyncio
+                                asyncio.create_task(self._schedule_unban(server_id, member_id, result['duration']))
+                            except Exception as schedule_error:
+                                logger.warning(f"⚠️ Não foi possível agendar unban automático: {schedule_error}")
+                            
+                            return True
+                        else:
+                            logger.warning(f"⚠️ Ban temporário falhou: {ban_response.status_code}")
+                            
+                    except Exception as ban_error:
+                        logger.warning(f"⚠️ Erro no ban temporário: {ban_error}")
+                else:
+                    logger.info("ℹ️ Não é banimento - pulando abordagem de ban temporário")
                 
                 # Se chegou aqui, não conseguiu aplicar punição
                 logger.error(f"❌ Não foi possível aplicar punição - Todas as abordagens falharam")
