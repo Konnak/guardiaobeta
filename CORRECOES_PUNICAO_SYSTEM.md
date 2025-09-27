@@ -78,6 +78,16 @@
 
 **Status**: ✅ **SUCESSO** - Solução definitiva: API direta do Discord
 
+### 🔧 **Correção 8: Tratamento de Permissões (403)**
+**Data**: 2025-09-27
+**Problema**: Erro `403 - Missing Permissions` - Bot não tem permissões para aplicar timeout
+**Solução**:
+- Detecta erro 403 e fornece instruções claras
+- Tenta fallback usando bot diretamente (se sincronizado)
+- Logs detalhados sobre como resolver o problema de permissões
+
+**Status**: ✅ **SUCESSO** - Tratamento de permissões implementado
+
 ## 🎯 **Análise do Problema Real**
 
 ### ✅ **O que funciona nos cogs:**

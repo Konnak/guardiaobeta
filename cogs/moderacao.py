@@ -547,6 +547,35 @@ class VoteView(ui.View):
                     logger.warning(f"Erro ao enviar log de punição: {log_error}")
                 
                 return True
+            elif response.status_code == 403:
+                # Bot não tem permissões - fornece instruções claras
+                logger.error(f"❌ Bot não tem permissões para aplicar timeout no servidor {server_id}")
+                logger.error(f"💡 SOLUÇÃO: Adicione o bot ao servidor com permissão 'Moderate Members'")
+                logger.error(f"💡 Como fazer: Configurações do Servidor > Integrações > Guardião BETA > Permissões > Moderate Members")
+                
+                # Tenta usar o bot diretamente (pode funcionar se estiver sincronizado)
+                try:
+                    from main import bot
+                    if bot.is_ready():
+                        guild = bot.get_guild(server_id)
+                        if guild:
+                            member = guild.get_member(member_id)
+                            if member:
+                                # Tenta aplicar timeout via bot
+                                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
+                                logger.info(f"✅ Punição aplicada via bot para {member.display_name}")
+                                
+                                # Enviar log
+                                punishment_action = "🔨 Banimento Temporário" if result.get('is_ban') else "⏰ Timeout"
+                                await self._send_punishment_log(guild, member, result, punishment_action)
+                                return True
+                except Exception as bot_error:
+                    logger.error(f"❌ Erro ao aplicar punição via bot: {bot_error}")
+                
+                # Se chegou aqui, não conseguiu aplicar punição
+                logger.error(f"❌ Não foi possível aplicar punição - Bot sem permissões no servidor {server_id}")
+                logger.error(f"💡 SOLUÇÃO: Adicione o bot ao servidor com permissão 'Moderate Members'")
+                return False
             else:
                 logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
                 return False
