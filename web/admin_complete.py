@@ -20,6 +20,7 @@ except Exception as e:
 def setup_admin_complete(app):
     """Configura painel administrativo completo - DESABILITADO TEMPORARIAMENTE"""
     logger.info("⚠️ setup_admin_complete DESABILITADO - Usando sistema principal de rotas admin")
+    return  # DESABILITADO - não registra rotas
     
     # ==================== VERIFICAÇÃO DE ADMIN ====================
     def is_admin(user_id):
