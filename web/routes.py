@@ -2287,3 +2287,139 @@ def get_server_stats(server_id: int) -> dict:
             'top_denunciados': []
         }
 
+@app.route('/mural-vergonha')
+def mural_vergonha():
+    """Mural da Vergonha - Lista dos últimos 10 usuários punidos"""
+    try:
+        # Busca os últimos 10 usuários punidos
+        query = """
+            SELECT 
+                id_usuario,
+                username,
+                display_name,
+                avatar_url,
+                tipo_punicao,
+                motivo,
+                duracao,
+                data_punicao,
+                id_servidor
+            FROM logs_punicoes 
+            WHERE ativa = true 
+            ORDER BY data_punicao DESC 
+            LIMIT 10
+        """
+        
+        punicoes = db_manager.execute_all_sync(query)
+        
+        # Processa os dados para o template
+        usuarios_punidos = []
+        for punicao in punicoes:
+            usuarios_punidos.append({
+                'id_usuario': punicao['id_usuario'],
+                'username': punicao['username'] or 'Usuário Desconhecido',
+                'display_name': punicao['display_name'] or punicao['username'] or 'Usuário Desconhecido',
+                'avatar_url': punicao['avatar_url'] or '/static/img/default-avatar.png',
+                'tipo_punicao': punicao['tipo_punicao'],
+                'motivo': punicao['motivo'],
+                'duracao': punicao['duracao'],
+                'data_punicao': punicao['data_punicao'],
+                'id_servidor': punicao['id_servidor']
+            })
+        
+        return render_template('mural_vergonha.html', usuarios_punidos=usuarios_punidos)
+        
+    except Exception as e:
+        logger.error(f"Erro ao carregar mural da vergonha: {e}")
+        return render_template('mural_vergonha.html', usuarios_punidos=[], error=str(e))
+
+@app.route('/mural-vergonha/<int:user_id>')
+def perfil_usuario_punido(user_id):
+    """Perfil detalhado do usuário punido"""
+    try:
+        # Busca informações do usuário
+        query_usuario = """
+            SELECT 
+                id_usuario,
+                username,
+                display_name,
+                avatar_url,
+                data_punicao,
+                id_servidor
+            FROM logs_punicoes 
+            WHERE id_usuario = $1 
+            ORDER BY data_punicao DESC 
+            LIMIT 1
+        """
+        
+        usuario = db_manager.execute_one_sync(query_usuario, user_id)
+        
+        if not usuario:
+            return render_template('perfil_usuario_punido.html', 
+                                 usuario=None, 
+                                 punicoes=[], 
+                                 total_punicoes=0,
+                                 error="Usuário não encontrado")
+        
+        # Busca histórico completo de punições
+        query_punicoes = """
+            SELECT 
+                tipo_punicao,
+                motivo,
+                duracao,
+                data_punicao,
+                aplicado_por,
+                ativa,
+                data_remocao
+            FROM logs_punicoes 
+            WHERE id_usuario = $1 
+            ORDER BY data_punicao DESC
+        """
+        
+        punicoes = db_manager.execute_all_sync(query_punicoes, user_id)
+        
+        # Conta total de punições
+        query_total = """
+            SELECT COUNT(*) as total 
+            FROM logs_punicoes 
+            WHERE id_usuario = $1
+        """
+        
+        total_result = db_manager.execute_one_sync(query_total, user_id)
+        total_punicoes = total_result['total'] if total_result else 0
+        
+        # Processa dados do usuário
+        usuario_data = {
+            'id_usuario': usuario['id_usuario'],
+            'username': usuario['username'] or 'Usuário Desconhecido',
+            'display_name': usuario['display_name'] or usuario['username'] or 'Usuário Desconhecido',
+            'avatar_url': usuario['avatar_url'] or '/static/img/default-avatar.png',
+            'data_punicao': usuario['data_punicao'],
+            'id_servidor': usuario['id_servidor']
+        }
+        
+        # Processa punições
+        punicoes_data = []
+        for punicao in punicoes:
+            punicoes_data.append({
+                'tipo_punicao': punicao['tipo_punicao'],
+                'motivo': punicao['motivo'],
+                'duracao': punicao['duracao'],
+                'data_punicao': punicao['data_punicao'],
+                'aplicado_por': punicao['aplicado_por'],
+                'ativa': punicao['ativa'],
+                'data_remocao': punicao['data_remocao']
+            })
+        
+        return render_template('perfil_usuario_punido.html', 
+                               usuario=usuario_data, 
+                               punicoes=punicoes_data,
+                               total_punicoes=total_punicoes)
+        
+    except Exception as e:
+        logger.error(f"Erro ao carregar perfil do usuário {user_id}: {e}")
+        return render_template('perfil_usuario_punido.html', 
+                               usuario=None, 
+                               punicoes=[], 
+                               total_punicoes=0,
+                               error=str(e))
+

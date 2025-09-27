@@ -89,9 +89,13 @@ CREATE TABLE IF NOT EXISTS mensagens_guardioes (
 CREATE TABLE IF NOT EXISTS logs_punicoes (
     id SERIAL PRIMARY KEY,
     id_usuario BIGINT NOT NULL,
-    tipo_punicao VARCHAR(50) NOT NULL, -- 'Ban', 'Kick', 'Warn', 'Mute', etc.
+    username VARCHAR(255), -- Nome de usuário do Discord
+    display_name VARCHAR(255), -- Nome de exibição do Discord
+    avatar_url TEXT, -- URL do avatar do usuário
+    tipo_punicao VARCHAR(50) NOT NULL, -- 'Intimidou', 'Grave', 'Ban', 'Kick', 'Warn', 'Mute', etc.
     motivo TEXT NOT NULL,
     duracao VARCHAR(100) DEFAULT 'Permanente',
+    duracao_segundos INTEGER, -- Duração em segundos para cálculos
     data_punicao TIMESTAMP DEFAULT NOW(),
     aplicado_por BIGINT NOT NULL, -- ID do admin que aplicou
     id_servidor BIGINT, -- Servidor onde foi aplicada (opcional)

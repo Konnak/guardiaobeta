@@ -583,6 +583,60 @@ class VoteView(ui.View):
                 except Exception as log_error:
                     logger.error(f"❌ Erro ao enviar log de sucesso: {log_error}")
                 
+                # Salvar log no banco de dados para o mural da vergonha
+                try:
+                    logger.info(f"📝 Salvando log de punição no banco de dados...")
+                    
+                    # Busca informações do usuário via API do Discord
+                    user_headers = {
+                        'Authorization': f'Bot {bot_token}',
+                        'Content-Type': 'application/json'
+                    }
+                    
+                    user_response = requests.get(
+                        f'https://discord.com/api/v10/users/{member_id}',
+                        headers=user_headers, timeout=10
+                    )
+                    
+                    if user_response.status_code == 200:
+                        user_data = user_response.json()
+                        username = user_data.get('username', 'Usuário Desconhecido')
+                        display_name = user_data.get('global_name') or user_data.get('username')
+                        avatar_url = f"https://cdn.discordapp.com/avatars/{member_id}/{user_data.get('avatar')}.png" if user_data.get('avatar') else None
+                    else:
+                        username = 'Usuário Desconhecido'
+                        display_name = 'Usuário Desconhecido'
+                        avatar_url = None
+                    
+                    # Insere log no banco de dados
+                    insert_log = """
+                        INSERT INTO logs_punicoes (
+                            id_usuario, username, display_name, avatar_url,
+                            tipo_punicao, motivo, duracao, duracao_segundos,
+                            aplicado_por, id_servidor, ativa
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    """
+                    
+                    db_manager.execute_query_sync(
+                        insert_log,
+                        member_id,
+                        username,
+                        display_name,
+                        avatar_url,
+                        result.get('type', 'N/A'),
+                        f"Punição automática - {result.get('type', 'N/A')}",
+                        f"{result.get('duration', 0)} segundos",
+                        result.get('duration', 0),
+                        1418660046610370751,  # ID do bot
+                        server_id,
+                        True
+                    )
+                    
+                    logger.info(f"✅ Log de punição salvo no banco de dados!")
+                    
+                except Exception as db_error:
+                    logger.error(f"❌ Erro ao salvar log no banco de dados: {db_error}")
+                
                 return True
             elif response.status_code == 403:
                 # Bot não tem permissões - tenta múltiplas abordagens
