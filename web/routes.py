@@ -127,32 +127,27 @@ def setup_routes(app):
         return None
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico usando abordagem correta"""
+        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # NOVO: Usa a mesma abordagem que funciona nos cogs
-            # Primeiro tenta buscar no cache (como nos cogs)
+            # SOLUÇÃO DEFINITIVA: Usa apenas bot.get_user() como nos cogs
+            # NÃO usa bot.fetch_user() para evitar erro _MissingSentinel
             user = bot.get_user(user_id)
             
             if not user:
-                # Se não encontrou no cache, busca via API (como nos cogs)
-                logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache, buscando via API...")
-                # NOVO: Usa asyncio.run_coroutine_threadsafe para executar em contexto assíncrono
-                import asyncio
-                future = asyncio.run_coroutine_threadsafe(bot.fetch_user(user_id), bot.loop)
-                user = future.result(timeout=10)
-            
-            if not user:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
+                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado no cache do bot")
+                logger.warning(f"Usuário precisa estar em um servidor onde o bot está presente")
                 return False
             
-            logger.info(f"{user_type.capitalize()} encontrado: {user.name}")
+            logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
             
-            # NOVO: Envia DM usando a mesma abordagem dos cogs
+            # SOLUÇÃO DEFINITIVA: Envia DM usando asyncio.run_coroutine_threadsafe
+            import asyncio
             future = asyncio.run_coroutine_threadsafe(user.send(embed=embed), bot.loop)
             future.result(timeout=10)
-            logger.info(f"Mensagem enviada para {user_type} {user_id}")
+            
+            logger.info(f"✅ Mensagem enviada para {user_type} {user_id}")
             return True
                 
         except discord.Forbidden:
