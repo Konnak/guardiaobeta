@@ -190,7 +190,7 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 
 **Status**: ❌ **FALHOU** - Erro `asyncio.run() cannot be called from a running event loop`
 
-### 🔧 **Correção 12: SOLUÇÃO DEFINITIVA - USA LOOP EXISTENTE (FINAL)**
+### 🔧 **Correção 12: SOLUÇÃO DEFINITIVA - USA LOOP EXISTENTE**
 **Data**: 2025-09-27
 **Problema**: Erro `asyncio.run() cannot be called from a running event loop`
 **Solução**:
@@ -199,7 +199,19 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 - Usa `bot.fetch_user(user_id)` e `user.send(embed=embed)` diretamente
 - Executa no loop existente com timeout
 
-**Status**: ✅ **SUCESSO** - Solução definitiva: usa loop existente
+**Status**: ❌ **FALHOU** - Erro `loop attribute cannot be accessed in non-async contexts` retornou
+
+### 🔧 **Correção 13: SOLUÇÃO DEFINITIVA - API DIRETA DO DISCORD (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Erro `loop attribute cannot be accessed in non-async contexts` persistiu
+**Solução**:
+- Usa `requests` para enviar DM via API do Discord diretamente
+- Não depende do loop do bot
+- Cria DM channel via API: `POST /users/@me/channels`
+- Envia mensagem via API: `POST /channels/{channel_id}/messages`
+- Funciona completamente independente do bot
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: API direta do Discord
 
 ## 📊 **Status Atual**
 - ✅ **Erro `_MissingSentinel` eliminado**

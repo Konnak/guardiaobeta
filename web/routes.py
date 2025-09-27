@@ -73,30 +73,55 @@ def setup_routes(app):
     
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA: USA LOOP EXISTENTE"""
+        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA: SEM LOOP DO BOT"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # SOLUÇÃO DEFINITIVA: Usa o loop existente com asyncio.run_coroutine_threadsafe
-            import asyncio
+            # SOLUÇÃO DEFINITIVA: Usa requests para enviar DM via API do Discord
+            # Não depende do loop do bot
+            import requests
+            import os
             
-            async def send_dm_async():
-                # Pega usuário via API
-                user = await bot.fetch_user(user_id)
-                if not user:
-                    logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
-                    return False
-                
-                logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-                
-                # Envia DM
-                await user.send(embed=embed)
+            # Pega o token do bot
+            bot_token = os.getenv('DISCORD_TOKEN')
+            if not bot_token:
+                logger.error("DISCORD_TOKEN não configurado")
+                return False
+            
+            # Cria DM channel via API
+            headers = {'Authorization': f'Bot {bot_token}', 'Content-Type': 'application/json'}
+            
+            # Cria DM channel
+            dm_data = {'recipient_id': str(user_id)}
+            dm_response = requests.post('https://discord.com/api/v10/users/@me/channels', 
+                                      headers=headers, json=dm_data)
+            
+            if dm_response.status_code != 200:
+                logger.error(f"Erro ao criar DM channel: {dm_response.status_code}")
+                return False
+            
+            dm_channel = dm_response.json()
+            channel_id = dm_channel['id']
+            
+            # Envia mensagem via API
+            message_data = {
+                'embeds': [{
+                    'title': embed.title,
+                    'description': embed.description,
+                    'color': embed.color.value if embed.color else 0x00ff00,
+                    'footer': {'text': embed.footer.text} if embed.footer else None
+                }]
+            }
+            
+            message_response = requests.post(f'https://discord.com/api/v10/channels/{channel_id}/messages',
+                                          headers=headers, json=message_data)
+            
+            if message_response.status_code == 200:
                 logger.info(f"✅ Mensagem enviada para {user_type} {user_id}")
                 return True
-            
-            # Executa no loop existente
-            future = asyncio.run_coroutine_threadsafe(send_dm_async(), bot.loop)
-            return future.result(timeout=10)
+            else:
+                logger.error(f"Erro ao enviar mensagem: {message_response.status_code}")
+                return False
                 
         except discord.Forbidden:
             logger.warning(f"Não foi possível enviar DM para {user_type} {user_id} - DMs bloqueados")
