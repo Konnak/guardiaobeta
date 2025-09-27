@@ -483,7 +483,7 @@ class VoteView(ui.View):
         return {"type": "Improcedente", "punishment": False}
     
     async def _apply_punishment(self, result: Dict):
-        """Aplica a punição no Discord"""
+        """Aplica a punição no Discord - SOLUÇÃO DEFINITIVA: API DIRETA DO DISCORD"""
         try:
             # Busca informações da denúncia
             denuncia_query = """
@@ -495,75 +495,65 @@ class VoteView(ui.View):
             if not denuncia:
                 return
             
-            # Busca o servidor através do bot
-            from main import bot  # Import local para evitar circular
-            server_id = int(denuncia['id_servidor'])  # Converte para inteiro
+            server_id = int(denuncia['id_servidor'])
+            member_id = int(denuncia['id_denunciado'])
             
-            # SOLUÇÃO DEFINITIVA: Aguarda bot estar completamente pronto
-            if not bot.is_ready():
-                logger.info("Aguardando bot estar pronto...")
-                await bot.wait_until_ready()
+            # SOLUÇÃO DEFINITIVA: Usa requests para aplicar punição via API do Discord diretamente
+            # Não depende do loop do bot
+            import requests
+            import os
             
-            # Aguarda um pouco mais para garantir sincronização completa
-            await asyncio.sleep(2)
+            # Pega o token do bot
+            bot_token = os.getenv('DISCORD_TOKEN')
+            if not bot_token:
+                logger.error("DISCORD_TOKEN não configurado")
+                return
             
-            # Verifica se o bot está realmente pronto
-            if not bot.is_ready() or bot.user is None:
-                logger.warning("Bot ainda não está pronto após aguardar. Tentando novamente...")
-                await asyncio.sleep(5)  # Aguarda mais 5 segundos
-                
-                if not bot.is_ready() or bot.user is None:
-                    logger.error("Bot não está pronto após múltiplas tentativas. Cancelando punição.")
-                    return
-            
-            # Tenta buscar o servidor com fallback
-            guild = bot.get_guild(server_id)
-            if not guild:
-                # Se não encontrou no cache, tenta buscar via fetch
-                try:
-                    guild = await bot.fetch_guild(server_id)
-                    logger.info(f"Servidor {server_id} encontrado via fetch")
-                except Exception as fetch_error:
-                    logger.warning(f"Servidor {server_id} não encontrado via fetch: {fetch_error}")
-                    # Lista servidores disponíveis para debug
-                    available_guilds = [g.id for g in bot.guilds]
-                    logger.info(f"Servidores disponíveis: {available_guilds}")
-                    return
-            
-            # Busca o membro
-            member_id = int(denuncia['id_denunciado'])  # Converte para inteiro
-            member = guild.get_member(member_id)
-            if not member:
-                # Se não encontrou no cache, tenta buscar via fetch
-                try:
-                    member = await guild.fetch_member(member_id)
-                    logger.info(f"Membro {member_id} encontrado via fetch")
-                except Exception as fetch_error:
-                    logger.warning(f"Membro {member_id} não encontrado no servidor: {fetch_error}")
-                    # Lista membros disponíveis para debug
-                    available_members = [m.id for m in guild.members[:10]]  # Primeiros 10 para não sobrecarregar
-                    logger.info(f"Alguns membros disponíveis: {available_members}")
-                    return
-            
-            # Aplica a punição
+            # Calcula a data de fim do timeout
             duration_delta = timedelta(seconds=result['duration'])
+            timeout_until = datetime.utcnow() + duration_delta
             
-            if result.get('is_ban'):
-                # Para bans temporários, usa timeout longo (Discord não tem ban temporário nativo)
-                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
-                logger.info(f"Ban (timeout) aplicado para {member.display_name} por {result['duration']} segundos")
-                punishment_action = "🔨 Banimento Temporário"
+            # Headers para API do Discord
+            headers = {
+                'Authorization': f'Bot {bot_token}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Dados para aplicar timeout
+            timeout_data = {
+                'communication_disabled_until': timeout_until.isoformat()
+            }
+            
+            # Aplica timeout via API do Discord
+            response = requests.patch(
+                f'https://discord.com/api/v10/guilds/{server_id}/members/{member_id}',
+                headers=headers, 
+                json=timeout_data
+            )
+            
+            if response.status_code == 200:
+                logger.info(f"✅ Punição aplicada via API para {member_id} por {result['duration']} segundos")
+                punishment_action = "🔨 Banimento Temporário" if result.get('is_ban') else "⏰ Timeout"
+                
+                # Enviar log para o canal configurado (se possível)
+                try:
+                    from main import bot
+                    guild = bot.get_guild(server_id)
+                    if guild:
+                        member = guild.get_member(member_id)
+                        if member:
+                            await self._send_punishment_log(guild, member, result, punishment_action)
+                except Exception as log_error:
+                    logger.warning(f"Erro ao enviar log de punição: {log_error}")
+                
+                return True
             else:
-                # Timeout normal
-                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
-                logger.info(f"Timeout aplicado para {member.display_name} por {result['duration']} segundos")
-                punishment_action = "⏰ Timeout"
-            
-            # Enviar log para o canal configurado
-            await self._send_punishment_log(guild, member, result, punishment_action)
-            
+                logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
+                return False
+                
         except Exception as e:
-            logger.error(f"Erro ao aplicar punição: {e}")
+            logger.error(f"❌ Erro ao aplicar punição: {e}")
+            return False
     
     async def _send_punishment_log(self, guild: discord.Guild, member: discord.Member, result: Dict, action: str):
         """Envia log da punição para o canal configurado"""

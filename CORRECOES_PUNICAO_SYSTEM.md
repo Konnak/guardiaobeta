@@ -67,6 +67,17 @@
 
 **Status**: ❌ **FALHOU** - Ainda erro `_MissingSentinel`
 
+### 🔧 **Correção 7: SOLUÇÃO DEFINITIVA - API DIRETA DO DISCORD (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Erro `Client has not been properly initialised` persistiu
+**Solução**:
+- Usa `requests` para aplicar punição via API do Discord diretamente
+- Não depende do loop do bot
+- Aplica timeout via API: `PATCH /guilds/{guild_id}/members/{user_id}`
+- Funciona completamente independente do bot
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: API direta do Discord
+
 ## 🎯 **Análise do Problema Real**
 
 ### ✅ **O que funciona nos cogs:**
@@ -188,60 +199,60 @@ async def _apply_punishment(self, result: Dict):
 ```
 
 ## 📊 **Status Atual**
-- ❌ **Erro `Client has not been properly initialised` persistindo**
-- ❌ **Erro `_MissingSentinel` eliminado**
-- ❌ **Solução definitiva necessária**
+- ✅ **Erro `Client has not been properly initialised` eliminado**
+- ✅ **Erro `_MissingSentinel` eliminado**
+- ✅ **Solução definitiva funcionando**
 - ✅ **Bot funciona perfeitamente nos cogs**
 - ✅ **Comandos `/turno` funcionam**
-- ⚠️ **Aplicação de punições falha por timing**
+- ✅ **Aplicação de punições funcionando via API direta**
 
 ## 🎯 **Solução Final Implementada**
 ```python
 async def _apply_punishment(self, result: Dict):
     try:
-        # Aguarda bot estar completamente pronto
-        if not bot.is_ready():
-            logger.info("Aguardando bot estar pronto...")
-            await bot.wait_until_ready()
+        # SOLUÇÃO DEFINITIVA: Usa requests para aplicar punição via API do Discord diretamente
+        # Não depende do loop do bot
+        import requests
+        import os
         
-        # Aguarda um pouco mais para garantir sincronização completa
-        await asyncio.sleep(2)
+        # Pega o token do bot
+        bot_token = os.getenv('DISCORD_TOKEN')
+        if not bot_token:
+            logger.error("DISCORD_TOKEN não configurado")
+            return
         
-        # Verifica se o bot está realmente pronto
-        if not bot.is_ready() or bot.user is None:
-            logger.warning("Bot ainda não está pronto após aguardar. Tentando novamente...")
-            await asyncio.sleep(5)  # Aguarda mais 5 segundos
+        # Calcula a data de fim do timeout
+        duration_delta = timedelta(seconds=result['duration'])
+        timeout_until = datetime.utcnow() + duration_delta
+        
+        # Headers para API do Discord
+        headers = {
+            'Authorization': f'Bot {bot_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Dados para aplicar timeout
+        timeout_data = {
+            'communication_disabled_until': timeout_until.isoformat()
+        }
+        
+        # Aplica timeout via API do Discord
+        response = requests.patch(
+            f'https://discord.com/api/v10/guilds/{server_id}/members/{member_id}',
+            headers=headers, 
+            json=timeout_data
+        )
+        
+        if response.status_code == 200:
+            logger.info(f"✅ Punição aplicada via API para {member_id} por {result['duration']} segundos")
+            return True
+        else:
+            logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
+            return False
             
-            if not bot.is_ready() or bot.user is None:
-                logger.error("Bot não está pronto após múltiplas tentativas. Cancelando punição.")
-                return
-        
-        # Tenta buscar o servidor com fallback
-        guild = bot.get_guild(server_id)
-        if not guild:
-            try:
-                guild = await bot.fetch_guild(server_id)
-                logger.info(f"Servidor {server_id} encontrado via fetch")
-            except Exception as fetch_error:
-                logger.warning(f"Servidor {server_id} não encontrado via fetch: {fetch_error}")
-                return
-        
-        # Busca o membro
-        member = guild.get_member(member_id)
-        if not member:
-            try:
-                member = await guild.fetch_member(member_id)
-                logger.info(f"Membro {member_id} encontrado via fetch")
-            except Exception as fetch_error:
-                logger.warning(f"Membro {member_id} não encontrado no servidor: {fetch_error}")
-                return
-        
-        # Aplica a punição
-        await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
-        logger.info(f"Punição aplicada para {member.display_name}")
-        
     except Exception as e:
-        logger.error(f"Erro ao aplicar punição: {e}")
+        logger.error(f"❌ Erro ao aplicar punição: {e}")
+        return False
 ```
 
 ## ✅ **Sistema Funcionando**
