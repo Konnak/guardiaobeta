@@ -1653,14 +1653,19 @@ def setup_routes(app):
                     
                     for guardian in guardians:
                         try:
+                            logger.info(f"Tentando enviar mensagem para guardião {guardian['id_discord']} ({guardian['categoria']})")
                             user = bot.get_user(guardian['id_discord'])
                             if user:
+                                logger.info(f"Usuário encontrado no Discord: {user.name}")
                                 dm_channel = await user.create_dm()
+                                logger.info(f"Canal DM criado: {dm_channel.id}")
                                 await dm_channel.send(embed=embed)
                                 sent_count += 1
                                 logger.info(f"Mensagem enviada para guardião {guardian['id_discord']} ({guardian['categoria']})")
+                            else:
+                                logger.warning(f"Usuário {guardian['id_discord']} não encontrado no Discord")
                         except Exception as e:
-                            logger.warning(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
+                            logger.error(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
                             continue
                     
                     logger.info(f"Mensagem enviada para {sent_count} guardiões")
@@ -1677,14 +1682,19 @@ def setup_routes(app):
                     
                     for moderator in moderators:
                         try:
+                            logger.info(f"Tentando enviar mensagem para moderador {moderator['id_discord']} ({moderator['categoria']})")
                             user = bot.get_user(moderator['id_discord'])
                             if user:
+                                logger.info(f"Usuário encontrado no Discord: {user.name}")
                                 dm_channel = await user.create_dm()
+                                logger.info(f"Canal DM criado: {dm_channel.id}")
                                 await dm_channel.send(embed=embed)
                                 sent_count += 1
                                 logger.info(f"Mensagem enviada para moderador {moderator['id_discord']} ({moderator['categoria']})")
+                            else:
+                                logger.warning(f"Usuário {moderator['id_discord']} não encontrado no Discord")
                         except Exception as e:
-                            logger.warning(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
+                            logger.error(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
                             continue
                     
                     logger.info(f"Mensagem enviada para {sent_count} moderadores")
