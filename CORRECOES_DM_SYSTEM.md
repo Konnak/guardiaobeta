@@ -179,7 +179,7 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 
 **Status**: ❌ **FALHOU** - Erro `loop attribute cannot be accessed in non-async contexts`
 
-### 🔧 **Correção 11: SOLUÇÃO DEFINITIVA - SEM LOOP DO BOT (FINAL)**
+### 🔧 **Correção 11: SOLUÇÃO DEFINITIVA - SEM LOOP DO BOT**
 **Data**: 2025-09-27
 **Problema**: Erro `loop attribute cannot be accessed in non-async contexts`
 **Solução**:
@@ -188,7 +188,18 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 - Usa `bot.fetch_user(user_id)` e `user.send(embed=embed)` diretamente
 - Executa em contexto assíncrono isolado
 
-**Status**: ✅ **SUCESSO** - Solução definitiva: sem loop do bot
+**Status**: ❌ **FALHOU** - Erro `asyncio.run() cannot be called from a running event loop`
+
+### 🔧 **Correção 12: SOLUÇÃO DEFINITIVA - USA LOOP EXISTENTE (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Erro `asyncio.run() cannot be called from a running event loop`
+**Solução**:
+- Usa `asyncio.run_coroutine_threadsafe()` para executar no loop existente
+- Não cria novo loop, usa o loop do bot
+- Usa `bot.fetch_user(user_id)` e `user.send(embed=embed)` diretamente
+- Executa no loop existente com timeout
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: usa loop existente
 
 ## 📊 **Status Atual**
 - ✅ **Erro `_MissingSentinel` eliminado**

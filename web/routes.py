@@ -73,12 +73,11 @@ def setup_routes(app):
     
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA: SEM LOOP DO BOT"""
+        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA: USA LOOP EXISTENTE"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # SOLUÇÃO DEFINITIVA: Usa asyncio.run() para criar um novo loop
-            # Não depende do loop do bot
+            # SOLUÇÃO DEFINITIVA: Usa o loop existente com asyncio.run_coroutine_threadsafe
             import asyncio
             
             async def send_dm_async():
@@ -95,8 +94,9 @@ def setup_routes(app):
                 logger.info(f"✅ Mensagem enviada para {user_type} {user_id}")
                 return True
             
-            # Executa em novo loop
-            return asyncio.run(send_dm_async())
+            # Executa no loop existente
+            future = asyncio.run_coroutine_threadsafe(send_dm_async(), bot.loop)
+            return future.result(timeout=10)
                 
         except discord.Forbidden:
             logger.warning(f"Não foi possível enviar DM para {user_type} {user_id} - DMs bloqueados")
