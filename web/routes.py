@@ -1768,6 +1768,22 @@ def setup_routes(app):
                 logger.info(f"Usuários no cache: {len(bot.users)}")
                 sent_count = 0
                 
+                # NOVO: Aguarda o bot estar realmente pronto antes de prosseguir
+                if not bot.is_ready() or bot.user is None:
+                    logger.warning("⚠️ Bot não está pronto na função async, aguardando...")
+                    import asyncio
+                    try:
+                        await asyncio.wait_for(bot.wait_until_ready(), timeout=10.0)
+                        logger.info("✅ Bot agora está pronto na função async!")
+                    except asyncio.TimeoutError:
+                        logger.error("❌ Timeout aguardando bot ficar pronto na função async")
+                        flash("Bot não está pronto. Tente novamente em alguns segundos.", "error")
+                        return redirect(url_for('admin_system'))
+                    except Exception as e:
+                        logger.error(f"❌ Erro aguardando bot ficar pronto: {e}")
+                        flash("Erro ao aguardar bot ficar pronto.", "error")
+                        return redirect(url_for('admin_system'))
+                
                 # Cria embed da mensagem
                 embed = discord.Embed(
                     title=f"📢 {message_title}",
