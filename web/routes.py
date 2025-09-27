@@ -1118,6 +1118,7 @@ def get_discord_user_info(user_id: int) -> dict:
         _discord_user_cache[cache_key] = (result, current_time)
         return result
 
+
 def get_server_stats(server_id: int) -> dict:
     """Busca estatísticas de um servidor"""
     try:
