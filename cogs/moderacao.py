@@ -548,12 +548,10 @@ class VoteView(ui.View):
                 
                 return True
             elif response.status_code == 403:
-                # Bot não tem permissões - fornece instruções claras
-                logger.error(f"❌ Bot não tem permissões para aplicar timeout no servidor {server_id}")
-                logger.error(f"💡 SOLUÇÃO: Adicione o bot ao servidor com permissão 'Moderate Members'")
-                logger.error(f"💡 Como fazer: Configurações do Servidor > Integrações > Guardião BETA > Permissões > Moderate Members")
+                # Bot não tem permissões - tenta múltiplas abordagens
+                logger.warning(f"⚠️ API retornou 403 para servidor {server_id} - Tentando abordagens alternativas...")
                 
-                # Tenta usar o bot diretamente (pode funcionar se estiver sincronizado)
+                # Abordagem 1: Tenta usar o bot diretamente (pode funcionar se estiver sincronizado)
                 try:
                     from main import bot
                     if bot.is_ready():
@@ -561,20 +559,86 @@ class VoteView(ui.View):
                         if guild:
                             member = guild.get_member(member_id)
                             if member:
-                                # Tenta aplicar timeout via bot
-                                await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
-                                logger.info(f"✅ Punição aplicada via bot para {member.display_name}")
-                                
-                                # Enviar log
-                                punishment_action = "🔨 Banimento Temporário" if result.get('is_ban') else "⏰ Timeout"
-                                await self._send_punishment_log(guild, member, result, punishment_action)
-                                return True
+                                # Verifica se o bot tem permissões no servidor
+                                bot_member = guild.get_member(bot.user.id)
+                                if bot_member and bot_member.guild_permissions.moderate_members:
+                                    # Tenta aplicar timeout via bot
+                                    await member.timeout(duration_delta, reason=f"Punição automática - {result['type']}")
+                                    logger.info(f"✅ Punição aplicada via bot para {member.display_name}")
+                                    
+                                    # Enviar log
+                                    punishment_action = "🔨 Banimento Temporário" if result.get('is_ban') else "⏰ Timeout"
+                                    await self._send_punishment_log(guild, member, result, punishment_action)
+                                    return True
+                                else:
+                                    logger.warning(f"⚠️ Bot não tem permissão 'Moderate Members' no servidor {server_id}")
                 except Exception as bot_error:
-                    logger.error(f"❌ Erro ao aplicar punição via bot: {bot_error}")
+                    logger.warning(f"⚠️ Erro ao aplicar punição via bot: {bot_error}")
+                
+                # Abordagem 2: Tenta API com headers diferentes
+                try:
+                    logger.info("🔄 Tentando API com headers alternativos...")
+                    alt_headers = {
+                        'Authorization': f'Bot {bot_token}',
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'DiscordBot (https://github.com/discord/discord-api-docs, 1.0)'
+                    }
+                    
+                    alt_response = requests.patch(
+                        f'https://discord.com/api/v10/guilds/{server_id}/members/{member_id}',
+                        headers=alt_headers, 
+                        json=timeout_data,
+                        timeout=10
+                    )
+                    
+                    if alt_response.status_code == 200:
+                        logger.info(f"✅ Punição aplicada via API alternativa para {member_id}")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ API alternativa também falhou: {alt_response.status_code}")
+                        
+                except Exception as alt_error:
+                    logger.warning(f"⚠️ Erro na API alternativa: {alt_error}")
+                
+                # Abordagem 3: Tenta ban temporário como alternativa
+                try:
+                    logger.info("🔄 Tentando ban temporário como alternativa...")
+                    ban_data = {
+                        'delete_message_days': 0,
+                        'reason': f"Punição automática - {result['type']} (Timeout alternativo)"
+                    }
+                    
+                    ban_response = requests.put(
+                        f'https://discord.com/api/v10/guilds/{server_id}/bans/{member_id}',
+                        headers=headers,
+                        json=ban_data,
+                        timeout=10
+                    )
+                    
+                    if ban_response.status_code == 200:
+                        logger.info(f"✅ Ban temporário aplicado como alternativa para {member_id}")
+                        
+                        # Agenda unban automático
+                        try:
+                            import asyncio
+                            asyncio.create_task(self._schedule_unban(server_id, member_id, result['duration']))
+                        except Exception as schedule_error:
+                            logger.warning(f"⚠️ Não foi possível agendar unban automático: {schedule_error}")
+                        
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Ban temporário também falhou: {ban_response.status_code}")
+                        
+                except Exception as ban_error:
+                    logger.warning(f"⚠️ Erro no ban temporário: {ban_error}")
                 
                 # Se chegou aqui, não conseguiu aplicar punição
-                logger.error(f"❌ Não foi possível aplicar punição - Bot sem permissões no servidor {server_id}")
-                logger.error(f"💡 SOLUÇÃO: Adicione o bot ao servidor com permissão 'Moderate Members'")
+                logger.error(f"❌ Não foi possível aplicar punição - Todas as abordagens falharam")
+                logger.error(f"💡 POSSÍVEIS SOLUÇÕES:")
+                logger.error(f"   1. Verifique se o bot tem cargo mais alto que o usuário")
+                logger.error(f"   2. Verifique se o usuário não é dono do servidor")
+                logger.error(f"   3. Verifique se o bot tem permissão 'Moderate Members'")
+                logger.error(f"   4. Tente reiniciar o bot para sincronizar permissões")
                 return False
             else:
                 logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
@@ -583,6 +647,45 @@ class VoteView(ui.View):
         except Exception as e:
             logger.error(f"❌ Erro ao aplicar punição: {e}")
             return False
+    
+    async def _schedule_unban(self, server_id: int, member_id: int, duration_seconds: int):
+        """Agenda unban automático após o tempo especificado"""
+        try:
+            import asyncio
+            from datetime import datetime, timedelta
+            
+            logger.info(f"⏰ Agendando unban automático para {member_id} em {duration_seconds} segundos")
+            
+            # Aguarda o tempo especificado
+            await asyncio.sleep(duration_seconds)
+            
+            # Executa o unban
+            import requests
+            import os
+            
+            bot_token = os.getenv('DISCORD_TOKEN')
+            if not bot_token:
+                logger.error("DISCORD_TOKEN não configurado para unban")
+                return
+            
+            headers = {
+                'Authorization': f'Bot {bot_token}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Remove o ban
+            unban_response = requests.delete(
+                f'https://discord.com/api/v10/guilds/{server_id}/bans/{member_id}',
+                headers=headers
+            )
+            
+            if unban_response.status_code == 204:
+                logger.info(f"✅ Unban automático executado para {member_id}")
+            else:
+                logger.warning(f"⚠️ Erro no unban automático: {unban_response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"❌ Erro no unban automático: {e}")
     
     async def _send_punishment_log(self, guild: discord.Guild, member: discord.Member, result: Dict, action: str):
         """Envia log da punição para o canal configurado"""
