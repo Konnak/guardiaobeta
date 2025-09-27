@@ -1587,6 +1587,7 @@ def setup_routes(app):
     @admin_required
     def admin_system_message():
         """Envia mensagem para usuários"""
+        logger.info("🚀 ROTA admin_system_message CHAMADA!")
         import asyncio
         
         async def send_message_async():
