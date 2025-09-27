@@ -145,27 +145,42 @@ def setup_routes(app):
                 logger.warning(f"Bot está fechado")
                 return False
             
-            # Tenta buscar usuário no cache primeiro
-            user = bot.get_user(user_id)
-            if not user:
-                # Se não encontrou no cache, tenta buscar via API
+            # NOVO: Usa o loop do bot para executar de forma segura
+            import asyncio
+            
+            # Função interna para buscar usuário de forma segura
+            async def safe_fetch_user():
                 try:
+                    # Tenta buscar no cache primeiro
+                    user = bot.get_user(user_id)
+                    if user:
+                        logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
+                        return user
+                    
+                    # Se não encontrou no cache, tenta buscar via API
                     logger.info(f"Buscando {user_type} {user_id} via API do Discord...")
                     user = await bot.fetch_user(user_id)
                     logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-                except discord.NotFound:
-                    logger.warning(f"{user_type.capitalize()} {user_id} não encontrado na API do Discord")
-                    return False
-                except discord.HTTPException as e:
-                    logger.warning(f"Erro HTTP ao buscar {user_type} {user_id}: {e}")
-                    return False
+                    return user
                 except Exception as e:
-                    logger.warning(f"Erro ao buscar {user_type} {user_id} via API: {e}")
-                    return False
+                    logger.warning(f"Erro ao buscar {user_type} {user_id}: {e}")
+                    return None
             
-            if user:
-                logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
+            # Executa a busca usando o loop do bot
+            try:
+                user = await asyncio.run_coroutine_threadsafe(safe_fetch_user(), bot.loop).result()
+            except Exception as e:
+                logger.warning(f"Erro ao executar busca no loop do bot: {e}")
+                return False
+            
+            if not user:
+                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
+                return False
+            
+            # NOVO: Função interna para enviar DM de forma segura
+            async def safe_send_dm():
                 try:
+                    logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
                     dm_channel = await user.create_dm()
                     logger.info(f"Canal DM criado: {dm_channel.id}")
                     await dm_channel.send(embed=embed)
@@ -180,8 +195,13 @@ def setup_routes(app):
                 except Exception as e:
                     logger.error(f"Erro ao enviar DM para {user.name}: {e}")
                     return False
-            else:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado no Discord")
+            
+            # Executa o envio usando o loop do bot
+            try:
+                result = await asyncio.run_coroutine_threadsafe(safe_send_dm(), bot.loop).result()
+                return result
+            except Exception as e:
+                logger.error(f"Erro ao executar envio no loop do bot: {e}")
                 return False
                 
         except Exception as e:
