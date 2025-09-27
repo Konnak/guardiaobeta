@@ -2,184 +2,604 @@
 
 {% block title %}Denúncia #{{ denuncia.id }} - Detalhes{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Admin Report Details Modern Styling */
+    .hero-report-details {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 40px 0 30px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-report-details::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-report-details-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-report-details-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .report-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .details-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    .details-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--dark-card);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+        transform: translateX(5px);
+    }
+
+    .info-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        text-align: right;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+    }
+
+    .status-pendente { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+    .status-resolvida { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+    .status-dispensada { background: linear-gradient(135deg, #95a5a6, #bdc3c7); color: #2c3e50; }
+
+    .reason-card {
+        background: var(--dark-card);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border-left: 4px solid var(--primary-gold);
+    }
+
+    .reason-title {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .reason-text {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .votes-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .votes-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .votes-summary {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .vote-summary-card {
+        background: var(--dark-card);
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .vote-count {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .vote-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .votes-list {
+        display: grid;
+        gap: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .vote-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--dark-card);
+        border-radius: 12px;
+        border-left: 4px solid var(--primary-teal);
+        transition: all 0.3s ease;
+    }
+
+    .vote-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+        transform: translateX(5px);
+    }
+
+    .vote-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-light));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .vote-info h6 {
+        color: var(--text-primary);
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .vote-info small {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .vote-badge {
+        margin-left: auto;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .vote-badge.ok { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+    .vote-badge.intimidou { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+    .vote-badge.grave { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+
+    .messages-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+
+    .messages-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .messages-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .message-item {
+        padding: 1rem;
+        background: var(--dark-card);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--glass-border);
+        transition: all 0.3s ease;
+    }
+
+    .message-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+        border-left-color: var(--primary-gold);
+    }
+
+    .message-item.denunciado {
+        border-left-color: var(--accent-orange);
+        background: rgba(231, 76, 60, 0.05);
+    }
+
+    .message-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--dark-bg);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .message-info h6 {
+        color: var(--text-primary);
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .message-info small {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .message-content {
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .message-timestamp {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        text-align: right;
+    }
+
+    .navigation-modern {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-report-details-title {
+            font-size: 1.8rem;
+        }
+
+        .report-details-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .votes-summary {
+            flex-direction: column;
+        }
+
+        .info-item {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.5rem;
+        }
+
+        .info-value {
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="bi bi-flag"></i> Denúncia #{{ denuncia.id }}</h1>
-                <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar à Lista
-                </a>
-            </div>
+<!-- Hero Section -->
+<section class="hero-report-details">
+    <div class="container">
+        <div class="hero-report-details-content">
+            <h1 class="hero-report-details-title">
+                <i class="bi bi-flag-fill"></i>
+                Denúncia #{{ denuncia.id }}
+            </h1>
+            <p style="color: var(--text-secondary);">
+                Detalhes completos da denúncia
+            </p>
         </div>
     </div>
+</section>
 
-    <div class="row">
-        <!-- Informações da Denúncia -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-info-circle"></i> Informações da Denúncia</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr>
-                            <td><strong>ID:</strong></td>
-                            <td><code>#{{ denuncia.id }}</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Denunciado:</strong></td>
-                            <td>
-                                {% if denuncia.denunciado_username %}
-                                    <strong>{{ denuncia.denunciado_username }}</strong>
-                                    <br>
-                                    <code>{{ denuncia.id_denunciado }}</code>
-                                {% else %}
-                                    <code>{{ denuncia.id_denunciado }}</code>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Status:</strong></td>
-                            <td>
-                                <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %} fs-6">
-                                    {{ denuncia.status }}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data de Criação:</strong></td>
-                            <td>{{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}</td>
-                        </tr>
-                        {% if denuncia.data_resolucao %}
-                        <tr>
-                            <td><strong>Data de Resolução:</strong></td>
-                            <td>{{ denuncia.data_resolucao.strftime('%d/%m/%Y %H:%M') }}</td>
-                        </tr>
-                        {% endif %}
-                        {% if denuncia.punicao_aplicada %}
-                        <tr>
-                            <td><strong>Punição:</strong></td>
-                            <td>
-                                <span class="badge bg-danger">{{ denuncia.punicao_aplicada }}</span>
-                            </td>
-                        </tr>
-                        {% endif %}
-                    </table>
-                </div>
-            </div>
+<div class="container">
+    <!-- Navigation -->
+    <div class="navigation-modern">
+        <a href="{{ url_for('admin_denuncias') }}" class="btn btn-custom-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar à Lista de Denúncias
+        </a>
+    </div>
 
-            <!-- Motivo da Denúncia -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5><i class="bi bi-chat-text"></i> Motivo da Denúncia</h5>
+    <!-- Report Details Grid -->
+    <div class="report-details-grid">
+        <!-- Report Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="bi bi-info-circle"></i>
+                Informações da Denúncia
+            </h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-hash"></i>
+                        ID da Denúncia
+                    </span>
+                    <span class="info-value">#{{ denuncia.id }}</span>
                 </div>
-                <div class="card-body">
-                    <p class="mb-0">{{ denuncia.motivo }}</p>
+
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-person-exclamation"></i>
+                        Denunciado
+                    </span>
+                    <span class="info-value">
+                        {% if denuncia.denunciado_username %}
+                            {{ denuncia.denunciado_username }}<br>
+                            <small style="color: var(--text-muted);">{{ denuncia.id_denunciado }}</small>
+                        {% else %}
+                            {{ denuncia.id_denunciado }}
+                        {% endif %}
+                    </span>
                 </div>
+
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-check-circle"></i>
+                        Status
+                    </span>
+                    <span class="info-value">
+                        <span class="status-badge status-{{ denuncia.status }}">
+                            {{ denuncia.status }}
+                        </span>
+                    </span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-calendar"></i>
+                        Data de Criação
+                    </span>
+                    <span class="info-value">{{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}</span>
+                </div>
+
+                {% if denuncia.data_resolucao %}
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-calendar-check"></i>
+                        Data de Resolução
+                    </span>
+                    <span class="info-value">{{ denuncia.data_resolucao.strftime('%d/%m/%Y %H:%M') }}</span>
+                </div>
+                {% endif %}
+
+                {% if denuncia.punicao_aplicada %}
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Punição Aplicada
+                    </span>
+                    <span class="info-value" style="color: var(--accent-orange);">{{ denuncia.punicao_aplicada }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Votos dos Guardiões -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-hand-thumbs-up"></i> Votos dos Guardiões ({{ votos|length }})</h5>
+        <!-- Reason -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="bi bi-chat-quote"></i>
+                Motivo da Denúncia
+            </h4>
+            <div class="reason-card">
+                <div class="reason-title">
+                    <i class="bi bi-chat-text"></i>
+                    Descrição do Incidente
                 </div>
-                <div class="card-body">
-                    {% if votos %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Guardião</th>
-                                        <th>Voto</th>
-                                        <th>Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for voto in votos %}
-                                    <tr>
-                                        <td>
-                                            {% if voto.guardiao_username %}
-                                                <strong>{{ voto.guardiao_username }}</strong>
-                                                <br>
-                                                <code>{{ voto.id_guardiao }}</code>
-                                            {% else %}
-                                                <code>{{ voto.id_guardiao }}</code>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if voto.voto == 'culpado' %}danger{% elif voto.voto == 'inocente' %}success{% else %}warning{% endif %}">
-                                                {{ voto.voto }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhum voto encontrado.</p>
-                    {% endif %}
+                <div class="reason-text">
+                    {{ denuncia.motivo }}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Mensagens Capturadas -->
+    <!-- Votes Section -->
+    <div class="votes-section">
+        <h3 class="votes-title">
+            <i class="bi bi-hand-thumbs-up"></i>
+            Votos dos Guardiões
+        </h3>
+
+        <!-- Votes Summary -->
+        <div class="votes-summary">
+            <div class="vote-summary-card">
+                <span class="vote-count">{{ votos|selectattr('voto', 'equalto', 'OK!')|list|length }}</span>
+                <span class="vote-label">OK!</span>
+            </div>
+            <div class="vote-summary-card">
+                <span class="vote-count">{{ votos|selectattr('voto', 'equalto', 'Intimidou')|list|length }}</span>
+                <span class="vote-label">Intimidou</span>
+            </div>
+            <div class="vote-summary-card">
+                <span class="vote-count">{{ votos|selectattr('voto', 'equalto', 'Grave')|list|length }}</span>
+                <span class="vote-label">Grave</span>
+            </div>
+            <div class="vote-summary-card">
+                <span class="vote-count">{{ votos|length }}</span>
+                <span class="vote-label">Total</span>
+            </div>
+        </div>
+
+        <!-- Votes List -->
+        {% if votos %}
+            <div class="votes-list">
+                {% for voto in votos %}
+                <div class="vote-item">
+                    <div class="vote-avatar">
+                        {{ (voto.guardiao_username or voto.id_guardiao)[0]|upper }}
+                    </div>
+                    <div class="vote-info">
+                        <h6>{{ voto.guardiao_username or 'Guardião #' + voto.id_guardiao|string }}</h6>
+                        <small>ID: {{ voto.id_guardiao }}</small>
+                    </div>
+                    <span class="vote-badge
+                        {% if voto.voto == 'OK!' %}ok
+                        {% elif voto.voto == 'Intimidou' %}intimidou
+                        {% elif voto.voto == 'Grave' %}grave
+                        {% endif %}">
+                        {{ voto.voto }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                <i class="bi bi-info-circle" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>Nenhum voto registrado para esta denúncia.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Messages Section -->
     {% if mensagens %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-chat-dots"></i> Mensagens Capturadas ({{ mensagens|length }})</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>Mensagem</th>
-                                    <th>Data</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for msg in mensagens %}
-                                <tr {% if msg.id_usuario == denuncia.id_denunciado %}class="table-danger"{% endif %}>
-                                    <td>
-                                        {% if msg.id_usuario == denuncia.id_denunciado %}
-                                            <strong class="text-danger">🔴 Denunciado</strong>
-                                        {% else %}
-                                            Usuário {{ loop.index }}
-                                        {% endif %}
-                                        <br>
-                                        <code>{{ msg.id_usuario }}</code>
-                                    </td>
-                                    <td>
-                                        <div style="max-width: 400px;">
-                                            {{ msg.conteudo_mensagem }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            {{ msg.timestamp_mensagem.strftime('%d/%m/%Y %H:%M') if msg.timestamp_mensagem else 'N/A' }}
-                                        </small>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+    <div class="messages-section">
+        <h3 class="messages-title">
+            <i class="bi bi-chat-dots"></i>
+            Mensagens Capturadas
+        </h3>
+        <div class="messages-list">
+            {% for msg in mensagens %}
+            <div class="message-item {% if msg.id_autor == denuncia.id_denunciado %}denunciado{% endif %}">
+                <div class="message-header">
+                    <div class="message-avatar">
+                        {{ (msg.id_autor|string)[0]|upper }}
+                    </div>
+                    <div class="message-info">
+                        <h6>
+                            {% if msg.id_autor == denuncia.id_denunciado %}
+                                <span style="color: var(--accent-orange);">🔴 Denunciado</span>
+                            {% else %}
+                                Usuário {{ loop.index }}
+                            {% endif %}
+                        </h6>
+                        <small>ID: {{ msg.id_autor }}</small>
                     </div>
                 </div>
+                <div class="message-content">{{ msg.conteudo }}</div>
+                <div class="message-timestamp">
+                    {{ msg.timestamp_mensagem.strftime('%d/%m/%Y %H:%M:%S') if msg.timestamp_mensagem else 'N/A' }}
+                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
     {% endif %}

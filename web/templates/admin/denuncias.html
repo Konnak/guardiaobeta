@@ -2,156 +2,466 @@
 
 {% block title %}Denúncias - Painel Administrativo{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Admin Reports Modern Styling */
+    .hero-reports {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 40px 0 30px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-reports::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-reports-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-reports-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .report-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .report-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-teal), var(--primary-gold));
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .report-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .report-id {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .report-status {
+        padding: 0.25rem 1rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pendente { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+    .status-resolvida { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+    .status-dispensada { background: linear-gradient(135deg, #95a5a6, #bdc3c7); color: #2c3e50; }
+
+    .report-user {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--dark-card);
+        border-radius: 12px;
+    }
+
+    .user-avatar-report {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .user-info-report h6 {
+        color: var(--text-primary);
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .user-info-report small {
+        color: var(--text-secondary);
+    }
+
+    .report-content {
+        margin-bottom: 1rem;
+    }
+
+    .report-reason {
+        background: var(--dark-card);
+        padding: 1rem;
+        border-radius: 12px;
+        border-left: 4px solid var(--primary-gold);
+    }
+
+    .report-reason-title {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .report-reason-text {
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .report-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--dark-card);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .report-date {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .report-server {
+        color: var(--primary-teal-light);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .report-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .action-btn-report {
+        padding: 0.5rem;
+        border: 1px solid var(--glass-border);
+        background: var(--dark-card);
+        color: var(--text-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+    }
+
+    .action-btn-report:hover {
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
+        transform: translateY(-2px);
+    }
+
+    .filters-section-reports {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-title-reports {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-form-reports {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .pagination-modern-reports {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .page-btn-reports {
+        padding: 0.5rem 1rem;
+        background: var(--dark-card);
+        border: 1px solid var(--glass-border);
+        color: var(--text-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .page-btn-reports:hover {
+        background: var(--primary-teal);
+        border-color: var(--primary-gold);
+        color: var(--text-primary);
+    }
+
+    .page-btn-reports.active {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border-color: var(--primary-gold);
+    }
+
+    .empty-state-reports {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-icon-reports {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-reports-title {
+            font-size: 1.8rem;
+        }
+
+        .reports-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-form-reports {
+            grid-template-columns: 1fr;
+        }
+
+        .report-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="bi bi-flag"></i> Gerenciar Denúncias</h1>
-                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar ao Painel
+<!-- Hero Section -->
+<section class="hero-reports">
+    <div class="container">
+        <div class="hero-reports-content">
+            <h1 class="hero-reports-title">
+                <i class="bi bi-flag-fill"></i>
+                Gerenciar Denúncias
+            </h1>
+            <p style="color: var(--text-secondary);">
+                {{ total_denuncias }} denúncias registradas no sistema
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Navigation -->
+    <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1rem; margin-bottom: 2rem; text-align: center;">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-custom-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section-reports">
+        <h3 class="filters-title-reports">
+            <i class="bi bi-funnel"></i>
+            Filtros e Busca
+        </h3>
+        <form method="GET" class="filter-form-reports">
+            <div>
+                <label for="status" class="form-label" style="color: var(--text-primary); font-weight: 500;">Status</label>
+                <select class="form-select" id="status" name="status" style="background: var(--dark-card); border-color: var(--glass-border); color: var(--text-primary);">
+                    <option value="">Todos os Status</option>
+                    <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="resolvida" {% if status_filter == 'resolvida' %}selected{% endif %}>Resolvida</option>
+                    <option value="dispensada" {% if status_filter == 'dispensada' %}selected{% endif %}>Dispensada</option>
+                </select>
+            </div>
+            <div>
+                <label for="search" class="form-label" style="color: var(--text-primary); font-weight: 500;">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="ID ou motivo da denúncia"
+                       style="background: var(--dark-card); border-color: var(--glass-border); color: var(--text-primary);">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-custom-primary">
+                    <i class="bi bi-search me-2"></i>Filtrar
+                </button>
+                <a href="{{ url_for('admin_denuncias') }}" class="btn btn-custom-secondary" style="margin-left: 0.5rem;">
+                    <i class="bi bi-x me-2"></i>Limpar
                 </a>
             </div>
-        </div>
+        </form>
     </div>
 
-    <!-- Filtros -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="GET" class="row g-3">
-                        <div class="col-md-4">
-                            <label for="status" class="form-label">Filtrar por Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="">Todos os Status</option>
-                                <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
-                                <option value="resolvida" {% if status_filter == 'resolvida' %}selected{% endif %}>Resolvida</option>
-                                <option value="dispensada" {% if status_filter == 'dispensada' %}selected{% endif %}>Dispensada</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-funnel"></i> Filtrar
-                            </button>
-                            <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-secondary ms-2">
-                                <i class="bi bi-x"></i> Limpar
-                            </a>
-                        </div>
-                    </form>
+    <!-- Reports Grid -->
+    {% if denuncias %}
+        <div class="reports-grid">
+            {% for denuncia in denuncias %}
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-id">
+                        <i class="bi bi-hash"></i>
+                        #{{ denuncia.id }}
+                    </div>
+                    <span class="report-status status-{{ denuncia.status }}">
+                        {{ denuncia.status }}
+                    </span>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Lista de Denúncias ({{ total_denuncias }} total)</h5>
-                </div>
-                <div class="card-body">
-                    {% if denuncias %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Denunciado</th>
-                                        <th>Motivo</th>
-                                        <th>Status</th>
-                                        <th>Data de Criação</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for denuncia in denuncias %}
-                                    <tr>
-                                        <td>
-                                            <strong>#{{ denuncia.id }}</strong>
-                                        </td>
-                                        <td>
-                                            {% if denuncia.denunciado_username %}
-                                                <strong>{{ denuncia.denunciado_username }}</strong>
-                                                <br>
-                                                <code>{{ denuncia.id_denunciado }}</code>
-                                            {% else %}
-                                                <code>{{ denuncia.id_denunciado }}</code>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div style="max-width: 300px;">
-                                                <p class="mb-0">{{ denuncia.motivo[:100] }}{% if denuncia.motivo|length > 100 %}...{% endif %}</p>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %} fs-6">
-                                                {{ denuncia.status }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" 
-                                               class="btn btn-outline-primary btn-sm" title="Ver Detalhes">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Paginação -->
-                        {% if total_pages > 1 %}
-                        <nav aria-label="Navegação de denúncias">
-                            <ul class="pagination justify-content-center">
-                                {% if page > 1 %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin_denuncias', page=page-1, status=status_filter) }}">Anterior</a>
-                                    </li>
-                                {% endif %}
-                                
-                                {% for p in range(1, total_pages + 1) %}
-                                    {% if p == page %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ p }}</span>
-                                        </li>
-                                    {% else %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ url_for('admin_denuncias', page=p, status=status_filter) }}">{{ p }}</a>
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                {% if page < total_pages %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin_denuncias', page=page+1, status=status_filter) }}">Próximo</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
+                <div class="report-user">
+                    <div class="user-avatar-report">
+                        <i class="bi bi-person-exclamation"></i>
+                    </div>
+                    <div class="user-info-report">
+                        <h6>Denunciado</h6>
+                        {% if denuncia.denunciado_username %}
+                            <div>{{ denuncia.denunciado_username }}</div>
                         {% endif %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-flag text-muted" style="font-size: 3rem;"></i>
-                            <h5 class="text-muted mt-3">Nenhuma denúncia encontrada</h5>
-                            <p class="text-muted">
-                                {% if status_filter %}
-                                    Não há denúncias com status "{{ status_filter }}".
-                                {% else %}
-                                    Não há denúncias cadastradas no sistema.
-                                {% endif %}
-                            </p>
+                        <small>ID: {{ denuncia.id_denunciado }}</small>
+                    </div>
+                </div>
+
+                <div class="report-content">
+                    <div class="report-reason">
+                        <div class="report-reason-title">
+                            <i class="bi bi-chat-quote"></i>
+                            Motivo da Denúncia
                         </div>
-                    {% endif %}
+                        <div class="report-reason-text">
+                            {{ denuncia.motivo[:150] }}{% if denuncia.motivo|length > 150 %}...{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-meta">
+                    <div class="report-date">
+                        <i class="bi bi-calendar me-1"></i>
+                        {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
+                    </div>
+                    <div class="report-server">
+                        <i class="bi bi-server me-1"></i>
+                        Servidor #{{ denuncia.id_servidor }}
+                    </div>
+                </div>
+
+                <div class="report-actions">
+                    <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}"
+                       class="action-btn-report" title="Ver Detalhes">
+                        <i class="bi bi-eye"></i>
+                    </a>
                 </div>
             </div>
+            {% endfor %}
         </div>
-    </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination-modern-reports">
+            {% if page > 1 %}
+                <a class="page-btn-reports" href="{{ url_for('admin_denuncias', page=page-1, status=status_filter) }}">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="page-btn-reports active">{{ p }}</span>
+                {% else %}
+                    <a class="page-btn-reports" href="{{ url_for('admin_denuncias', page=p, status=status_filter) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+                <a class="page-btn-reports" href="{{ url_for('admin_denuncias', page=page+1, status=status_filter) }}">
+                    Próximo <i class="bi bi-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state-reports">
+            <div class="empty-icon-reports">
+                <i class="bi bi-flag"></i>
+            </div>
+            <h4>Nenhuma denúncia encontrada</h4>
+            <p>
+                {% if status_filter %}
+                    Não há denúncias com status "{{ status_filter }}".
+                {% else %}
+                    Não há denúncias cadastradas no sistema ou que correspondam aos filtros aplicados.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

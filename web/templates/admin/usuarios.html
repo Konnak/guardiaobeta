@@ -2,135 +2,429 @@
 
 {% block title %}Usuários - Painel Administrativo{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Admin Users Modern Styling */
+    .hero-users {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 40px 0 30px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-users::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-users-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-users-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .user-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .user-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-teal), var(--primary-gold));
+    }
+
+    .user-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .user-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--dark-bg);
+        font-weight: 600;
+        border: 2px solid var(--glass-border);
+    }
+
+    .user-info h5 {
+        color: var(--text-primary);
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .user-info small {
+        color: var(--text-secondary);
+    }
+
+    .user-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .detail-item {
+        background: var(--dark-card);
+        padding: 0.75rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .detail-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .user-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .badge-category {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-service {
+        background: var(--primary-teal);
+        color: var(--text-primary);
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .action-btn {
+        padding: 0.5rem;
+        border: 1px solid var(--glass-border);
+        background: var(--dark-card);
+        color: var(--text-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+    }
+
+    .action-btn:hover {
+        border-color: var(--primary-gold);
+        color: var(--primary-gold);
+        transform: translateY(-2px);
+    }
+
+    .filters-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .pagination-modern {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .page-btn {
+        padding: 0.5rem 1rem;
+        background: var(--dark-card);
+        border: 1px solid var(--glass-border);
+        color: var(--text-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .page-btn:hover {
+        background: var(--primary-teal);
+        border-color: var(--primary-gold);
+        color: var(--text-primary);
+    }
+
+    .page-btn.active {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border-color: var(--primary-gold);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-users-title {
+            font-size: 1.8rem;
+        }
+
+        .users-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .user-details {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-form {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="bi bi-people"></i> Gerenciar Usuários</h1>
-                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar ao Painel
+<!-- Hero Section -->
+<section class="hero-users">
+    <div class="container">
+        <div class="hero-users-content">
+            <h1 class="hero-users-title">
+                <i class="bi bi-people-fill"></i>
+                Gerenciar Usuários
+            </h1>
+            <p style="color: var(--text-secondary);">
+                {{ total_usuarios }} usuários registrados no sistema
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Navigation -->
+    <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1rem; margin-bottom: 2rem; text-align: center;">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-custom-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <h3 class="filters-title">
+            <i class="bi bi-funnel"></i>
+            Filtros e Busca
+        </h3>
+        <form method="GET" class="filter-form">
+            <div>
+                <label for="categoria" class="form-label" style="color: var(--text-primary); font-weight: 500;">Categoria</label>
+                <select class="form-select" id="categoria" name="categoria" style="background: var(--dark-card); border-color: var(--glass-border); color: var(--text-primary);">
+                    <option value="">Todas as Categorias</option>
+                    <option value="Usuário">Usuário</option>
+                    <option value="Guardião">Guardião</option>
+                    <option value="Administrador">Administrador</option>
+                </select>
+            </div>
+            <div>
+                <label for="search" class="form-label" style="color: var(--text-primary); font-weight: 500;">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="Nome ou ID do usuário"
+                       style="background: var(--dark-card); border-color: var(--glass-border); color: var(--text-primary);">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-custom-primary">
+                    <i class="bi bi-search me-2"></i>Filtrar
+                </button>
+                <a href="{{ url_for('admin_usuarios') }}" class="btn btn-custom-secondary" style="margin-left: 0.5rem;">
+                    <i class="bi bi-x me-2"></i>Limpar
                 </a>
             </div>
-        </div>
+        </form>
     </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Lista de Usuários ({{ total_usuarios }} total)</h5>
+    <!-- Users Grid -->
+    {% if usuarios %}
+        <div class="users-grid">
+            {% for user in usuarios %}
+            <div class="user-card">
+                <div class="user-header">
+                    <div class="user-avatar">
+                        {{ (user.display_name or user.username)[0]|upper }}
+                    </div>
+                    <div class="user-info">
+                        <h5>{{ user.display_name or user.username }}</h5>
+                        <small>@{{ user.username }}</small>
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if usuarios %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID Discord</th>
-                                        <th>Usuário</th>
-                                        <th>Nome Completo</th>
-                                        <th>Categoria</th>
-                                        <th>Pontos</th>
-                                        <th>Experiência</th>
-                                        <th>Em Serviço</th>
-                                        <th>Registro</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in usuarios %}
-                                    <tr>
-                                        <td>
-                                            <code>{{ user.id_discord }}</code>
-                                        </td>
-                                        <td>
-                                            <strong>{{ user.display_name or user.username }}</strong>
-                                            <br>
-                                            <small class="text-muted">@{{ user.username }}</small>
-                                        </td>
-                                        <td>{{ user.nome_completo or 'N/A' }}</td>
-                                        <td>
-                                            <span class="badge bg-{% if user.categoria == 'Guardião' %}success{% elif user.categoria == 'Administrador' %}danger{% else %}secondary{% endif %}">
-                                                {{ user.categoria }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-primary">{{ user.pontos or 0 }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info">{{ user.experiencia or 0 }}</span>
-                                        </td>
-                                        <td>
-                                            {% if user.em_servico %}
-                                                <span class="badge bg-success">Sim</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Não</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ url_for('admin_usuario_detalhes', user_id=user.id_discord) }}" 
-                                                   class="btn btn-outline-primary" title="Ver Detalhes">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <a href="{{ url_for('admin_usuario_editar', user_id=user.id_discord) }}" 
-                                                   class="btn btn-outline-warning" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
 
-                        <!-- Paginação -->
-                        {% if total_pages > 1 %}
-                        <nav aria-label="Navegação de usuários">
-                            <ul class="pagination justify-content-center">
-                                {% if page > 1 %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin_usuarios', page=page-1) }}">Anterior</a>
-                                    </li>
-                                {% endif %}
-                                
-                                {% for p in range(1, total_pages + 1) %}
-                                    {% if p == page %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ p }}</span>
-                                        </li>
-                                    {% else %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ url_for('admin_usuarios', page=p) }}">{{ p }}</a>
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                {% if page < total_pages %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin_usuarios', page=page+1) }}">Próximo</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                        {% endif %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
-                            <h5 class="text-muted mt-3">Nenhum usuário encontrado</h5>
-                            <p class="text-muted">Não há usuários cadastrados no sistema.</p>
+                <div class="user-details">
+                    <div class="detail-item">
+                        <div class="detail-label">ID Discord</div>
+                        <div class="detail-value" style="font-family: monospace; font-size: 0.8rem;">
+                            {{ user.id_discord }}
                         </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Nome Completo</div>
+                        <div class="detail-value">{{ user.nome_completo or 'N/A' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Pontos</div>
+                        <div class="detail-value">{{ user.pontos or 0 }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Experiência</div>
+                        <div class="detail-value">{{ user.experiencia or 0 }}</div>
+                    </div>
+                </div>
+
+                <div class="user-badges">
+                    <span class="badge-category">{{ user.categoria }}</span>
+                    {% if user.em_servico %}
+                        <span class="badge-service">Em Serviço</span>
                     {% endif %}
                 </div>
+
+                <div class="user-actions">
+                    <a href="{{ url_for('admin_usuario_detalhes', user_id=user.id_discord) }}"
+                       class="action-btn" title="Ver Detalhes">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{{ url_for('admin_usuario_editar', user_id=user.id_discord) }}"
+                       class="action-btn" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
             </div>
+            {% endfor %}
         </div>
-    </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination-modern">
+            {% if page > 1 %}
+                <a class="page-btn" href="{{ url_for('admin_usuarios', page=page-1) }}">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="page-btn active">{{ p }}</span>
+                {% else %}
+                    <a class="page-btn" href="{{ url_for('admin_usuarios', page=p) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+                <a class="page-btn" href="{{ url_for('admin_usuarios', page=page+1) }}">
+                    Próximo <i class="bi bi-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h4>Nenhum usuário encontrado</h4>
+            <p>Não há usuários cadastrados no sistema ou que correspondam aos filtros aplicados.</p>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -2,183 +2,527 @@
 
 {% block title %}Painel Administrativo - Sistema Guardião BETA{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Admin Dashboard Modern Styling */
+    .hero-admin {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 60px 0 40px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-admin::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-admin-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-admin-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+
+    .stats-grid-modern {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-modern {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-teal), var(--primary-gold));
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: var(--dark-bg);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .content-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .content-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .content-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .content-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .content-action {
+        color: var(--primary-gold);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .content-action:hover {
+        color: var(--primary-gold-light);
+        transform: translateX(3px);
+    }
+
+    .activity-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+        border-radius: 8px;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.user { background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-light)); }
+    .activity-icon.report { background: linear-gradient(135deg, var(--accent-orange), #ff8c42); }
+    .activity-icon.vote { background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark)); }
+
+    .activity-content h6 {
+        color: var(--text-primary);
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+    }
+
+    .activity-content p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    .quick-actions {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+    }
+
+    .quick-actions-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .action-button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--dark-card);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .action-button:hover {
+        background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-light));
+        border-color: var(--primary-gold);
+        color: var(--text-primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--dark-bg);
+        flex-shrink: 0;
+    }
+
+    .badge-modern {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border: none;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-admin-title {
+            font-size: 2rem;
+        }
+
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid-modern {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="bi bi-shield-check"></i> Painel Administrativo</h1>
-                <div class="btn-group">
-                    <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-primary">
-                        <i class="bi bi-people"></i> Usuários
-                    </a>
-                    <a href="{{ url_for('admin_denuncias') }}" class="btn btn-outline-danger">
-                        <i class="bi bi-flag"></i> Denúncias
-                    </a>
-                </div>
+<!-- Hero Section -->
+<section class="hero-admin">
+    <div class="container">
+        <div class="hero-admin-content">
+            <h1 class="hero-admin-title">
+                <i class="bi bi-shield-check"></i>
+                Painel Administrativo
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">
+                Controle total do Sistema Guardião BETA
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Navigation Bar -->
+    <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-custom-primary">
+                <i class="bi bi-people-fill me-2"></i>Usuários
+            </a>
+            <a href="{{ url_for('admin_denuncias') }}" class="btn btn-custom-primary">
+                <i class="bi bi-flag-fill me-2"></i>Denúncias
+            </a>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-custom-secondary">
+                <i class="bi bi-graph-up me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid-modern">
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-value">{{ stats.total_usuarios or 0 }}</div>
+            <div class="stat-label">Total de Usuários</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="stat-value">{{ stats.total_guardioes or 0 }}</div>
+            <div class="stat-label">Guardiões Ativos</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-flag-fill"></i>
+            </div>
+            <div class="stat-value">{{ stats.total_denuncias or 0 }}</div>
+            <div class="stat-label">Total de Denúncias</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-value">{{ stats.denuncias_pendentes or 0 }}</div>
+            <div class="stat-label">Pendentes</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-value">{{ stats.denuncias_resolvidas or 0 }}</div>
+            <div class="stat-label">Resolvidas</div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-icon">
+                <i class="bi bi-hand-thumbs-up-fill"></i>
+            </div>
+            <div class="stat-value">{{ stats.total_votos or 0 }}</div>
+            <div class="stat-label">Total de Votos</div>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+        <!-- Recent Users -->
+        <div class="content-card">
+            <div class="content-header">
+                <h5 class="content-title">
+                    <i class="bi bi-people-fill"></i>
+                    Usuários Recentes
+                </h5>
+                <a href="{{ url_for('admin_usuarios') }}" class="content-action">
+                    Ver Todos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="activity-list">
+                {% if recent_users %}
+                    {% for user in recent_users %}
+                    <div class="activity-item">
+                        <div class="activity-icon user">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>{{ user.display_name or user.username }}</h6>
+                            <p>
+                                <span class="badge-modern">{{ user.categoria }}</span>
+                            </p>
+                            <div class="activity-time">
+                                Registrado em {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <div class="activity-content" style="text-align: center; color: var(--text-muted);">
+                            <i class="bi bi-info-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Nenhum usuário recente</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="content-card">
+            <div class="content-header">
+                <h5 class="content-title">
+                    <i class="bi bi-flag-fill"></i>
+                    Denúncias Recentes
+                </h5>
+                <a href="{{ url_for('admin_denuncias') }}" class="content-action">
+                    Ver Todas <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="activity-list">
+                {% if recent_denuncias %}
+                    {% for denuncia in recent_denuncias %}
+                    <div class="activity-item">
+                        <div class="activity-icon report">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>Denúncia #{{ denuncia.id }}</h6>
+                            <p>Usuário: <code>{{ denuncia.id_denunciado }}</code></p>
+                            <div class="activity-time">
+                                {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <div class="activity-content" style="text-align: center; color: var(--text-muted);">
+                            <i class="bi bi-info-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Nenhuma denúncia recente</p>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Estatísticas Gerais -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card bg-primary text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.total_usuarios or 0 }}</h3>
-                    <p class="mb-0">Total Usuários</p>
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h3 class="quick-actions-title">
+            <i class="bi bi-lightning-charge"></i>
+            Ações Rápidas
+        </h3>
+        <div class="actions-grid">
+            <a href="{{ url_for('admin_usuarios') }}" class="action-button">
+                <div class="action-icon">
+                    <i class="bi bi-people-fill"></i>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.total_guardioes or 0 }}</h3>
-                    <p class="mb-0">Guardiões</p>
+                <div>
+                    <div style="font-weight: 600;">Gerenciar Usuários</div>
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Visualizar e editar usuários</div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-warning text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.total_denuncias or 0 }}</h3>
-                    <p class="mb-0">Total Denúncias</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-info text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.denuncias_pendentes or 0 }}</h3>
-                    <p class="mb-0">Pendentes</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-secondary text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.denuncias_resolvidas or 0 }}</h3>
-                    <p class="mb-0">Resolvidas</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-dark text-white">
-                <div class="card-body text-center">
-                    <h3>{{ stats.total_votos or 0 }}</h3>
-                    <p class="mb-0">Total Votos</p>
-                </div>
-            </div>
-        </div>
-    </div>
+            </a>
 
-    <div class="row">
-        <!-- Usuários Recentes -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-people"></i> Usuários Recentes</h5>
+            <a href="{{ url_for('admin_denuncias') }}" class="action-button">
+                <div class="action-icon">
+                    <i class="bi bi-flag-fill"></i>
                 </div>
-                <div class="card-body">
-                    {% if recent_users %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Usuário</th>
-                                        <th>Categoria</th>
-                                        <th>Registro</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in recent_users %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ url_for('admin_usuario_detalhes', user_id=user.id_discord) }}" class="text-decoration-none">
-                                                {{ user.display_name or user.username }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if user.categoria == 'Guardião' %}success{% elif user.categoria == 'Administrador' %}danger{% else %}secondary{% endif %}">
-                                                {{ user.categoria }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ user.data_criacao_registro.strftime('%d/%m/%Y') if user.data_criacao_registro else 'N/A' }}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center">
-                            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-sm btn-outline-primary">
-                                Ver Todos os Usuários
-                            </a>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhum usuário encontrado.</p>
-                    {% endif %}
+                <div>
+                    <div style="font-weight: 600;">Denúncias Pendentes</div>
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Revisar casos pendentes</div>
                 </div>
-            </div>
-        </div>
+            </a>
 
-        <!-- Denúncias Recentes -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-flag"></i> Denúncias Recentes</h5>
+            <a href="{{ url_for('admin_usuarios', categoria='Guardião') }}" class="action-button">
+                <div class="action-icon">
+                    <i class="bi bi-shield-check"></i>
                 </div>
-                <div class="card-body">
-                    {% if recent_denuncias %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Denunciado</th>
-                                        <th>Status</th>
-                                        <th>Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for denuncia in recent_denuncias %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" class="text-decoration-none">
-                                                #{{ denuncia.id }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <code>{{ denuncia.id_denunciado }}</code>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %}">
-                                                {{ denuncia.status }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y %H:%M') if denuncia.data_criacao else 'N/A' }}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center">
-                            <a href="{{ url_for('admin_denuncias') }}" class="btn btn-sm btn-outline-danger">
-                                Ver Todas as Denúncias
-                            </a>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhuma denúncia encontrada.</p>
-                    {% endif %}
+                <div>
+                    <div style="font-weight: 600;">Ver Guardiões</div>
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Lista de moderadores ativos</div>
                 </div>
-            </div>
+            </a>
+
+            <a href="{{ url_for('admin_denuncias', status='pendente') }}" class="action-button">
+                <div class="action-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Casos Urgentes</div>
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Denúncias pendentes</div>
+                </div>
+            </a>
         </div>
     </div>
 </div>

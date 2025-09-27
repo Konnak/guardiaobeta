@@ -2,240 +2,542 @@
 
 {% block title %}{{ usuario.display_name or usuario.username }} - Detalhes do Usuário{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Admin User Details Modern Styling */
+    .hero-user-details {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 40px 0 30px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-user-details::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-user-details-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-user-details-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .user-profile-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .user-profile-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-teal), var(--primary-gold));
+    }
+
+    .user-profile-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .user-profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--dark-bg);
+        font-weight: 600;
+        border: 3px solid var(--glass-border);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .user-profile-info h2 {
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+        font-weight: 700;
+    }
+
+    .user-profile-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .badge-user-category {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+        color: var(--dark-bg);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-user-service {
+        background: var(--primary-teal);
+        color: var(--text-primary);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .user-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .details-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    .details-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-gold);
+    }
+
+    .details-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .details-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--dark-card);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .detail-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+    }
+
+    .detail-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .activity-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .activity-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .activity-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .activity-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--glass-border);
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background: rgba(255, 184, 0, 0.05);
+        border-radius: 8px;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.denuncia { background: linear-gradient(135deg, var(--accent-orange), #ff8c42); }
+    .activity-icon.voto { background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark)); }
+
+    .activity-content h6 {
+        color: var(--text-primary);
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .activity-content p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    .activity-time {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .btn-modern {
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-user-details-title {
+            font-size: 1.8rem;
+        }
+
+        .user-profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .user-details-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .activity-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="bi bi-person"></i> Detalhes do Usuário</h1>
-                <div class="btn-group">
-                    <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Voltar à Lista
-                    </a>
-                    <a href="{{ url_for('admin_usuario_editar', user_id=usuario.id_discord) }}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Editar
-                    </a>
-                </div>
-            </div>
+<!-- Hero Section -->
+<section class="hero-user-details">
+    <div class="container">
+        <div class="hero-user-details-content">
+            <h1 class="hero-user-details-title">
+                <i class="bi bi-person-circle"></i>
+                {{ usuario.display_name or usuario.username }}
+            </h1>
+            <p style="color: var(--text-secondary);">
+                Detalhes completos do usuário
+            </p>
         </div>
     </div>
+</section>
 
-    <div class="row">
-        <!-- Informações do Usuário -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-info-circle"></i> Informações Pessoais</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr>
-                            <td><strong>ID Discord:</strong></td>
-                            <td><code>{{ usuario.id_discord }}</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Username:</strong></td>
-                            <td>{{ usuario.username }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Display Name:</strong></td>
-                            <td>{{ usuario.display_name or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Nome Completo:</strong></td>
-                            <td>{{ usuario.nome_completo or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Idade:</strong></td>
-                            <td>{{ usuario.idade or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Email:</strong></td>
-                            <td>{{ usuario.email or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Telefone:</strong></td>
-                            <td>{{ usuario.telefone or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data de Registro:</strong></td>
-                            <td>{{ usuario.data_criacao_registro.strftime('%d/%m/%Y %H:%M') if usuario.data_criacao_registro else 'N/A' }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Estatísticas do Usuário -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-graph-up"></i> Estatísticas</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr>
-                            <td><strong>Categoria:</strong></td>
-                            <td>
-                                <span class="badge bg-{% if usuario.categoria == 'Guardião' %}success{% elif usuario.categoria == 'Administrador' %}danger{% else %}secondary{% endif %} fs-6">
-                                    {{ usuario.categoria }}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Pontos:</strong></td>
-                            <td>
-                                <span class="badge bg-primary fs-6">{{ usuario.pontos or 0 }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Experiência:</strong></td>
-                            <td>
-                                <span class="badge bg-info fs-6">{{ usuario.experiencia or 0 }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Em Serviço:</strong></td>
-                            <td>
-                                {% if usuario.em_servico %}
-                                    <span class="badge bg-success fs-6">Sim</span>
-                                {% else %}
-                                    <span class="badge bg-secondary fs-6">Não</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Último Turno:</strong></td>
-                            <td>
-                                {% if usuario.ultimo_turno_inicio %}
-                                    {{ usuario.ultimo_turno_inicio.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    <span class="text-muted">Nunca</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Cooldown Prova:</strong></td>
-                            <td>
-                                {% if usuario.cooldown_prova %}
-                                    {{ usuario.cooldown_prova.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    <span class="text-muted">Disponível</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Cooldown Dispensa:</strong></td>
-                            <td>
-                                {% if usuario.cooldown_dispensa %}
-                                    {{ usuario.cooldown_dispensa.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    <span class="text-muted">Disponível</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="container">
+    <!-- Navigation -->
+    <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1rem; margin-bottom: 2rem; text-align: center;">
+        <a href="{{ url_for('admin_usuarios') }}" class="btn btn-custom-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar à Lista de Usuários
+        </a>
     </div>
 
-    <div class="row mt-4">
-        <!-- Denúncias do Usuário -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-flag"></i> Denúncias ({{ denuncias|length }})</h5>
-                </div>
-                <div class="card-body">
-                    {% if denuncias %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Motivo</th>
-                                        <th>Status</th>
-                                        <th>Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for denuncia in denuncias %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=denuncia.id) }}" class="text-decoration-none">
-                                                #{{ denuncia.id }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <small>{{ denuncia.motivo[:50] }}{% if denuncia.motivo|length > 50 %}...{% endif %}</small>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if denuncia.status == 'pendente' %}warning{% elif denuncia.status == 'resolvida' %}success{% elif denuncia.status == 'dispensada' %}secondary{% else %}info{% endif %}">
-                                                {{ denuncia.status }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ denuncia.data_criacao.strftime('%d/%m/%Y') if denuncia.data_criacao else 'N/A' }}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhuma denúncia encontrada.</p>
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{{ url_for('admin_usuario_editar', user_id=usuario.id_discord) }}" class="btn-modern" style="background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark)); color: var(--dark-bg);">
+            <i class="bi bi-pencil"></i>
+            Editar Usuário
+        </a>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="user-profile-card">
+        <div class="user-profile-header">
+            <div class="user-profile-avatar">
+                {{ (usuario.display_name or usuario.username)[0]|upper }}
+            </div>
+            <div class="user-profile-info">
+                <h2>{{ usuario.display_name or usuario.username }}</h2>
+                <div class="user-profile-badges">
+                    <span class="badge-user-category">{{ usuario.categoria }}</span>
+                    {% if usuario.em_servico %}
+                        <span class="badge-user-service">Em Serviço</span>
                     {% endif %}
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Votos do Usuário (se for guardião) -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="bi bi-hand-thumbs-up"></i> Votos ({{ votos|length }})</h5>
+    <!-- User Details Grid -->
+    <div class="user-details-grid">
+        <!-- Personal Information -->
+        <div class="details-card">
+            <h4 class="details-title">
+                <i class="bi bi-info-circle"></i>
+                Informações Pessoais
+            </h4>
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="detail-label">ID Discord</span>
+                    <span class="detail-value">{{ usuario.id_discord }}</span>
                 </div>
-                <div class="card-body">
-                    {% if votos %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Denúncia</th>
-                                        <th>Voto</th>
-                                        <th>Data</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for voto in votos %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ url_for('admin_denuncia_detalhes', denuncia_id=voto.id) }}" class="text-decoration-none">
-                                                #{{ voto.id }}
-                                            </a>
-                                            <br>
-                                            <small class="text-muted">{{ voto.motivo[:30] }}{% if voto.motivo|length > 30 %}...{% endif %}</small>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{% if voto.voto == 'culpado' %}danger{% elif voto.voto == 'inocente' %}success{% else %}warning{% endif %}">
-                                                {{ voto.voto }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}
-                                            </small>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                <div class="detail-item">
+                    <span class="detail-label">Username</span>
+                    <span class="detail-value">@{{ usuario.username }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Display Name</span>
+                    <span class="detail-value">{{ usuario.display_name or 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Nome Completo</span>
+                    <span class="detail-value">{{ usuario.nome_completo or 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Idade</span>
+                    <span class="detail-value">{{ usuario.idade or 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">{{ usuario.email or 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Telefone</span>
+                    <span class="detail-value">{{ usuario.telefone or 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Data de Registro</span>
+                    <span class="detail-value">{{ usuario.data_criacao_registro.strftime('%d/%m/%Y %H:%M') if usuario.data_criacao_registro else 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="details-card">
+            <h4 class="details-title">
+                <i class="bi bi-graph-up"></i>
+                Estatísticas
+            </h4>
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="detail-label">Categoria</span>
+                    <span class="detail-value">
+                        <span class="badge-user-category">{{ usuario.categoria }}</span>
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Pontos</span>
+                    <span class="detail-value">{{ usuario.pontos or 0 }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Experiência</span>
+                    <span class="detail-value">{{ usuario.experiencia or 0 }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Em Serviço</span>
+                    <span class="detail-value">
+                        {% if usuario.em_servico %}
+                            <span style="color: var(--primary-gold);">Sim</span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">Não</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Último Turno</span>
+                    <span class="detail-value">
+                        {% if usuario.ultimo_turno_inicio %}
+                            {{ usuario.ultimo_turno_inicio.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                            <span style="color: var(--text-muted);">Nunca</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cooldown Prova</span>
+                    <span class="detail-value">
+                        {% if usuario.cooldown_prova %}
+                            {{ usuario.cooldown_prova.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                            <span style="color: var(--primary-gold);">Disponível</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cooldown Dispensa</span>
+                    <span class="detail-value">
+                        {% if usuario.cooldown_dispensa %}
+                            {{ usuario.cooldown_dispensa.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                            <span style="color: var(--primary-gold);">Disponível</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Section -->
+    <div class="activity-section">
+        <h3 class="activity-title">
+            <i class="bi bi-activity"></i>
+            Atividade do Usuário
+        </h3>
+        <div class="activity-grid">
+            <!-- User Reports -->
+            <div>
+                <h5 style="color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-flag"></i>
+                    Denúncias ({{ denuncias|length }})
+                </h5>
+                <div class="activity-list">
+                    {% if denuncias %}
+                        {% for denuncia in denuncias %}
+                        <div class="activity-item">
+                            <div class="activity-icon denuncia">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Denúncia #{{ denuncia.id }}</h6>
+                                <p>{{ denuncia.motivo[:60] }}{% if denuncia.motivo|length > 60 %}...{% endif %}</p>
+                                <div class="activity-time">
+                                    {{ denuncia.data_criacao.strftime('%d/%m/%Y') if denuncia.data_criacao else 'N/A' }}
+                                </div>
+                            </div>
                         </div>
+                        {% endfor %}
                     {% else %}
-                        <p class="text-muted">Nenhum voto encontrado.</p>
+                        <div class="activity-item">
+                            <div class="activity-content" style="text-align: center; color: var(--text-muted);">
+                                <p>Nenhuma denúncia encontrada</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User Votes -->
+            <div>
+                <h5 style="color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    Votos ({{ votos|length }})
+                </h5>
+                <div class="activity-list">
+                    {% if votos %}
+                        {% for voto in votos %}
+                        <div class="activity-item">
+                            <div class="activity-icon voto">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>{{ voto.voto }}</h6>
+                                <p>Denúncia #{{ voto.id }}</p>
+                                <div class="activity-time">
+                                    {{ voto.data_voto.strftime('%d/%m/%Y %H:%M') if voto.data_voto else 'N/A' }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="activity-item">
+                            <div class="activity-content" style="text-align: center; color: var(--text-muted);">
+                                <p>Nenhum voto encontrado</p>
+                            </div>
+                        </div>
                     {% endif %}
                 </div>
             </div>
