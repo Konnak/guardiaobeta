@@ -104,36 +104,36 @@
                 <div class="card-body">
                     {% if punicoes %}
                     <div class="table-responsive">
-                        <table class="table table-hover" style="color: var(--text-primary);">
+                        <table class="table table-hover" style="color: var(--text-primary) !important; background: transparent;">
                             <thead>
-                                <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <th style="color: var(--text-secondary); border: none;">Tipo</th>
-                                    <th style="color: var(--text-secondary); border: none;">Motivo</th>
-                                    <th style="color: var(--text-secondary); border: none;">Duração</th>
-                                    <th style="color: var(--text-secondary); border: none;">Data</th>
-                                    <th style="color: var(--text-secondary); border: none;">Status</th>
+                                <tr style="border-bottom: 1px solid var(--glass-border); background: var(--dark-surface);">
+                                    <th style="color: var(--text-secondary) !important; border: none !important; background: transparent !important; font-weight: 600;">Tipo</th>
+                                    <th style="color: var(--text-secondary) !important; border: none !important; background: transparent !important; font-weight: 600;">Motivo</th>
+                                    <th style="color: var(--text-secondary) !important; border: none !important; background: transparent !important; font-weight: 600;">Duração</th>
+                                    <th style="color: var(--text-secondary) !important; border: none !important; background: transparent !important; font-weight: 600;">Data</th>
+                                    <th style="color: var(--text-secondary) !important; border: none !important; background: transparent !important; font-weight: 600;">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for punicao in punicoes %}
-                                <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <td style="border: none;">
-                                        <span class="badge" style="background: {% if punicao.tipo_punicao == 'Intimidou' %}var(--primary-gold){% elif punicao.tipo_punicao == 'Grave' %}var(--accent-orange){% else %}var(--text-muted){% endif %}; color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                <tr style="border-bottom: 1px solid var(--glass-border); background: transparent;">
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">
+                                        <span class="badge" style="background: {% if punicao.tipo_punicao == 'Intimidou' %}var(--primary-gold){% elif punicao.tipo_punicao == 'Grave' %}var(--accent-orange){% else %}var(--text-muted){% endif %} !important; color: white !important; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; border: none;">
                                             {{ punicao.tipo_punicao }}
                                         </span>
                                     </td>
-                                    <td style="border: none; color: var(--text-primary);">
-                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ punicao.motivo }}">
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">
+                                        <span class="text-truncate d-inline-block" style="max-width: 200px; color: var(--text-primary) !important;" title="{{ punicao.motivo }}">
                                             {{ punicao.motivo }}
                                         </span>
                                     </td>
-                                    <td style="border: none; color: var(--text-primary);">{{ punicao.duracao }}</td>
-                                    <td style="border: none; color: var(--text-primary);">{{ punicao.data_punicao.strftime('%d/%m/%Y %H:%M') }}</td>
-                                    <td style="border: none;">
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">{{ punicao.duracao }}</td>
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">{{ punicao.data_punicao.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td style="border: none !important; background: transparent !important; color: var(--text-primary) !important;">
                                         {% if punicao.ativa %}
-                                        <span class="badge" style="background: #28a745; color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px;">Ativa</span>
+                                        <span class="badge" style="background: #28a745 !important; color: white !important; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; border: none;">Ativa</span>
                                         {% else %}
-                                        <span class="badge" style="background: var(--text-muted); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px;">Removida</span>
+                                        <span class="badge" style="background: var(--text-muted) !important; color: white !important; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; border: none;">Removida</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -195,7 +195,42 @@
 
 /* Hover effect para as linhas da tabela */
 .table tbody tr:hover {
-    background-color: var(--dark-surface);
+    background-color: var(--dark-surface) !important;
+}
+
+/* Forçar cores da tabela */
+.table {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
+
+.table th,
+.table td {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.table thead th {
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+
+.table tbody tr {
+    background: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.table tbody tr:hover {
+    background-color: var(--dark-surface) !important;
+}
+
+/* Badges da tabela */
+.table .badge {
+    border: none !important;
+    font-weight: 500 !important;
 }
 </style>
 {% endblock %}
