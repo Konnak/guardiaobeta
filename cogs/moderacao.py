@@ -535,16 +535,53 @@ class VoteView(ui.View):
                 logger.info(f"✅ Punição aplicada via API para {member_id} por {result['duration']} segundos")
                 punishment_action = "🔨 Banimento Temporário" if result.get('is_ban') else "⏰ Timeout"
                 
-                # Enviar log para o canal configurado (se possível)
+                # Enviar log para o canal configurado via API direta
                 try:
-                    from main import bot
-                    guild = bot.get_guild(server_id)
-                    if guild:
-                        member = guild.get_member(member_id)
-                        if member:
-                            await self._send_punishment_log(guild, member, result, punishment_action)
+                    logger.info(f"📝 Enviando log de sucesso via API direta do Discord...")
+                    
+                    # Busca configuração do canal de log
+                    config_query = "SELECT canal_log FROM configuracoes_servidor WHERE id_servidor = $1"
+                    config = db_manager.execute_one_sync(config_query, server_id)
+                    
+                    if config and config['canal_log']:
+                        log_channel_id = int(config['canal_log'])
+                        logger.info(f"📝 Canal de log: {log_channel_id}")
+                        
+                        # Cria embed de log de sucesso
+                        embed_data = {
+                            "title": f"✅ {punishment_action} Aplicado",
+                            "color": 3066993,  # Verde
+                            "fields": [
+                                {"name": "👤 Usuário", "value": f"<@{member_id}>", "inline": True},
+                                {"name": "📋 Tipo", "value": result.get('type', 'N/A'), "inline": True},
+                                {"name": "⏰ Duração", "value": f"{result.get('duration', 0)} segundos", "inline": True},
+                                {"name": "🛡️ Servidor", "value": f"<#{log_channel_id}>", "inline": True},
+                                {"name": "✅ Status", "value": "Punição aplicada via API do Discord", "inline": False}
+                            ],
+                            "footer": {"text": f"ID: {member_id} | Servidor: {server_id}"},
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                        
+                        # Envia via API direta
+                        headers = {
+                            'Authorization': f'Bot {bot_token}',
+                            'Content-Type': 'application/json'
+                        }
+                        
+                        message_data = {"embeds": [embed_data]}
+                        response_log = requests.post(
+                            f'https://discord.com/api/v10/channels/{log_channel_id}/messages',
+                            headers=headers, json=message_data, timeout=10
+                        )
+                        
+                        if response_log.status_code == 200:
+                            logger.info(f"✅ Log de sucesso enviado com sucesso via API direta!")
+                        else:
+                            logger.warning(f"⚠️ Erro ao enviar log de sucesso: {response_log.status_code}")
+                    else:
+                        logger.warning(f"📝 Nenhum canal de log configurado para servidor {server_id}")
                 except Exception as log_error:
-                    logger.warning(f"Erro ao enviar log de punição: {log_error}")
+                    logger.error(f"❌ Erro ao enviar log de sucesso: {log_error}")
                 
                 return True
             elif response.status_code == 403:
