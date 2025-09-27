@@ -59,88 +59,34 @@ def setup_routes(app):
     """Configura todas as rotas da aplicação"""
     
     def get_bot_instance():
-        """Obtém a instância do bot de forma segura"""
+        """Obtém a instância do bot de forma simples - COMO OUTRAS PARTES QUE FUNCIONAM"""
         try:
-            logger.info("🔍 INÍCIO: get_bot_instance()")
-            
-            # Tenta importar o bot
-            import sys
-            logger.info(f"🔍 sys.modules tem 'main': {'main' in sys.modules}")
-            
-            if 'main' in sys.modules:
-                logger.info("🔍 Usando bot de sys.modules['main']")
-                bot = sys.modules['main'].bot
-            else:
-                logger.info("🔍 Importando bot diretamente de main")
-                from main import bot
-            
-            logger.info(f"🔍 Bot importado: {bot is not None}")
-            if bot:
-                logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
-                logger.info(f"🔍 Bot user: {bot.user}")
-                logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
-                logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
-                logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
-                logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
-                # Não podemos acessar bot.loop.is_running() em contexto não-assíncrono
-                logger.info(f"🔍 Bot loop running: N/A (não acessível em contexto síncrono)")
-                
-                # SOLUÇÃO DEFINITIVA: Verifica se bot está REALMENTE pronto
-                if bot.is_ready() and bot.user is not None and not bot.is_closed():
-                    logger.info("✅ Bot está REALMENTE pronto (is_ready + user + não fechado)")
-                    return bot
-                else:
-                    logger.warning("⚠️ Bot não está REALMENTE pronto")
-                    logger.warning(f"⚠️ is_ready(): {bot.is_ready()}")
-                    logger.warning(f"⚠️ user: {bot.user}")
-                    logger.warning(f"⚠️ is_closed(): {bot.is_closed()}")
-                    return None
-            else:
-                logger.warning("⚠️ Bot é None")
-                return None
+            # Importa o bot diretamente como outras partes que funcionam
+            from main import bot
+            return bot
         except ImportError as e:
             logger.error(f"❌ Erro ao importar bot: {e}")
             return None
         except Exception as e:
             logger.error(f"❌ Erro ao acessar bot: {e}")
-            import traceback
-            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return None
     
-    def wait_for_bot_ready(timeout_seconds=30):
-        """Aguarda o bot estar pronto com timeout estendido"""
-        import time
-        start_time = time.time()
-        
-        while time.time() - start_time < timeout_seconds:
-            bot = get_bot_instance()
-            if bot:
-                logger.info("✅ Bot está pronto!")
-                return bot
-            
-            logger.info(f"⏳ Aguardando bot estar pronto... ({time.time() - start_time:.1f}s)")
-            time.sleep(2)  # Aumenta o intervalo de espera
-        
-        logger.warning(f"⏰ Timeout:: Bot não ficou pronto em {timeout_seconds} segundos")
-        return None
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA"""
+        """Envia DM para um usuário específico - COMO OUTRAS PARTES QUE FUNCIONAM"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # SOLUÇÃO DEFINITIVA: Usa apenas bot.get_user() como nos cogs
-            # NÃO usa bot.fetch_user() para evitar erro _MissingSentinel
+            # Usa bot.get_user() como outras partes que funcionam
             user = bot.get_user(user_id)
             
             if not user:
                 logger.warning(f"{user_type.capitalize()} {user_id} não encontrado no cache do bot")
-                logger.warning(f"Usuário precisa estar em um servidor onde o bot está presente")
                 return False
             
             logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
             
-            # SOLUÇÃO DEFINITIVA: Envia DM usando asyncio.run_coroutine_threadsafe
+            # Envia DM usando asyncio.run_coroutine_threadsafe como outras partes
             import asyncio
             future = asyncio.run_coroutine_threadsafe(user.send(embed=embed), bot.loop)
             future.result(timeout=10)
@@ -1686,16 +1632,15 @@ def setup_routes(app):
     @app.route('/admin/system/message', methods=['POST'])
     @admin_required
     def admin_system_message():
-        """Envia mensagem para usuários"""
+        """Envia mensagem para usuários - COMO OUTRAS PARTES QUE FUNCIONAM"""
         logger.info("🚀 ROTA admin_system_message CHAMADA!")
         import asyncio
         
-        # Aguarda o bot estar pronto com timeout
-        logger.info("⏳ Aguardando bot estar pronto...")
-        bot = wait_for_bot_ready(timeout_seconds=15)
+        # Usa o bot diretamente como outras partes que funcionam
+        bot = get_bot_instance()
         if not bot:
-            logger.warning("⚠️ Bot Discord não ficou pronto no tempo esperado")
-            flash("Bot Discord ainda está inicializando. Aguarde alguns segundos e tente novamente.", "error")
+            logger.warning("⚠️ Bot Discord não está disponível")
+            flash("Bot Discord não está disponível.", "error")
             return redirect(url_for('admin_system'))
         
         async def send_message_async():
