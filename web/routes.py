@@ -61,17 +61,36 @@ def setup_routes(app):
     def get_bot_instance():
         """Obtém a instância do bot de forma segura"""
         try:
-            from main import bot
-            if bot and bot.is_ready():
-                return bot
+            # Tenta importar o bot
+            import sys
+            if 'main' in sys.modules:
+                bot = sys.modules['main'].bot
             else:
-                logger.warning("Bot não está pronto ou não está conectado")
+                from main import bot
+            
+            logger.info(f"🔍 Bot importado: {bot is not None}")
+            if bot:
+                logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
+                logger.info(f"🔍 Bot user: {bot.user}")
+                logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
+                logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
+                logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
+                
+                # Verifica se o bot está conectado (não precisa estar "ready" para enviar DMs)
+                if bot.user and not bot.is_closed():
+                    logger.info("✅ Bot está conectado e funcionando")
+                    return bot
+                else:
+                    logger.warning("⚠️ Bot não está conectado adequadamente")
+                    return None
+            else:
+                logger.warning("⚠️ Bot é None")
                 return None
         except ImportError as e:
-            logger.error(f"Erro ao importar bot: {e}")
+            logger.error(f"❌ Erro ao importar bot: {e}")
             return None
         except Exception as e:
-            logger.error(f"Erro ao acessar bot: {e}")
+            logger.error(f"❌ Erro ao acessar bot: {e}")
             return None
     
     async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
