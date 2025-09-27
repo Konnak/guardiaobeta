@@ -703,6 +703,12 @@ def setup_routes(app):
             duracao_intimidou = data.get('duracao_intimidou', 1)
             duracao_grave = data.get('duracao_grave', 12)
             
+            # Converter canal_log para integer se não estiver vazio
+            if canal_log and canal_log.strip():
+                canal_log = int(canal_log)
+            else:
+                canal_log = None
+            
             # Validações
             try:
                 duracao_intimidou = int(duracao_intimidou)
