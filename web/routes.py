@@ -1592,11 +1592,14 @@ def setup_routes(app):
         
         async def send_message_async():
             try:
+                logger.info("🔄 Função send_message_async iniciada!")
                 target_type = request.form.get('target_type')
                 target_user_id = request.form.get('target_user_id')
                 target_server_id = request.form.get('target_server_id')
                 message_title = request.form.get('message_title')
                 message_content = request.form.get('message_content')
+                
+                logger.info(f"📝 Dados recebidos: target_type={target_type}, title={message_title}")
                 
                 if not all([target_type, message_title, message_content]):
                     flash("Campos obrigatórios não preenchidos.", "error")
@@ -1849,9 +1852,15 @@ def setup_routes(app):
         
         # Executa a função async
         try:
-            return asyncio.run(send_message_async())
+            logger.info("🔄 Iniciando execução da função async...")
+            result = asyncio.run(send_message_async())
+            logger.info("✅ Função async executada com sucesso!")
+            return result
         except Exception as e:
-            logger.error(f"Erro ao executar função async: {e}")
+            logger.error(f"❌ Erro ao executar função async: {e}")
+            logger.error(f"❌ Tipo do erro: {type(e)}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             flash("Erro ao enviar mensagem.", "error")
             return redirect(url_for('admin_system'))
     
