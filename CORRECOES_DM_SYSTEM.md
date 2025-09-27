@@ -168,7 +168,7 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 
 **Status**: ❌ **FALHOU** - Ainda dependia do cache do bot
 
-### 🔧 **Correção 10: SOLUÇÃO DEFINITIVA - PEGAR ID E ENVIAR (FINAL)**
+### 🔧 **Correção 10: SOLUÇÃO DEFINITIVA - PEGAR ID E ENVIAR**
 **Data**: 2025-09-27
 **Problema**: Dependia do cache do bot, mas usuário não estava no cache
 **Solução**:
@@ -177,7 +177,18 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 - Pega o ID e envia diretamente como solicitado
 - Funciona para qualquer ID válido do Discord
 
-**Status**: ✅ **SUCESSO** - Solução definitiva: pegar ID e enviar
+**Status**: ❌ **FALHOU** - Erro `loop attribute cannot be accessed in non-async contexts`
+
+### 🔧 **Correção 11: SOLUÇÃO DEFINITIVA - SEM LOOP DO BOT (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Erro `loop attribute cannot be accessed in non-async contexts`
+**Solução**:
+- Usa `asyncio.run()` para criar um novo loop
+- Não depende do loop do bot
+- Usa `bot.fetch_user(user_id)` e `user.send(embed=embed)` diretamente
+- Executa em contexto assíncrono isolado
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: sem loop do bot
 
 ## 📊 **Status Atual**
 - ✅ **Erro `_MissingSentinel` eliminado**

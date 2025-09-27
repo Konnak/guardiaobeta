@@ -73,28 +73,30 @@ def setup_routes(app):
     
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico - SOLUÇÃO SIMPLES: PEGAR ID E ENVIAR"""
+        """Envia DM para um usuário específico - SOLUÇÃO DEFINITIVA: SEM LOOP DO BOT"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # SOLUÇÃO SIMPLES: Usa bot.fetch_user() para pegar o usuário diretamente
-            # Não depende do cache do bot
+            # SOLUÇÃO DEFINITIVA: Usa asyncio.run() para criar um novo loop
+            # Não depende do loop do bot
             import asyncio
-            future = asyncio.run_coroutine_threadsafe(bot.fetch_user(user_id), bot.loop)
-            user = future.result(timeout=10)
             
-            if not user:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
-                return False
+            async def send_dm_async():
+                # Pega usuário via API
+                user = await bot.fetch_user(user_id)
+                if not user:
+                    logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
+                    return False
+                
+                logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
+                
+                # Envia DM
+                await user.send(embed=embed)
+                logger.info(f"✅ Mensagem enviada para {user_type} {user_id}")
+                return True
             
-            logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-            
-            # Envia DM diretamente
-            future = asyncio.run_coroutine_threadsafe(user.send(embed=embed), bot.loop)
-            future.result(timeout=10)
-            
-            logger.info(f"✅ Mensagem enviada para {user_type} {user_id}")
-            return True
+            # Executa em novo loop
+            return asyncio.run(send_dm_async())
                 
         except discord.Forbidden:
             logger.warning(f"Não foi possível enviar DM para {user_type} {user_id} - DMs bloqueados")
