@@ -659,29 +659,55 @@ class VoteView(ui.View):
                         logger.warning(f"📝 Erro ao listar servidores: {guild_error}")
                         connected_guilds = []
                     
-                    # Tenta buscar o servidor
-                    guild = bot.get_guild(server_id)
-                    if not guild:
-                        # Tenta buscar via fetch se não encontrou no cache
-                        try:
-                            logger.info(f"📝 Tentando buscar servidor {server_id} via fetch...")
-                            guild = await bot.fetch_guild(server_id)
-                            logger.info(f"📝 Servidor encontrado via fetch: {guild.name}")
-                        except Exception as fetch_error:
-                            logger.warning(f"📝 Erro ao buscar servidor via fetch: {fetch_error}")
-                            guild = None
-                    if guild:
-                        logger.info(f"📝 Servidor encontrado: {guild.name}")
-                        member = guild.get_member(member_id)
-                        if member:
-                            logger.info(f"📝 Membro encontrado: {member.display_name}")
-                            await self._send_punishment_log(guild, member, result, "❌ Falha na Aplicação")
-                            logger.info("📝 Log de falha enviado com sucesso!")
+                    # SOLUÇÃO DEFINITIVA: API direta do Discord (como no sistema de DMs)
+                    try:
+                        logger.info(f"📝 Enviando log via API direta do Discord...")
+                        
+                        # Busca configuração do canal de log
+                        config_query = "SELECT canal_log FROM configuracoes_servidor WHERE id_servidor = $1"
+                        config = db_manager.execute_one_sync(config_query, server_id)
+                        
+                        if not config or not config['canal_log']:
+                            logger.warning(f"📝 Nenhum canal de log configurado para servidor {server_id}")
+                            return
+                        
+                        log_channel_id = int(config['canal_log'])
+                        logger.info(f"📝 Canal de log: {log_channel_id}")
+                        
+                        # Cria embed de log
+                        embed_data = {
+                            "title": "❌ Falha na Aplicação de Punição",
+                            "color": 15158332,  # Vermelho
+                            "fields": [
+                                {"name": "👤 Usuário", "value": f"<@{member_id}>", "inline": True},
+                                {"name": "📋 Tipo", "value": result.get('type', 'N/A'), "inline": True},
+                                {"name": "⏰ Duração", "value": f"{result.get('duration', 0)} segundos", "inline": True},
+                                {"name": "🛡️ Servidor", "value": f"<#{log_channel_id}>", "inline": True},
+                                {"name": "❌ Motivo", "value": "Erro 403 - Permissões insuficientes", "inline": False}
+                            ],
+                            "footer": {"text": f"ID: {member_id} | Servidor: {server_id}"},
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                        
+                        # Envia via API direta
+                        headers = {
+                            'Authorization': f'Bot {bot_token}',
+                            'Content-Type': 'application/json'
+                        }
+                        
+                        message_data = {"embeds": [embed_data]}
+                        response = requests.post(
+                            f'https://discord.com/api/v10/channels/{log_channel_id}/messages',
+                            headers=headers, json=message_data, timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            logger.info(f"✅ Log de falha enviado com sucesso via API direta!")
                         else:
-                            logger.warning(f"📝 Membro {member_id} não encontrado no servidor")
-                    else:
-                        logger.warning(f"📝 Servidor {server_id} não encontrado - Bot não está neste servidor")
-                        logger.warning(f"📝 Servidores disponíveis: {connected_guilds}")
+                            logger.warning(f"⚠️ Erro ao enviar log via API: {response.status_code}")
+                            
+                    except Exception as api_error:
+                        logger.error(f"❌ Erro ao enviar log via API direta: {api_error}")
                 except Exception as log_error:
                     logger.error(f"❌ Erro ao enviar log de falha: {log_error}")
                 
@@ -689,30 +715,102 @@ class VoteView(ui.View):
             else:
                 logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
                 
-                # Enviar log de erro na punição
-                try:
-                    from main import bot
-                    guild = bot.get_guild(server_id)
-                    if guild:
-                        member = guild.get_member(member_id)
-                        if member:
-                            await self._send_punishment_log(guild, member, result, f"❌ Erro API ({response.status_code})")
-                except Exception as log_error:
-                    logger.warning(f"Erro ao enviar log de erro: {log_error}")
+            # Enviar log de erro na punição via API direta
+            try:
+                logger.info(f"📝 Enviando log de erro API via API direta do Discord...")
+                
+                # Busca configuração do canal de log
+                config_query = "SELECT canal_log FROM configuracoes_servidor WHERE id_servidor = $1"
+                config = db_manager.execute_one_sync(config_query, server_id)
+                
+                if config and config['canal_log']:
+                    log_channel_id = int(config['canal_log'])
+                    
+                    # Cria embed de log
+                    embed_data = {
+                        "title": f"❌ Erro API ({response.status_code})",
+                        "color": 15158332,  # Vermelho
+                        "fields": [
+                            {"name": "👤 Usuário", "value": f"<@{member_id}>", "inline": True},
+                            {"name": "📋 Tipo", "value": result.get('type', 'N/A'), "inline": True},
+                            {"name": "⏰ Duração", "value": f"{result.get('duration', 0)} segundos", "inline": True},
+                            {"name": "🛡️ Servidor", "value": f"<#{log_channel_id}>", "inline": True},
+                            {"name": "❌ Motivo", "value": f"Erro API {response.status_code}: {response.text[:100]}", "inline": False}
+                        ],
+                        "footer": {"text": f"ID: {member_id} | Servidor: {server_id}"},
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    # Envia via API direta
+                    headers = {
+                        'Authorization': f'Bot {bot_token}',
+                        'Content-Type': 'application/json'
+                    }
+                    
+                    message_data = {"embeds": [embed_data]}
+                    response_log = requests.post(
+                        f'https://discord.com/api/v10/channels/{log_channel_id}/messages',
+                        headers=headers, json=message_data, timeout=10
+                    )
+                    
+                    if response_log.status_code == 200:
+                        logger.info(f"✅ Log de erro API enviado com sucesso!")
+                    else:
+                        logger.warning(f"⚠️ Erro ao enviar log de erro: {response_log.status_code}")
+                else:
+                    logger.warning(f"📝 Nenhum canal de log configurado para servidor {server_id}")
+            except Exception as log_error:
+                logger.warning(f"Erro ao enviar log de erro: {log_error}")
                 
                 return False
                 
         except Exception as e:
             logger.error(f"❌ Erro ao aplicar punição: {e}")
             
-            # Enviar log de erro geral na punição
+            # Enviar log de erro geral na punição via API direta
             try:
-                from main import bot
-                guild = bot.get_guild(server_id)
-                if guild:
-                    member = guild.get_member(member_id)
-                    if member:
-                        await self._send_punishment_log(guild, member, result, "❌ Erro Geral")
+                logger.info(f"📝 Enviando log de erro geral via API direta do Discord...")
+                
+                # Busca configuração do canal de log
+                config_query = "SELECT canal_log FROM configuracoes_servidor WHERE id_servidor = $1"
+                config = db_manager.execute_one_sync(config_query, server_id)
+                
+                if config and config['canal_log']:
+                    log_channel_id = int(config['canal_log'])
+                    
+                    # Cria embed de log
+                    embed_data = {
+                        "title": "❌ Erro Geral na Aplicação",
+                        "color": 15158332,  # Vermelho
+                        "fields": [
+                            {"name": "👤 Usuário", "value": f"<@{member_id}>", "inline": True},
+                            {"name": "📋 Tipo", "value": result.get('type', 'N/A'), "inline": True},
+                            {"name": "⏰ Duração", "value": f"{result.get('duration', 0)} segundos", "inline": True},
+                            {"name": "🛡️ Servidor", "value": f"<#{log_channel_id}>", "inline": True},
+                            {"name": "❌ Motivo", "value": f"Erro geral: {str(e)[:100]}", "inline": False}
+                        ],
+                        "footer": {"text": f"ID: {member_id} | Servidor: {server_id}"},
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    # Envia via API direta
+                    headers = {
+                        'Authorization': f'Bot {bot_token}',
+                        'Content-Type': 'application/json'
+                    }
+                    
+                    message_data = {"embeds": [embed_data]}
+                    response_log = requests.post(
+                        f'https://discord.com/api/v10/channels/{log_channel_id}/messages',
+                        headers=headers, json=message_data, timeout=10
+                    )
+                    
+                    if response_log.status_code == 200:
+                        logger.info(f"✅ Log de erro geral enviado com sucesso!")
+                    else:
+                        logger.warning(f"⚠️ Erro ao enviar log de erro geral: {response_log.status_code}")
+                else:
+                    logger.warning(f"📝 Nenhum canal de log configurado para servidor {server_id}")
             except Exception as log_error:
                 logger.warning(f"Erro ao enviar log de erro geral: {log_error}")
             

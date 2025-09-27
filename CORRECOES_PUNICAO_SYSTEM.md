@@ -226,6 +226,19 @@ async def _apply_punishment(self, result: Dict):
 - ✅ **Bot funciona perfeitamente nos cogs**
 - ✅ **Comandos `/turno` funcionam**
 - ✅ **Aplicação de punições funcionando via API direta**
+- ✅ **Logs de punição funcionando via API direta**
+
+### 🔧 **Correção 14: SOLUÇÃO DEFINITIVA - API DIRETA DO DISCORD PARA LOGS (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Erro `'_MissingSentinel' object has no attribute 'is_set'` no sistema de logs de punição
+**Solução**:
+- Aplicou a mesma solução do sistema de DMs: **API direta do Discord**
+- Removeu dependência do `discord.py` bot instance para logs
+- Usa `requests` para enviar logs via API: `POST /channels/{channel_id}/messages`
+- Funciona completamente independente do bot
+- Aplicado em todos os casos: falha 403, erro API, erro geral
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: API direta do Discord para logs
 
 ## 🎯 **Solução Final Implementada**
 ```python
