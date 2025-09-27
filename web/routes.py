@@ -1640,10 +1640,16 @@ def setup_routes(app):
                 elif target_type == 'guardians':
                     # Busca todos os guardiões
                     guardians_query = """
-                        SELECT id_discord FROM usuarios 
+                        SELECT id_discord, categoria FROM usuarios 
                         WHERE categoria IN ('Guardião', 'Moderador', 'Administrador')
                     """
                     guardians = db_manager.execute_query_sync(guardians_query)
+                    
+                    # Debug: verificar categorias existentes
+                    debug_query = "SELECT DISTINCT categoria FROM usuarios"
+                    categories = db_manager.execute_query_sync(debug_query)
+                    logger.info(f"Categorias encontradas no banco: {[cat['categoria'] for cat in categories]}")
+                    logger.info(f"Guardiões encontrados: {len(guardians)}")
                     
                     for guardian in guardians:
                         try:
@@ -1652,6 +1658,7 @@ def setup_routes(app):
                                 dm_channel = await user.create_dm()
                                 await dm_channel.send(embed=embed)
                                 sent_count += 1
+                                logger.info(f"Mensagem enviada para guardião {guardian['id_discord']} ({guardian['categoria']})")
                         except Exception as e:
                             logger.warning(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
                             continue
@@ -1661,10 +1668,12 @@ def setup_routes(app):
                 elif target_type == 'moderators':
                     # Busca todos os moderadores
                     moderators_query = """
-                        SELECT id_discord FROM usuarios 
+                        SELECT id_discord, categoria FROM usuarios 
                         WHERE categoria IN ('Moderador', 'Administrador')
                     """
                     moderators = db_manager.execute_query_sync(moderators_query)
+                    
+                    logger.info(f"Moderadores encontrados: {len(moderators)}")
                     
                     for moderator in moderators:
                         try:
@@ -1673,6 +1682,7 @@ def setup_routes(app):
                                 dm_channel = await user.create_dm()
                                 await dm_channel.send(embed=embed)
                                 sent_count += 1
+                                logger.info(f"Mensagem enviada para moderador {moderator['id_discord']} ({moderator['categoria']})")
                         except Exception as e:
                             logger.warning(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
                             continue
@@ -1682,10 +1692,12 @@ def setup_routes(app):
                 elif target_type == 'administrators':
                     # Busca todos os administradores
                     admins_query = """
-                        SELECT id_discord FROM usuarios 
+                        SELECT id_discord, categoria FROM usuarios 
                         WHERE categoria = 'Administrador'
                     """
                     admins = db_manager.execute_query_sync(admins_query)
+                    
+                    logger.info(f"Administradores encontrados: {len(admins)}")
                     
                     for admin in admins:
                         try:
@@ -1694,6 +1706,7 @@ def setup_routes(app):
                                 dm_channel = await user.create_dm()
                                 await dm_channel.send(embed=embed)
                                 sent_count += 1
+                                logger.info(f"Mensagem enviada para admin {admin['id_discord']} ({admin['categoria']})")
                         except Exception as e:
                             logger.warning(f"Erro ao enviar mensagem para admin {admin['id_discord']}: {e}")
                             continue
