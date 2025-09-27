@@ -652,10 +652,24 @@ class VoteView(ui.View):
                     from main import bot
                     
                     # Lista servidores conectados para debug
-                    connected_guilds = [f"{guild.name} ({guild.id})" for guild in bot.guilds]
-                    logger.info(f"📝 Servidores conectados: {connected_guilds}")
+                    try:
+                        connected_guilds = [f"{guild.name} ({guild.id})" for guild in bot.guilds]
+                        logger.info(f"📝 Servidores conectados: {connected_guilds}")
+                    except Exception as guild_error:
+                        logger.warning(f"📝 Erro ao listar servidores: {guild_error}")
+                        connected_guilds = []
                     
+                    # Tenta buscar o servidor
                     guild = bot.get_guild(server_id)
+                    if not guild:
+                        # Tenta buscar via fetch se não encontrou no cache
+                        try:
+                            logger.info(f"📝 Tentando buscar servidor {server_id} via fetch...")
+                            guild = await bot.fetch_guild(server_id)
+                            logger.info(f"📝 Servidor encontrado via fetch: {guild.name}")
+                        except Exception as fetch_error:
+                            logger.warning(f"📝 Erro ao buscar servidor via fetch: {fetch_error}")
+                            guild = None
                     if guild:
                         logger.info(f"📝 Servidor encontrado: {guild.name}")
                         member = guild.get_member(member_id)
