@@ -92,6 +92,13 @@ def setup_routes(app):
                 elif bot.user is None:
                     logger.warning("⚠️ Bot ainda não está logado (bot.user é None)")
                     logger.warning("⚠️ Isso pode indicar que o bot ainda está inicializando")
+                    # Vamos tentar aguardar um pouco mais e verificar novamente
+                    import time
+                    time.sleep(2)
+                    logger.info(f"🔍 Verificação após 2s - Bot user: {bot.user}")
+                    if bot.user is not None:
+                        logger.info("✅ Bot agora está logado!")
+                        return bot
                     return None
                 elif bot.is_closed():
                     logger.warning("⚠️ Bot está fechado")
