@@ -16,6 +16,55 @@
                 </div>
             </div>
 
+            <!-- Campo de Pesquisa -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('mural_vergonha') }}" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="search" class="form-label">
+                                <i class="fas fa-search me-1"></i>
+                                Pesquisar Usuário
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="search" 
+                                   name="search" 
+                                   value="{{ request.args.get('search', '') }}"
+                                   placeholder="Digite ID do Discord ou username...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="type" class="form-label">
+                                <i class="fas fa-filter me-1"></i>
+                                Tipo de Pesquisa
+                            </label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>
+                                    Todos os Campos
+                                </option>
+                                <option value="id" {% if request.args.get('type') == 'id' %}selected{% endif %}>
+                                    Apenas ID do Discord
+                                </option>
+                                <option value="username" {% if request.args.get('type') == 'username' %}selected{% endif %}>
+                                    Apenas Username
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    Pesquisar
+                                </button>
+                                <a href="{{ url_for('mural_vergonha') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    Limpar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {% if error %}
             <div class="alert alert-danger" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -24,6 +73,23 @@
             {% endif %}
 
             {% if usuarios_punidos %}
+            <!-- Informações dos Resultados -->
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                {% if request.args.get('search') %}
+                    {% if request.args.get('type') == 'id' %}
+                        Pesquisando por ID: <strong>{{ request.args.get('search') }}</strong>
+                    {% elif request.args.get('type') == 'username' %}
+                        Pesquisando por username: <strong>{{ request.args.get('search') }}</strong>
+                    {% else %}
+                        Pesquisando por: <strong>{{ request.args.get('search') }}</strong>
+                    {% endif %}
+                    - {{ usuarios_punidos|length }} resultado(s) encontrado(s)
+                {% else %}
+                    Mostrando últimos 10 usuários punidos
+                {% endif %}
+            </div>
+            
             <div class="row">
                 {% for usuario in usuarios_punidos %}
                 <div class="col-lg-6 col-xl-4 mb-4">
@@ -90,9 +156,21 @@
             </div>
             {% else %}
             <div class="text-center py-5">
-                <i class="fas fa-shield-alt text-muted" style="font-size: 4rem;"></i>
-                <h4 class="mt-3 text-muted">Nenhum usuário punido ainda</h4>
-                <p class="text-muted">O mural da vergonha está vazio. Que bom! 🎉</p>
+                {% if request.args.get('search') %}
+                    <i class="fas fa-search text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-muted">Nenhum resultado encontrado</h4>
+                    <p class="text-muted">
+                        Nenhum usuário encontrado para: <strong>{{ request.args.get('search') }}</strong>
+                    </p>
+                    <a href="{{ url_for('mural_vergonha') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Ver Todos os Usuários
+                    </a>
+                {% else %}
+                    <i class="fas fa-shield-alt text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-muted">Nenhum usuário punido ainda</h4>
+                    <p class="text-muted">O mural da vergonha está vazio. Que bom! 🎉</p>
+                {% endif %}
             </div>
             {% endif %}
         </div>

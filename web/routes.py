@@ -2299,8 +2299,12 @@ def setup_mural_routes(app):
     def mural_vergonha():
         """Mural da Vergonha - Lista dos últimos 10 usuários punidos"""
         try:
-            # Busca os últimos 10 usuários punidos
-            query = """
+            # Parâmetros de pesquisa
+            search_query = request.args.get('search', '').strip()
+            search_type = request.args.get('type', 'all')  # all, id, username
+            
+            # Query base
+            base_query = """
                 SELECT 
                     id_usuario,
                     username,
@@ -2312,12 +2316,38 @@ def setup_mural_routes(app):
                     data_punicao,
                     id_servidor
                 FROM logs_punicoes 
-                WHERE ativa = true 
-                ORDER BY data_punicao DESC 
-                LIMIT 10
+                WHERE ativa = true
             """
             
-            punicoes = db_manager.execute_all_sync(query)
+            # Adiciona filtros de pesquisa
+            query_params = []
+            if search_query:
+                if search_type == 'id':
+                    # Pesquisa por ID do Discord
+                    try:
+                        user_id = int(search_query)
+                        base_query += " AND id_usuario = $1"
+                        query_params.append(user_id)
+                    except ValueError:
+                        # Se não for um número válido, não retorna resultados
+                        base_query += " AND 1 = 0"
+                elif search_type == 'username':
+                    # Pesquisa por username (case insensitive)
+                    base_query += " AND LOWER(username) LIKE LOWER($1)"
+                    query_params.append(f"%{search_query}%")
+                else:
+                    # Pesquisa geral (ID ou username)
+                    try:
+                        user_id = int(search_query)
+                        base_query += " AND (id_usuario = $1 OR LOWER(username) LIKE LOWER($2))"
+                        query_params.extend([user_id, f"%{search_query}%"])
+                    except ValueError:
+                        base_query += " AND LOWER(username) LIKE LOWER($1)"
+                        query_params.append(f"%{search_query}%")
+            
+            base_query += " ORDER BY data_punicao DESC LIMIT 10"
+            
+            punicoes = db_manager.execute_query_sync(base_query, *query_params)
             
             # Processa os dados para o template
             usuarios_punidos = []
@@ -2383,7 +2413,7 @@ def setup_mural_routes(app):
                 ORDER BY data_punicao DESC
             """
             
-            punicoes = db_manager.execute_all_sync(query_punicoes, user_id)
+            punicoes = db_manager.execute_query_sync(query_punicoes, user_id)
             
             # Conta total de punições
             query_total = """
