@@ -85,33 +85,15 @@ def setup_routes(app):
                 # Não podemos acessar bot.loop.is_running() em contexto não-assíncrono
                 logger.info(f"🔍 Bot loop running: N/A (não acessível em contexto síncrono)")
                 
-                # Verifica se o bot está conectado - critério mais flexível
-                if bot.user is not None and not bot.is_closed():
-                    logger.info("✅ Bot está conectado e funcionando")
+                # NOVO: Verifica se o bot tem um loop ativo e não está fechado
+                if not bot.is_closed() and bot.loop is not None:
+                    logger.info("✅ Bot está disponível (não fechado e com loop)")
                     return bot
-                elif bot.user is None:
-                    logger.warning("⚠️ Bot ainda não está logado (bot.user é None)")
-                    logger.warning("⚠️ Isso pode indicar que o bot ainda está inicializando")
-                    # Vamos tentar aguardar um pouco mais e verificar novamente
-                    import time
-                    time.sleep(2)
-                    logger.info(f"🔍 Verificação após 2s - Bot user: {bot.user}")
-                    if bot.user is not None:
-                        logger.info("✅ Bot agora está logado!")
-                        return bot
-                    
-                    # NOVO: Mesmo que bot.user seja None, vamos tentar usar o bot
-                    # se ele não estiver fechado, pois pode estar funcionando
-                    if not bot.is_closed():
-                        logger.warning("⚠️ Bot.user é None mas bot não está fechado - tentando usar mesmo assim")
-                        return bot
-                    
-                    return None
                 elif bot.is_closed():
                     logger.warning("⚠️ Bot está fechado")
                     return None
                 else:
-                    logger.warning("⚠️ Bot não está conectado adequadamente")
+                    logger.warning("⚠️ Bot não está disponível adequadamente")
                     logger.warning(f"⚠️ bot.user: {bot.user}")
                     logger.warning(f"⚠️ bot.is_closed(): {bot.is_closed()}")
                     return None
@@ -147,11 +129,20 @@ def setup_routes(app):
     async def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
         """Envia DM para um usuário específico de forma robusta"""
         try:
-            # Verifica se o bot está realmente inicializado
-            if not bot.is_ready() or bot.user is None:
-                logger.warning(f"Bot não está pronto ou não foi inicializado corretamente")
-                logger.warning(f"bot.is_ready(): {bot.is_ready()}")
-                logger.warning(f"bot.user: {bot.user}")
+            # NOVO: Logs detalhados para debug
+            logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
+            logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
+            logger.info(f"🔍 Bot user: {bot.user}")
+            logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
+            logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
+            logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
+            logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
+            logger.info(f"🔍 Loop rodando: N/A (não acessível em contexto síncrono)")
+            logger.info(f"🔍 Usuários no cache: {len(bot.users)}")
+            
+            # NOVO: Verificação mais flexível - se bot não está fechado, tenta usar
+            if bot.is_closed():
+                logger.warning(f"Bot está fechado")
                 return False
             
             # Tenta buscar usuário no cache primeiro
@@ -1768,28 +1759,21 @@ def setup_routes(app):
                 logger.info(f"Usuários no cache: {len(bot.users)}")
                 sent_count = 0
                 
-                # NOVO: Aguarda o bot estar realmente pronto antes de prosseguir
-                if not bot.is_ready() or bot.user is None:
-                    logger.warning("⚠️ Bot não está pronto na função async, aguardando...")
-                    import asyncio
-                    
-                    # Aguarda com polling em vez de wait_until_ready()
-                    max_attempts = 20  # 20 tentativas de 0.5s = 10s total
-                    for attempt in range(max_attempts):
-                        await asyncio.sleep(0.5)  # Aguarda 0.5 segundos
-                        
-                        # Verifica se bot está pronto
-                        if bot.is_ready() and bot.user is not None:
-                            logger.info("✅ Bot agora está pronto na função async!")
-                            break
-                        
-                        logger.info(f"⏳ Tentativa {attempt + 1}/{max_attempts} - Bot ainda não está pronto...")
-                    
-                    # Verifica se conseguiu ficar pronto
-                    if not bot.is_ready() or bot.user is None:
-                        logger.error("❌ Timeout aguardando bot ficar pronto na função async")
-                        flash("Bot não está pronto. Tente novamente em alguns segundos.", "error")
-                        return redirect(url_for('admin_system'))
+                # NOVO: Logs detalhados do bot na função async
+                logger.info(f"🔍 Bot está pronto: {bot.is_ready()}")
+                logger.info(f"🔍 Bot user: {bot.user}")
+                logger.info(f"🔍 Bot guilds: {len(bot.guilds) if bot.guilds else 0}")
+                logger.info(f"🔍 Bot websocket: {bot.ws is not None if hasattr(bot, 'ws') else 'N/A'}")
+                logger.info(f"🔍 Bot is_closed(): {bot.is_closed()}")
+                logger.info(f"🔍 Bot loop: {bot.loop is not None if hasattr(bot, 'loop') else 'N/A'}")
+                logger.info(f"🔍 Loop rodando: N/A (não acessível em contexto síncrono)")
+                logger.info(f"🔍 Usuários no cache: {len(bot.users)}")
+                
+                # NOVO: Verificação simples - se bot não está fechado, prossegue
+                if bot.is_closed():
+                    logger.error("❌ Bot está fechado na função async")
+                    flash("Bot não está disponível. Tente novamente em alguns segundos.", "error")
+                    return redirect(url_for('admin_system'))
                 
                 # Cria embed da mensagem
                 embed = discord.Embed(
