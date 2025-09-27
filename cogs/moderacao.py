@@ -499,13 +499,22 @@ class VoteView(ui.View):
             from main import bot  # Import local para evitar circular
             server_id = int(denuncia['id_servidor'])  # Converte para inteiro
             
-            # Aguarda o bot estar completamente pronto
+            # SOLUÇÃO DEFINITIVA: Aguarda bot estar completamente pronto
             if not bot.is_ready():
                 logger.info("Aguardando bot estar pronto...")
                 await bot.wait_until_ready()
             
             # Aguarda um pouco mais para garantir sincronização completa
             await asyncio.sleep(2)
+            
+            # Verifica se o bot está realmente pronto
+            if not bot.is_ready() or bot.user is None:
+                logger.warning("Bot ainda não está pronto após aguardar. Tentando novamente...")
+                await asyncio.sleep(5)  # Aguarda mais 5 segundos
+                
+                if not bot.is_ready() or bot.user is None:
+                    logger.error("Bot não está pronto após múltiplas tentativas. Cancelando punição.")
+                    return
             
             # Tenta buscar o servidor com fallback
             guild = bot.get_guild(server_id)
