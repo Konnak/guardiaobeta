@@ -145,74 +145,89 @@ def setup_routes(app):
                 logger.warning(f"Bot está fechado")
                 return False
             
-            # NOVO: Usa o loop do bot para executar de forma segura
-            import asyncio
-            import concurrent.futures
+            # NOVO: Abordagem simplificada - tenta buscar usuário diretamente
+            user = None
             
-            # Função interna para buscar usuário de forma segura
-            async def safe_fetch_user():
-                try:
-                    # Tenta buscar no cache primeiro
-                    user = bot.get_user(user_id)
-                    if user:
-                        logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
-                        return user
-                    
-                    # Se não encontrou no cache, tenta buscar via API
-                    logger.info(f"Buscando {user_type} {user_id} via API do Discord...")
-                    user = await bot.fetch_user(user_id)
-                    logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-                    return user
-                except Exception as e:
-                    logger.warning(f"Erro ao buscar {user_type} {user_id}: {e}")
-                    return None
-            
-            # Executa a busca usando o loop do bot de forma segura
+            # Tenta buscar no cache primeiro
             try:
-                # Cria um Future para executar no loop do bot
-                future = asyncio.run_coroutine_threadsafe(safe_fetch_user(), bot.loop)
-                user = future.result(timeout=10)  # Timeout de 10 segundos
-            except concurrent.futures.TimeoutError:
-                logger.warning(f"Timeout ao buscar {user_type} {user_id}")
-                return False
+                user = bot.get_user(user_id)
+                if user:
+                    logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
+                else:
+                    logger.info(f"{user_type.capitalize()} {user_id} não encontrado no cache")
             except Exception as e:
-                logger.warning(f"Erro ao executar busca no loop do bot: {e}")
-                return False
+                logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
+            
+            # Se não encontrou no cache, tenta buscar via API usando uma abordagem diferente
+            if not user:
+                try:
+                    logger.info(f"Tentando buscar {user_type} {user_id} via API do Discord...")
+                    # NOVO: Usa uma abordagem mais direta sem loop
+                    import asyncio
+                    import threading
+                    
+                    # Cria um novo loop para esta operação
+                    def run_in_new_loop():
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            return loop.run_until_complete(bot.fetch_user(user_id))
+                        finally:
+                            loop.close()
+                    
+                    # Executa em uma thread separada
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(run_in_new_loop)
+                        user = future.result(timeout=10)
+                    
+                    if user:
+                        logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
+                    else:
+                        logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
+                        
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar {user_type} {user_id} via API: {e}")
             
             if not user:
                 logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
                 return False
             
-            # NOVO: Função interna para enviar DM de forma segura
-            async def safe_send_dm():
-                try:
-                    logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
-                    dm_channel = await user.create_dm()
-                    logger.info(f"Canal DM criado: {dm_channel.id}")
-                    await dm_channel.send(embed=embed)
-                    logger.info(f"Mensagem enviada para {user_type} {user_id}")
-                    return True
-                except discord.Forbidden:
-                    logger.warning(f"Não foi possível enviar DM para {user.name} - DMs bloqueados")
-                    return False
-                except discord.HTTPException as e:
-                    logger.error(f"Erro HTTP ao enviar DM para {user.name}: {e}")
-                    return False
-                except Exception as e:
-                    logger.error(f"Erro ao enviar DM para {user.name}: {e}")
-                    return False
-            
-            # Executa o envio usando o loop do bot de forma segura
+            # NOVO: Envia DM usando nova abordagem
             try:
-                # Cria um Future para executar no loop do bot
-                future = asyncio.run_coroutine_threadsafe(safe_send_dm(), bot.loop)
-                result = future.result(timeout=10)  # Timeout de 10 segundos
+                logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
+                
+                # Cria um novo loop para esta operação
+                def run_send_dm():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        async def send_dm():
+                            dm_channel = await user.create_dm()
+                            logger.info(f"Canal DM criado: {dm_channel.id}")
+                            await dm_channel.send(embed=embed)
+                            logger.info(f"Mensagem enviada para {user_type} {user_id}")
+                            return True
+                        
+                        return loop.run_until_complete(send_dm())
+                    finally:
+                        loop.close()
+                
+                # Executa em uma thread separada
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(run_send_dm)
+                    result = future.result(timeout=10)
+                
                 return result
-            except concurrent.futures.TimeoutError:
-                logger.warning(f"Timeout ao enviar DM para {user_type} {user_id}")
+                
+            except discord.Forbidden:
+                logger.warning(f"Não foi possível enviar DM para {user.name} - DMs bloqueados")
+                return False
+            except discord.HTTPException as e:
+                logger.error(f"Erro HTTP ao enviar DM para {user.name}: {e}")
                 return False
             except Exception as e:
-                logger.error(f"Erro ao executar envio no loop do bot: {e}")
+                logger.error(f"Erro ao enviar DM para {user.name}: {e}")
                 return False
                 
         except Exception as e:
