@@ -498,17 +498,32 @@ class VoteView(ui.View):
             # Busca o servidor através do bot
             from main import bot  # Import local para evitar circular
             server_id = int(denuncia['id_servidor'])  # Converte para inteiro
+            
+            # Tenta buscar o servidor com fallback
             guild = bot.get_guild(server_id)
             if not guild:
-                logger.warning(f"Servidor {server_id} não encontrado")
-                return
+                # Se não encontrou no cache, tenta buscar via fetch
+                try:
+                    guild = await bot.fetch_guild(server_id)
+                    logger.info(f"Servidor {server_id} encontrado via fetch")
+                except Exception as fetch_error:
+                    logger.warning(f"Servidor {server_id} não encontrado via fetch: {fetch_error}")
+                    # Lista servidores disponíveis para debug
+                    available_guilds = [g.id for g in bot.guilds]
+                    logger.info(f"Servidores disponíveis: {available_guilds}")
+                    return
             
             # Busca o membro
             member_id = int(denuncia['id_denunciado'])  # Converte para inteiro
             member = guild.get_member(member_id)
             if not member:
-                logger.warning(f"Membro {member_id} não encontrado no servidor")
-                return
+                # Se não encontrou no cache, tenta buscar via fetch
+                try:
+                    member = await guild.fetch_member(member_id)
+                    logger.info(f"Membro {member_id} encontrado via fetch")
+                except Exception as fetch_error:
+                    logger.warning(f"Membro {member_id} não encontrado no servidor: {fetch_error}")
+                    return
             
             # Aplica a punição
             duration_delta = timedelta(seconds=result['duration'])
