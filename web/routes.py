@@ -1772,16 +1772,23 @@ def setup_routes(app):
                 if not bot.is_ready() or bot.user is None:
                     logger.warning("⚠️ Bot não está pronto na função async, aguardando...")
                     import asyncio
-                    try:
-                        await asyncio.wait_for(bot.wait_until_ready(), timeout=10.0)
-                        logger.info("✅ Bot agora está pronto na função async!")
-                    except asyncio.TimeoutError:
+                    
+                    # Aguarda com polling em vez de wait_until_ready()
+                    max_attempts = 20  # 20 tentativas de 0.5s = 10s total
+                    for attempt in range(max_attempts):
+                        await asyncio.sleep(0.5)  # Aguarda 0.5 segundos
+                        
+                        # Verifica se bot está pronto
+                        if bot.is_ready() and bot.user is not None:
+                            logger.info("✅ Bot agora está pronto na função async!")
+                            break
+                        
+                        logger.info(f"⏳ Tentativa {attempt + 1}/{max_attempts} - Bot ainda não está pronto...")
+                    
+                    # Verifica se conseguiu ficar pronto
+                    if not bot.is_ready() or bot.user is None:
                         logger.error("❌ Timeout aguardando bot ficar pronto na função async")
                         flash("Bot não está pronto. Tente novamente em alguns segundos.", "error")
-                        return redirect(url_for('admin_system'))
-                    except Exception as e:
-                        logger.error(f"❌ Erro aguardando bot ficar pronto: {e}")
-                        flash("Erro ao aguardar bot ficar pronto.", "error")
                         return redirect(url_for('admin_system'))
                 
                 # Cria embed da mensagem
