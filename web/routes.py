@@ -1710,6 +1710,7 @@ def setup_routes(app):
                     logger.info(f"Mensagem enviada para {sent_count} guardiões")
                 
                 elif target_type == 'moderators':
+                    logger.info("🎯 Entrando na seção de moderadores...")
                     # Busca todos os moderadores
                     moderators_query = """
                         SELECT id_discord, categoria FROM usuarios 
@@ -1718,6 +1719,7 @@ def setup_routes(app):
                     moderators = db_manager.execute_query_sync(moderators_query)
                     
                     logger.info(f"Moderadores encontrados: {len(moderators)}")
+                    logger.info(f"Moderadores: {moderators}")
                     
                     for moderator in moderators:
                         try:
@@ -1838,11 +1840,15 @@ def setup_routes(app):
                         flash(f"Erro ao enviar mensagem para servidor: {e}", "error")
                         return redirect(url_for('admin_system'))
                 
+                logger.info(f"📊 Total de mensagens enviadas: {sent_count}")
                 if sent_count > 0:
                     flash(f"Mensagem enviada com sucesso para {sent_count} destinatário(s).", "success")
+                    logger.info(f"✅ Flash de sucesso: {sent_count} destinatários")
                 else:
                     flash("Nenhuma mensagem foi enviada.", "warning")
+                    logger.info("⚠️ Flash de aviso: nenhuma mensagem enviada")
                 
+                logger.info("🔄 Redirecionando para admin_system...")
                 return redirect(url_for('admin_system'))
                 
             except Exception as e:
