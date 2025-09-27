@@ -73,21 +73,23 @@ def setup_routes(app):
     
     
     def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
-        """Envia DM para um usuário específico - COMO OUTRAS PARTES QUE FUNCIONAM"""
+        """Envia DM para um usuário específico - SOLUÇÃO SIMPLES: PEGAR ID E ENVIAR"""
         try:
             logger.info(f"🔍 send_dm_to_user iniciado para {user_type} {user_id}")
             
-            # Usa bot.get_user() como outras partes que funcionam
-            user = bot.get_user(user_id)
+            # SOLUÇÃO SIMPLES: Usa bot.fetch_user() para pegar o usuário diretamente
+            # Não depende do cache do bot
+            import asyncio
+            future = asyncio.run_coroutine_threadsafe(bot.fetch_user(user_id), bot.loop)
+            user = future.result(timeout=10)
             
             if not user:
-                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado no cache do bot")
+                logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
                 return False
             
-            logger.info(f"{user_type.capitalize()} encontrado no cache: {user.name}")
+            logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
             
-            # Envia DM usando asyncio.run_coroutine_threadsafe como outras partes
-            import asyncio
+            # Envia DM diretamente
             future = asyncio.run_coroutine_threadsafe(user.send(embed=embed), bot.loop)
             future.result(timeout=10)
             

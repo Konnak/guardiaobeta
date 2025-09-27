@@ -156,7 +156,7 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 
 **Status**: ❌ **FALHOU** - Ainda complicando demais
 
-### 🔧 **Correção 9: Solução SIMPLES como outras partes (FINAL)**
+### 🔧 **Correção 9: Solução SIMPLES como outras partes**
 **Data**: 2025-09-27
 **Problema**: Estava complicando demais algo que já funciona
 **Solução**:
@@ -166,7 +166,18 @@ def send_dm_to_user(bot, user_id: int, embed, user_type: str = "usuário"):
 - Simplificou `send_dm_to_user()` para usar apenas `bot.get_user()`
 - Baseado no código da linha 1866 que funciona: `guild = bot.get_guild(int(target_server_id))`
 
-**Status**: ✅ **SUCESSO** - Solução simples baseada no que já funciona
+**Status**: ❌ **FALHOU** - Ainda dependia do cache do bot
+
+### 🔧 **Correção 10: SOLUÇÃO DEFINITIVA - PEGAR ID E ENVIAR (FINAL)**
+**Data**: 2025-09-27
+**Problema**: Dependia do cache do bot, mas usuário não estava no cache
+**Solução**:
+- Usa `bot.fetch_user(user_id)` para pegar usuário diretamente via API
+- Não depende do cache do bot
+- Pega o ID e envia diretamente como solicitado
+- Funciona para qualquer ID válido do Discord
+
+**Status**: ✅ **SUCESSO** - Solução definitiva: pegar ID e enviar
 
 ## 📊 **Status Atual**
 - ✅ **Erro `_MissingSentinel` eliminado**
