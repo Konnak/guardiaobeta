@@ -1599,6 +1599,12 @@ def setup_routes(app):
             flash("Bot Discord não está disponível.", "error")
             return redirect(url_for('admin_system'))
         
+        # Verifica se o bot está pronto
+        if not bot.is_ready():
+            logger.warning("⚠️ Bot Discord não está pronto")
+            flash("Bot Discord não está pronto. Tente novamente em alguns segundos.", "error")
+            return redirect(url_for('admin_system'))
+        
         async def send_message_async():
             try:
                 logger.info("🔄 Função send_message_async iniciada!")
@@ -1617,8 +1623,6 @@ def setup_routes(app):
                     flash("Campos obrigatórios não preenchidos.", "error")
                     return redirect(url_for('admin_system'))
                 
-                # Aguarda o bot estar pronto (como fazem nos cogs)
-                await bot.wait_until_ready()
                 logger.info("✅ Bot está pronto e conectado")
                 
                 # Logs de debug do bot
