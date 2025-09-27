@@ -1619,12 +1619,12 @@ def setup_routes(app):
                 
                 # Verifica se o bot está conectado
                 logger.info(f"🔍 Bot is_ready(): {bot.is_ready()}")
-                logger.info(f"🔍 Bot is_connected(): {bot.is_connected()}")
                 logger.info(f"🔍 Bot user: {bot.user}")
                 logger.info(f"🔍 Bot guilds: {len(bot.guilds)}")
+                logger.info(f"🔍 Bot websocket: {bot.ws}")
                 
                 # Verifica se o bot está conectado (mais flexível)
-                if not bot.is_connected():
+                if not bot.user:
                     logger.warning("⚠️ Bot Discord não está conectado")
                     flash("Bot Discord não está conectado.", "error")
                     return redirect(url_for('admin_system'))
