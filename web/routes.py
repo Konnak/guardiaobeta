@@ -145,10 +145,10 @@ def setup_routes(app):
                 logger.warning(f"Bot está fechado")
                 return False
             
-            # NOVO: Abordagem simplificada - tenta buscar usuário diretamente
+            # NOVO: Abordagem baseada nos cogs - usa bot.get_user() diretamente
             user = None
             
-            # Tenta buscar no cache primeiro
+            # Tenta buscar no cache primeiro (como nos cogs)
             try:
                 user = bot.get_user(user_id)
                 if user:
@@ -158,46 +158,15 @@ def setup_routes(app):
             except Exception as e:
                 logger.warning(f"Erro ao buscar {user_type} {user_id} no cache: {e}")
             
-            # Se não encontrou no cache, tenta buscar via API usando uma abordagem diferente
-            if not user:
-                try:
-                    logger.info(f"Tentando buscar {user_type} {user_id} via API do Discord...")
-                    # NOVO: Usa uma abordagem mais direta sem loop
-                    import asyncio
-                    import threading
-                    
-                    # Cria um novo loop para esta operação
-                    def run_in_new_loop():
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        try:
-                            return loop.run_until_complete(bot.fetch_user(user_id))
-                        finally:
-                            loop.close()
-                    
-                    # Executa em uma thread separada
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(run_in_new_loop)
-                        user = future.result(timeout=10)
-                    
-                    if user:
-                        logger.info(f"{user_type.capitalize()} encontrado via API: {user.name}")
-                    else:
-                        logger.warning(f"{user_type.capitalize()} {user_id} não encontrado via API")
-                        
-                except Exception as e:
-                    logger.warning(f"Erro ao buscar {user_type} {user_id} via API: {e}")
-            
             if not user:
                 logger.warning(f"{user_type.capitalize()} {user_id} não encontrado")
                 return False
             
-            # NOVO: Envia DM usando nova abordagem
+            # NOVO: Envia DM usando abordagem dos cogs - mais simples
             try:
                 logger.info(f"{user_type.capitalize()} encontrado no Discord: {user.name}")
                 
-                # Cria um novo loop para esta operação
+                # Cria um novo loop para esta operação (como nos cogs)
                 def run_send_dm():
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
@@ -214,6 +183,7 @@ def setup_routes(app):
                         loop.close()
                 
                 # Executa em uma thread separada
+                import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(run_send_dm)
                     result = future.result(timeout=10)
