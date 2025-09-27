@@ -317,20 +317,13 @@ class GuardiaoBot:
                 import traceback
                 logger.error(f"Traceback: {traceback.format_exc()}")
             
-            # Configura rotas admin separadas para teste
-            logger.info("🔧 Configurando rotas admin separadas...")
-            setup_admin_routes(self.web_app)
-            logger.info("✅ Rotas admin separadas configuradas")
-            
-            # Configura rotas admin fixas (sem dependências)
-            logger.info("🔧 Configurando rotas admin fixas...")
-            setup_admin_routes_fixed(self.web_app)
-            logger.info("✅ Rotas admin fixas configuradas")
-            
-            # Configura painel admin completo
+            # Configura painel admin completo (sistema principal)
             logger.info("🔧 Configurando painel admin completo...")
             setup_admin_complete(self.web_app)
             logger.info("✅ Painel admin completo configurado")
+
+            # NOTA: As rotas admin principais estão definidas em routes.py
+            # Os outros sistemas (admin_routes.py, admin_routes_fixed.py) são backups
             
             # Lista todas as rotas registradas
             with self.web_app.app_context():

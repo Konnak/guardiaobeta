@@ -18,7 +18,8 @@ except Exception as e:
     db_manager = None
 
 def setup_admin_complete(app):
-    """Configura painel administrativo completo"""
+    """Configura painel administrativo completo - DESABILITADO TEMPORARIAMENTE"""
+    logger.info("⚠️ setup_admin_complete DESABILITADO - Usando sistema principal de rotas admin")
     
     # ==================== VERIFICAÇÃO DE ADMIN ====================
     def is_admin(user_id):
