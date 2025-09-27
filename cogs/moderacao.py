@@ -645,13 +645,49 @@ class VoteView(ui.View):
                 logger.error(f"   2. Verifique se o usuário não é dono do servidor")
                 logger.error(f"   3. Verifique se o bot tem permissão 'Moderate Members'")
                 logger.error(f"   4. Tente reiniciar o bot para sincronizar permissões")
+                
+                # Enviar log de falha na punição
+                try:
+                    from main import bot
+                    guild = bot.get_guild(server_id)
+                    if guild:
+                        member = guild.get_member(member_id)
+                        if member:
+                            await self._send_punishment_log(guild, member, result, "❌ Falha na Aplicação")
+                except Exception as log_error:
+                    logger.warning(f"Erro ao enviar log de falha: {log_error}")
+                
                 return False
             else:
                 logger.error(f"❌ Erro ao aplicar punição via API: {response.status_code} - {response.text}")
+                
+                # Enviar log de erro na punição
+                try:
+                    from main import bot
+                    guild = bot.get_guild(server_id)
+                    if guild:
+                        member = guild.get_member(member_id)
+                        if member:
+                            await self._send_punishment_log(guild, member, result, f"❌ Erro API ({response.status_code})")
+                except Exception as log_error:
+                    logger.warning(f"Erro ao enviar log de erro: {log_error}")
+                
                 return False
                 
         except Exception as e:
             logger.error(f"❌ Erro ao aplicar punição: {e}")
+            
+            # Enviar log de erro geral na punição
+            try:
+                from main import bot
+                guild = bot.get_guild(server_id)
+                if guild:
+                    member = guild.get_member(member_id)
+                    if member:
+                        await self._send_punishment_log(guild, member, result, "❌ Erro Geral")
+            except Exception as log_error:
+                logger.warning(f"Erro ao enviar log de erro geral: {log_error}")
+            
             return False
     
     async def _schedule_unban(self, server_id: int, member_id: int, duration_seconds: int):
