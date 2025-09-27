@@ -1585,154 +1585,165 @@ def setup_routes(app):
     
     @app.route('/admin/system/message', methods=['POST'])
     @admin_required
-    async def admin_system_message():
+    def admin_system_message():
         """Envia mensagem para usuários"""
-        try:
-            target_type = request.form.get('target_type')
-            target_user_id = request.form.get('target_user_id')
-            target_server_id = request.form.get('target_server_id')
-            message_title = request.form.get('message_title')
-            message_content = request.form.get('message_content')
-            
-            if not all([target_type, message_title, message_content]):
-                flash("Campos obrigatórios não preenchidos.", "error")
-                return redirect(url_for('admin_system'))
-            
-            # Importa o bot do main.py
-            from main import guardiao_bot
-            
-            if not guardiao_bot or not guardiao_bot.bot:
-                flash("Bot Discord não está disponível.", "error")
-                return redirect(url_for('admin_system'))
-            
-            bot = guardiao_bot.bot
-            sent_count = 0
-            
-            # Cria embed da mensagem
-            embed = discord.Embed(
-                title=f"📢 {message_title}",
-                description=message_content,
-                color=0x00ff00
-            )
-            embed.set_footer(text="Sistema Guardião BETA - Mensagem Administrativa")
-            
-            if target_type == 'user':
-                if not target_user_id:
-                    flash("ID do usuário é obrigatório para envio individual.", "error")
+        import asyncio
+        
+        async def send_message_async():
+            try:
+                target_type = request.form.get('target_type')
+                target_user_id = request.form.get('target_user_id')
+                target_server_id = request.form.get('target_server_id')
+                message_title = request.form.get('message_title')
+                message_content = request.form.get('message_content')
+                
+                if not all([target_type, message_title, message_content]):
+                    flash("Campos obrigatórios não preenchidos.", "error")
                     return redirect(url_for('admin_system'))
                 
-                try:
-                    user = bot.get_user(int(target_user_id))
-                    if user:
-                        dm_channel = await user.create_dm()
-                        await dm_channel.send(embed=embed)
-                        sent_count = 1
-                        logger.info(f"Mensagem enviada para usuário {target_user_id}")
-                    else:
-                        flash(f"Usuário {target_user_id} não encontrado.", "error")
+                # Importa o bot do main.py
+                from main import guardiao_bot
+                
+                if not guardiao_bot or not guardiao_bot.bot:
+                    flash("Bot Discord não está disponível.", "error")
+                    return redirect(url_for('admin_system'))
+                
+                bot = guardiao_bot.bot
+                sent_count = 0
+                
+                # Cria embed da mensagem
+                embed = discord.Embed(
+                    title=f"📢 {message_title}",
+                    description=message_content,
+                    color=0x00ff00
+                )
+                embed.set_footer(text="Sistema Guardião BETA - Mensagem Administrativa")
+                
+                if target_type == 'user':
+                    if not target_user_id:
+                        flash("ID do usuário é obrigatório para envio individual.", "error")
                         return redirect(url_for('admin_system'))
-                except Exception as e:
-                    logger.error(f"Erro ao enviar mensagem para usuário {target_user_id}: {e}")
-                    flash(f"Erro ao enviar mensagem para usuário: {e}", "error")
-                    return redirect(url_for('admin_system'))
-            
-            elif target_type == 'guardians':
-                # Busca todos os guardiões
-                guardians_query = """
-                    SELECT id_discord FROM usuarios 
-                    WHERE categoria IN ('Guardião', 'Moderador', 'Administrador')
-                """
-                guardians = db_manager.execute_query_sync(guardians_query)
-                
-                for guardian in guardians:
+                    
                     try:
-                        user = bot.get_user(guardian['id_discord'])
+                        user = bot.get_user(int(target_user_id))
                         if user:
                             dm_channel = await user.create_dm()
                             await dm_channel.send(embed=embed)
-                            sent_count += 1
-                    except Exception as e:
-                        logger.warning(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
-                        continue
-                
-                logger.info(f"Mensagem enviada para {sent_count} guardiões")
-            
-            elif target_type == 'moderators':
-                # Busca todos os moderadores
-                moderators_query = """
-                    SELECT id_discord FROM usuarios 
-                    WHERE categoria IN ('Moderador', 'Administrador')
-                """
-                moderators = db_manager.execute_query_sync(moderators_query)
-                
-                for moderator in moderators:
-                    try:
-                        user = bot.get_user(moderator['id_discord'])
-                        if user:
-                            dm_channel = await user.create_dm()
-                            await dm_channel.send(embed=embed)
-                            sent_count += 1
-                    except Exception as e:
-                        logger.warning(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
-                        continue
-                
-                logger.info(f"Mensagem enviada para {sent_count} moderadores")
-            
-            elif target_type == 'administrators':
-                # Busca todos os administradores
-                admins_query = """
-                    SELECT id_discord FROM usuarios 
-                    WHERE categoria = 'Administrador'
-                """
-                admins = db_manager.execute_query_sync(admins_query)
-                
-                for admin in admins:
-                    try:
-                        user = bot.get_user(admin['id_discord'])
-                        if user:
-                            dm_channel = await user.create_dm()
-                            await dm_channel.send(embed=embed)
-                            sent_count += 1
-                    except Exception as e:
-                        logger.warning(f"Erro ao enviar mensagem para admin {admin['id_discord']}: {e}")
-                        continue
-                
-                logger.info(f"Mensagem enviada para {sent_count} administradores")
-            
-            elif target_type == 'server':
-                if not target_server_id:
-                    flash("ID do servidor é obrigatório para envio em servidor.", "error")
-                    return redirect(url_for('admin_system'))
-                
-                try:
-                    guild = bot.get_guild(int(target_server_id))
-                    if guild:
-                        # Envia para canal geral ou cria canal de anúncios
-                        channel = guild.system_channel or guild.text_channels[0] if guild.text_channels else None
-                        if channel:
-                            await channel.send(embed=embed)
                             sent_count = 1
-                            logger.info(f"Mensagem enviada para servidor {target_server_id}")
+                            logger.info(f"Mensagem enviada para usuário {target_user_id}")
                         else:
-                            flash("Nenhum canal disponível no servidor.", "error")
+                            flash(f"Usuário {target_user_id} não encontrado.", "error")
                             return redirect(url_for('admin_system'))
-                    else:
-                        flash(f"Servidor {target_server_id} não encontrado.", "error")
+                    except Exception as e:
+                        logger.error(f"Erro ao enviar mensagem para usuário {target_user_id}: {e}")
+                        flash(f"Erro ao enviar mensagem para usuário: {e}", "error")
                         return redirect(url_for('admin_system'))
-                except Exception as e:
-                    logger.error(f"Erro ao enviar mensagem para servidor {target_server_id}: {e}")
-                    flash(f"Erro ao enviar mensagem para servidor: {e}", "error")
-                    return redirect(url_for('admin_system'))
-            
-            if sent_count > 0:
-                flash(f"Mensagem enviada com sucesso para {sent_count} destinatário(s).", "success")
-            else:
-                flash("Nenhuma mensagem foi enviada.", "warning")
-            
-            return redirect(url_for('admin_system'))
-            
+                
+                elif target_type == 'guardians':
+                    # Busca todos os guardiões
+                    guardians_query = """
+                        SELECT id_discord FROM usuarios 
+                        WHERE categoria IN ('Guardião', 'Moderador', 'Administrador')
+                    """
+                    guardians = db_manager.execute_query_sync(guardians_query)
+                    
+                    for guardian in guardians:
+                        try:
+                            user = bot.get_user(guardian['id_discord'])
+                            if user:
+                                dm_channel = await user.create_dm()
+                                await dm_channel.send(embed=embed)
+                                sent_count += 1
+                        except Exception as e:
+                            logger.warning(f"Erro ao enviar mensagem para guardião {guardian['id_discord']}: {e}")
+                            continue
+                    
+                    logger.info(f"Mensagem enviada para {sent_count} guardiões")
+                
+                elif target_type == 'moderators':
+                    # Busca todos os moderadores
+                    moderators_query = """
+                        SELECT id_discord FROM usuarios 
+                        WHERE categoria IN ('Moderador', 'Administrador')
+                    """
+                    moderators = db_manager.execute_query_sync(moderators_query)
+                    
+                    for moderator in moderators:
+                        try:
+                            user = bot.get_user(moderator['id_discord'])
+                            if user:
+                                dm_channel = await user.create_dm()
+                                await dm_channel.send(embed=embed)
+                                sent_count += 1
+                        except Exception as e:
+                            logger.warning(f"Erro ao enviar mensagem para moderador {moderator['id_discord']}: {e}")
+                            continue
+                    
+                    logger.info(f"Mensagem enviada para {sent_count} moderadores")
+                
+                elif target_type == 'administrators':
+                    # Busca todos os administradores
+                    admins_query = """
+                        SELECT id_discord FROM usuarios 
+                        WHERE categoria = 'Administrador'
+                    """
+                    admins = db_manager.execute_query_sync(admins_query)
+                    
+                    for admin in admins:
+                        try:
+                            user = bot.get_user(admin['id_discord'])
+                            if user:
+                                dm_channel = await user.create_dm()
+                                await dm_channel.send(embed=embed)
+                                sent_count += 1
+                        except Exception as e:
+                            logger.warning(f"Erro ao enviar mensagem para admin {admin['id_discord']}: {e}")
+                            continue
+                    
+                    logger.info(f"Mensagem enviada para {sent_count} administradores")
+                
+                elif target_type == 'server':
+                    if not target_server_id:
+                        flash("ID do servidor é obrigatório para envio em servidor.", "error")
+                        return redirect(url_for('admin_system'))
+                    
+                    try:
+                        guild = bot.get_guild(int(target_server_id))
+                        if guild:
+                            # Envia para canal geral ou cria canal de anúncios
+                            channel = guild.system_channel or guild.text_channels[0] if guild.text_channels else None
+                            if channel:
+                                await channel.send(embed=embed)
+                                sent_count = 1
+                                logger.info(f"Mensagem enviada para servidor {target_server_id}")
+                            else:
+                                flash("Nenhum canal disponível no servidor.", "error")
+                                return redirect(url_for('admin_system'))
+                        else:
+                            flash(f"Servidor {target_server_id} não encontrado.", "error")
+                            return redirect(url_for('admin_system'))
+                    except Exception as e:
+                        logger.error(f"Erro ao enviar mensagem para servidor {target_server_id}: {e}")
+                        flash(f"Erro ao enviar mensagem para servidor: {e}", "error")
+                        return redirect(url_for('admin_system'))
+                
+                if sent_count > 0:
+                    flash(f"Mensagem enviada com sucesso para {sent_count} destinatário(s).", "success")
+                else:
+                    flash("Nenhuma mensagem foi enviada.", "warning")
+                
+                return redirect(url_for('admin_system'))
+                
+            except Exception as e:
+                logger.error(f"Erro ao enviar mensagem: {e}")
+                flash("Erro ao enviar mensagem.", "error")
+                return redirect(url_for('admin_system'))
+        
+        # Executa a função async
+        try:
+            return asyncio.run(send_message_async())
         except Exception as e:
-            logger.error(f"Erro ao enviar mensagem: {e}")
+            logger.error(f"Erro ao executar função async: {e}")
             flash("Erro ao enviar mensagem.", "error")
             return redirect(url_for('admin_system'))
     
