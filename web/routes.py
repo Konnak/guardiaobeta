@@ -1757,7 +1757,7 @@ def setup_routes(app):
                 logger.info(f"🔍 Bot websocket: {bot.ws}")
                 
                 logger.info("✅ Bot está pronto e conectado")
-                logger.info(f"Loop rodando: {bot.loop.is_running() if bot.loop else 'N/A'}")
+                logger.info(f"Loop rodando: N/A (não acessível em contexto síncrono)")
                 logger.info(f"Usuários no cache: {len(bot.users)}")
                 sent_count = 0
                 
