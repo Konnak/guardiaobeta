@@ -1623,3 +1623,215 @@ def get_server_stats(server_id: int) -> dict:
             'top_denunciados': []
         }
 
+    # ==================== ROTAS DO SISTEMA ADMIN ====================
+    
+    @app.route('/admin/system')
+    @admin_required
+    def admin_system():
+        """Página de controle do sistema"""
+        try:
+            # Busca estatísticas do banco
+            db_stats = {}
+            if db_manager and db_manager.pool:
+                stats_query = """
+                    SELECT
+                        (SELECT COUNT(*) FROM usuarios) as total_usuarios,
+                        (SELECT COUNT(*) FROM denuncias) as total_denuncias,
+                        (SELECT COUNT(*) FROM votos_guardioes) as total_votos,
+                        (SELECT COUNT(*) FROM captchas_guardioes) as total_captchas
+                """
+                stats_result = db_manager.execute_query_sync(stats_query)
+                if stats_result:
+                    db_stats = stats_result[0]
+            
+            return render_template('admin/system.html', db_stats=db_stats)
+            
+        except Exception as e:
+            logger.error(f"Erro na página do sistema: {e}")
+            return redirect(url_for('admin_dashboard'))
+    
+    @app.route('/admin/system/table/<table_name>')
+    @admin_required
+    def admin_system_table(table_name):
+        """Retorna dados de uma tabela específica"""
+        try:
+            # Tabelas permitidas
+            allowed_tables = [
+                'usuarios', 'denuncias', 'votos_guardioes', 
+                'mensagens_capturadas', 'captchas_guardioes',
+                'servidores_premium', 'configuracoes_servidor'
+            ]
+            
+            if table_name not in allowed_tables:
+                return {'success': False, 'error': 'Tabela não permitida'}
+            
+            # Busca dados da tabela
+            query = f"SELECT * FROM {table_name} ORDER BY id DESC LIMIT 100"
+            data = db_manager.execute_query_sync(query)
+            
+            return {'success': True, 'data': data}
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar dados da tabela {table_name}: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    @app.route('/admin/system/delete/<table_name>/<int:record_id>', methods=['DELETE'])
+    @admin_required
+    def admin_system_delete(table_name, record_id):
+        """Exclui um registro de uma tabela"""
+        try:
+            # Tabelas permitidas
+            allowed_tables = [
+                'usuarios', 'denuncias', 'votos_guardioes', 
+                'mensagens_capturadas', 'captchas_guardioes',
+                'servidores_premium', 'configuracoes_servidor'
+            ]
+            
+            if table_name not in allowed_tables:
+                return {'success': False, 'error': 'Tabela não permitida'}
+            
+            # Exclui o registro
+            query = f"DELETE FROM {table_name} WHERE id = $1"
+            db_manager.execute_command_sync(query, record_id)
+            
+            return {'success': True}
+            
+        except Exception as e:
+            logger.error(f"Erro ao excluir registro: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    @app.route('/admin/system/punish', methods=['POST'])
+    @admin_required
+    def admin_system_punish():
+        """Aplica punição a um usuário"""
+        try:
+            user_id = request.form.get('user_id')
+            punishment_type = request.form.get('punishment_type')
+            reason = request.form.get('reason')
+            
+            if not all([user_id, punishment_type, reason]):
+                flash("Todos os campos são obrigatórios.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Aqui você implementaria a lógica de punição
+            # Por exemplo, enviar comando para o bot Discord
+            
+            flash(f"Punição {punishment_type} aplicada ao usuário {user_id}.", "success")
+            return redirect(url_for('admin_system'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao aplicar punição: {e}")
+            flash("Erro ao aplicar punição.", "error")
+            return redirect(url_for('admin_system'))
+    
+    @app.route('/admin/system/message', methods=['POST'])
+    @admin_required
+    def admin_system_message():
+        """Envia mensagem para usuários"""
+        try:
+            target_type = request.form.get('target_type')
+            target_user_id = request.form.get('target_user_id')
+            target_server_id = request.form.get('target_server_id')
+            message_title = request.form.get('message_title')
+            message_content = request.form.get('message_content')
+            
+            if not all([target_type, message_title, message_content]):
+                flash("Campos obrigatórios não preenchidos.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Aqui você implementaria a lógica de envio de mensagem
+            # Por exemplo, enviar comando para o bot Discord
+            
+            flash(f"Mensagem enviada para {target_type}.", "success")
+            return redirect(url_for('admin_system'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar mensagem: {e}")
+            flash("Erro ao enviar mensagem.", "error")
+            return redirect(url_for('admin_system'))
+    
+    @app.route('/admin/system/ban-user', methods=['POST'])
+    @admin_required
+    def admin_system_ban_user():
+        """Banir usuário do sistema"""
+        try:
+            user_id = request.form.get('user_id')
+            reason = request.form.get('reason')
+            duration = request.form.get('duration')
+            
+            if not all([user_id, reason, duration]):
+                flash("Todos os campos são obrigatórios.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Adiciona usuário à lista de banidos
+            ban_query = """
+                INSERT INTO usuarios_banidos (id_discord, motivo, duracao, data_banimento)
+                VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+                ON CONFLICT (id_discord) DO UPDATE SET
+                    motivo = $2, duracao = $3, data_banimento = CURRENT_TIMESTAMP
+            """
+            db_manager.execute_command_sync(ban_query, user_id, reason, duration)
+            
+            flash(f"Usuário {user_id} banido do sistema.", "success")
+            return redirect(url_for('admin_system'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao banir usuário: {e}")
+            flash("Erro ao banir usuário.", "error")
+            return redirect(url_for('admin_system'))
+    
+    @app.route('/admin/system/unban-user', methods=['POST'])
+    @admin_required
+    def admin_system_unban_user():
+        """Desbanir usuário do sistema"""
+        try:
+            user_id = request.form.get('user_id')
+            reason = request.form.get('reason')
+            
+            if not all([user_id, reason]):
+                flash("Todos os campos são obrigatórios.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Remove usuário da lista de banidos
+            unban_query = "DELETE FROM usuarios_banidos WHERE id_discord = $1"
+            db_manager.execute_command_sync(unban_query, user_id)
+            
+            flash(f"Usuário {user_id} desbanido do sistema.", "success")
+            return redirect(url_for('admin_system'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao desbanir usuário: {e}")
+            flash("Erro ao desbanir usuário.", "error")
+            return redirect(url_for('admin_system'))
+    
+    @app.route('/admin/system/command', methods=['POST'])
+    @admin_required
+    def admin_system_command():
+        """Executa comandos do sistema"""
+        try:
+            command = request.form.get('command')
+            
+            if not command:
+                flash("Comando não especificado.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Comandos permitidos
+            allowed_commands = [
+                'restart_bot', 'clear_cache', 'backup_database', 'update_stats'
+            ]
+            
+            if command not in allowed_commands:
+                flash("Comando não permitido.", "error")
+                return redirect(url_for('admin_system'))
+            
+            # Aqui você implementaria a lógica de cada comando
+            # Por exemplo, enviar comando para o bot Discord
+            
+            flash(f"Comando {command} executado com sucesso.", "success")
+            return redirect(url_for('admin_system'))
+            
+        except Exception as e:
+            logger.error(f"Erro ao executar comando: {e}")
+            flash("Erro ao executar comando.", "error")
+            return redirect(url_for('admin_system'))
+

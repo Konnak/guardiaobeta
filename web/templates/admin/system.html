@@ -1,0 +1,661 @@
+{% extends "base.html" %}
+
+{% block title %}System - Painel Administrativo{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* System Page Styling */
+    .hero-system {
+        background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 50%, var(--dark-bg) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 60px 0 40px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-system::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(30, 90, 90, 0.1) 0%, transparent 50%);
+        z-index: 1;
+    }
+
+    .hero-system-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-system-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+
+    .system-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .system-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .system-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .system-card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .system-card-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-bg);
+        font-size: 1.2rem;
+    }
+
+    .table-selector {
+        margin-bottom: 1.5rem;
+    }
+
+    .table-selector select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        background: var(--glass-bg);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: var(--glass-bg);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .data-table th {
+        background: var(--primary-teal-dark);
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .data-table tr:hover {
+        background: rgba(255, 184, 0, 0.1);
+    }
+
+    .edit-btn {
+        background: var(--primary-gold);
+        color: var(--dark-bg);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .edit-btn:hover {
+        background: var(--primary-gold-light);
+        transform: translateY(-2px);
+    }
+
+    .delete-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .delete-btn:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .command-form {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        background: var(--glass-bg);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+        color: var(--dark-bg);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 184, 0, 0.3);
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background: rgba(40, 167, 69, 0.2);
+        border: 1px solid #28a745;
+        color: #28a745;
+    }
+
+    .alert-danger {
+        background: rgba(220, 53, 69, 0.2);
+        border: 1px solid #dc3545;
+        color: #dc3545;
+    }
+
+    .alert-warning {
+        background: rgba(255, 193, 7, 0.2);
+        border: 1px solid #ffc107;
+        color: #ffc107;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-item {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-gold);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination a:hover {
+        background: var(--primary-gold);
+        color: var(--dark-bg);
+    }
+
+    .pagination .current {
+        background: var(--primary-teal);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="hero-system">
+        <div class="hero-system-content">
+            <h1 class="hero-system-title">
+                <i class="bi bi-gear-fill"></i>
+                System Control
+            </h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">
+                Gerenciamento completo do banco de dados e comandos do sistema
+            </p>
+        </div>
+    </div>
+
+    <!-- Database Statistics -->
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-value">{{ db_stats.total_usuarios or 0 }}</div>
+            <div class="stat-label">Total de Usuários</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ db_stats.total_denuncias or 0 }}</div>
+            <div class="stat-label">Total de Denúncias</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ db_stats.total_votos or 0 }}</div>
+            <div class="stat-label">Total de Votos</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ db_stats.total_captchas or 0 }}</div>
+            <div class="stat-label">Captchas Enviados</div>
+        </div>
+    </div>
+
+    <!-- Database Viewer -->
+    <div class="system-card">
+        <h3 class="system-card-title">
+            <div class="system-card-icon">
+                <i class="bi bi-database"></i>
+            </div>
+            Visualizador de Banco de Dados
+        </h3>
+        
+        <div class="table-selector">
+            <label for="table-select">Selecione uma tabela:</label>
+            <select id="table-select" onchange="loadTableData()">
+                <option value="">Selecione uma tabela...</option>
+                <option value="usuarios">Usuários</option>
+                <option value="denuncias">Denúncias</option>
+                <option value="votos_guardioes">Votos dos Guardiões</option>
+                <option value="mensagens_capturadas">Mensagens Capturadas</option>
+                <option value="captchas_guardioes">Captchas de Guardiões</option>
+                <option value="servidores_premium">Servidores Premium</option>
+                <option value="configuracoes_servidor">Configurações de Servidor</option>
+            </select>
+        </div>
+
+        <div id="table-data">
+            <p style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                Selecione uma tabela para visualizar os dados
+            </p>
+        </div>
+    </div>
+
+    <!-- Test Commands -->
+    <div class="system-card">
+        <h3 class="system-card-title">
+            <div class="system-card-icon">
+                <i class="bi bi-terminal"></i>
+            </div>
+            Comandos de Teste
+        </h3>
+
+        <div class="command-form">
+            <h4 style="margin-bottom: 1.5rem; color: var(--text-primary);">Punir Usuário</h4>
+            <form method="POST" action="{{ url_for('admin_system_punish') }}">
+                <div class="form-group">
+                    <label for="user_id">ID do Usuário Discord:</label>
+                    <input type="number" id="user_id" name="user_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="punishment_type">Tipo de Punição:</label>
+                    <select id="punishment_type" name="punishment_type" required>
+                        <option value="">Selecione...</option>
+                        <option value="mute">Mute (1 hora)</option>
+                        <option value="mute_6h">Mute (6 horas)</option>
+                        <option value="mute_12h">Mute (12 horas)</option>
+                        <option value="ban_24h">Ban (24 horas)</option>
+                        <option value="ban_permanent">Ban Permanente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Motivo:</label>
+                    <textarea id="reason" name="reason" placeholder="Digite o motivo da punição..." required></textarea>
+                </div>
+                <button type="submit" class="btn-danger">Aplicar Punição</button>
+            </form>
+        </div>
+
+        <div class="command-form">
+            <h4 style="margin-bottom: 1.5rem; color: var(--text-primary);">Enviar Mensagem</h4>
+            <form method="POST" action="{{ url_for('admin_system_message') }}">
+                <div class="form-group">
+                    <label for="target_type">Tipo de Destinatário:</label>
+                    <select id="target_type" name="target_type" required>
+                        <option value="">Selecione...</option>
+                        <option value="user">Usuário Específico</option>
+                        <option value="guardians">Todos os Guardiões</option>
+                        <option value="moderators">Todos os Moderadores</option>
+                        <option value="administrators">Todos os Administradores</option>
+                        <option value="server">Usuários de um Servidor</option>
+                    </select>
+                </div>
+                <div class="form-group" id="user_id_group" style="display: none;">
+                    <label for="target_user_id">ID do Usuário Discord:</label>
+                    <input type="number" id="target_user_id" name="target_user_id">
+                </div>
+                <div class="form-group" id="server_id_group" style="display: none;">
+                    <label for="target_server_id">ID do Servidor Discord:</label>
+                    <input type="number" id="target_server_id" name="target_server_id">
+                </div>
+                <div class="form-group">
+                    <label for="message_title">Título da Mensagem:</label>
+                    <input type="text" id="message_title" name="message_title" required>
+                </div>
+                <div class="form-group">
+                    <label for="message_content">Conteúdo da Mensagem:</label>
+                    <textarea id="message_content" name="message_content" required></textarea>
+                </div>
+                <button type="submit" class="btn-success">Enviar Mensagem</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="system-card">
+        <h3 class="system-card-title">
+            <div class="system-card-icon">
+                <i class="bi bi-person-gear"></i>
+            </div>
+            Gerenciamento de Usuários
+        </h3>
+
+        <div class="command-form">
+            <h4 style="margin-bottom: 1.5rem; color: var(--text-primary);">Banir Usuário</h4>
+            <form method="POST" action="{{ url_for('admin_system_ban_user') }}">
+                <div class="form-group">
+                    <label for="ban_user_id">ID do Usuário Discord:</label>
+                    <input type="number" id="ban_user_id" name="user_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="ban_reason">Motivo do Banimento:</label>
+                    <textarea id="ban_reason" name="reason" placeholder="Digite o motivo do banimento..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ban_duration">Duração:</label>
+                    <select id="ban_duration" name="duration" required>
+                        <option value="permanent">Permanente</option>
+                        <option value="30">30 dias</option>
+                        <option value="90">90 dias</option>
+                        <option value="365">1 ano</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-danger">Banir Usuário</button>
+            </form>
+        </div>
+
+        <div class="command-form">
+            <h4 style="margin-bottom: 1.5rem; color: var(--text-primary);">Desbanir Usuário</h4>
+            <form method="POST" action="{{ url_for('admin_system_unban_user') }}">
+                <div class="form-group">
+                    <label for="unban_user_id">ID do Usuário Discord:</label>
+                    <input type="number" id="unban_user_id" name="user_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="unban_reason">Motivo do Desbanimento:</label>
+                    <textarea id="unban_reason" name="reason" placeholder="Digite o motivo do desbanimento..." required></textarea>
+                </div>
+                <button type="submit" class="btn-success">Desbanir Usuário</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- System Commands -->
+    <div class="system-card">
+        <h3 class="system-card-title">
+            <div class="system-card-icon">
+                <i class="bi bi-cpu"></i>
+            </div>
+            Comandos do Sistema
+        </h3>
+
+        <div class="command-form">
+            <h4 style="margin-bottom: 1.5rem; color: var(--text-primary);">Comandos Rápidos</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <form method="POST" action="{{ url_for('admin_system_command') }}" style="margin: 0;">
+                    <input type="hidden" name="command" value="restart_bot">
+                    <button type="submit" class="btn-warning" style="width: 100%;">Reiniciar Bot</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_system_command') }}" style="margin: 0;">
+                    <input type="hidden" name="command" value="clear_cache">
+                    <button type="submit" class="btn-primary" style="width: 100%;">Limpar Cache</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_system_command') }}" style="margin: 0;">
+                    <input type="hidden" name="command" value="backup_database">
+                    <button type="submit" class="btn-success" style="width: 100%;">Backup do Banco</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_system_command') }}" style="margin: 0;">
+                    <input type="hidden" name="command" value="update_stats">
+                    <button type="submit" class="btn-primary" style="width: 100%;">Atualizar Estatísticas</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide form fields based on target type
+document.getElementById('target_type').addEventListener('change', function() {
+    const userGroup = document.getElementById('user_id_group');
+    const serverGroup = document.getElementById('server_id_group');
+    
+    if (this.value === 'user') {
+        userGroup.style.display = 'block';
+        serverGroup.style.display = 'none';
+    } else if (this.value === 'server') {
+        userGroup.style.display = 'none';
+        serverGroup.style.display = 'block';
+    } else {
+        userGroup.style.display = 'none';
+        serverGroup.style.display = 'none';
+    }
+});
+
+// Load table data
+function loadTableData() {
+    const tableSelect = document.getElementById('table-select');
+    const tableData = document.getElementById('table-data');
+    
+    if (!tableSelect.value) {
+        tableData.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Selecione uma tabela para visualizar os dados</p>';
+        return;
+    }
+    
+    // Show loading
+    tableData.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Carregando dados...</p>';
+    
+    // Fetch data
+    fetch(`/admin/system/table/${tableSelect.value}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTableData(data.data, tableSelect.value);
+            } else {
+                tableData.innerHTML = `<div class="alert alert-danger">Erro: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            tableData.innerHTML = `<div class="alert alert-danger">Erro ao carregar dados: ${error}</div>`;
+        });
+}
+
+// Display table data
+function displayTableData(data, tableName) {
+    const tableData = document.getElementById('table-data');
+    
+    if (!data || data.length === 0) {
+        tableData.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Nenhum dado encontrado</p>';
+        return;
+    }
+    
+    let html = '<table class="data-table">';
+    
+    // Header
+    html += '<thead><tr>';
+    Object.keys(data[0]).forEach(key => {
+        html += `<th>${key}</th>`;
+    });
+    html += '<th>Ações</th>';
+    html += '</tr></thead>';
+    
+    // Data rows
+    html += '<tbody>';
+    data.forEach(row => {
+        html += '<tr>';
+        Object.values(row).forEach(value => {
+            html += `<td>${value || '-'}</td>`;
+        });
+        html += `<td>
+            <button class="edit-btn" onclick="editRow('${tableName}', ${row.id || 'null'})">Editar</button>
+            <button class="delete-btn" onclick="deleteRow('${tableName}', ${row.id || 'null'})">Excluir</button>
+        </td>`;
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    
+    html += '</table>';
+    tableData.innerHTML = html;
+}
+
+// Edit row
+function editRow(tableName, rowId) {
+    // Implementation for editing rows
+    alert(`Editar ${tableName} ID: ${rowId}`);
+}
+
+// Delete row
+function deleteRow(tableName, rowId) {
+    if (confirm(`Tem certeza que deseja excluir este registro?`)) {
+        fetch(`/admin/system/delete/${tableName}/${rowId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadTableData(); // Reload table
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`Erro ao excluir: ${error}`);
+        });
+    }
+}
+</script>
+{% endblock %}
