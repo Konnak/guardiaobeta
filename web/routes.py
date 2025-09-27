@@ -1308,30 +1308,17 @@ def setup_routes(app):
             recent_denuncias = []
 
             if db_manager and db_manager.pool:
-                # Estatísticas básicas para compatibilidade com dashboard_complete.html
+                # Estatísticas no formato esperado pelo template dashboard.html
                 stats = {
-                    'users': {
-                        'total_usuarios': 0,
-                        'novos_24h': 0,
-                        'total_guardioes': 0,
-                        'guardioes_servico': 0
-                    },
-                    'reports': {
-                        'total_denuncias': 0,
-                        'novas_24h': 0,
-                        'pendentes': 0,
-                        'em_analise': 0,
-                        'finalizadas': 0
-                    },
-                    'premium': {
-                        'premium_ativos': 0
-                    },
-                    'votes': {
-                        'votos_ok': 0,
-                        'votos_intimidou': 0,
-                        'votos_grave': 0
-                    },
-                    'activity': []
+                    'total_usuarios': 0,
+                    'total_guardioes': 0,
+                    'guardioes_servico': 0,
+                    'total_denuncias': 0,
+                    'denuncias_pendentes': 0,
+                    'denuncias_analise': 0,
+                    'denuncias_finalizadas': 0,
+                    'denuncias_resolvidas': 0,
+                    'total_votos': 0
                 }
 
                 # Buscar estatísticas reais
@@ -1349,19 +1336,15 @@ def setup_routes(app):
                 stats_result = db_manager.execute_query_sync(stats_query)
                 if stats_result:
                     real_stats = stats_result[0]
-                    stats['users']['total_usuarios'] = real_stats['total_usuarios'] or 0
-                    stats['users']['total_guardioes'] = real_stats['total_guardioes'] or 0
-                    stats['users']['guardioes_servico'] = real_stats['guardioes_servico'] or 0
-                    stats['reports']['total_denuncias'] = real_stats['total_denuncias'] or 0
-                    stats['reports']['pendentes'] = real_stats['denuncias_pendentes'] or 0
-                    stats['reports']['em_analise'] = real_stats['denuncias_analise'] or 0
-                    stats['reports']['finalizadas'] = real_stats['denuncias_finalizadas'] or 0
-
-                    # Calcular votos por tipo (estimativa)
-                    total_votos = real_stats['total_votos'] or 0
-                    stats['votes']['votos_ok'] = int(total_votos * 0.4)  # 40% OK
-                    stats['votes']['votos_intimidou'] = int(total_votos * 0.35)  # 35% Intimidou
-                    stats['votes']['votos_grave'] = int(total_votos * 0.25)  # 25% Grave
+                    stats['total_usuarios'] = real_stats['total_usuarios'] or 0
+                    stats['total_guardioes'] = real_stats['total_guardioes'] or 0
+                    stats['guardioes_servico'] = real_stats['guardioes_servico'] or 0
+                    stats['total_denuncias'] = real_stats['total_denuncias'] or 0
+                    stats['denuncias_pendentes'] = real_stats['denuncias_pendentes'] or 0
+                    stats['denuncias_analise'] = real_stats['denuncias_analise'] or 0
+                    stats['denuncias_finalizadas'] = real_stats['denuncias_finalizadas'] or 0
+                    stats['denuncias_resolvidas'] = real_stats['denuncias_finalizadas'] or 0  # Mesmo que finalizadas
+                    stats['total_votos'] = real_stats['total_votos'] or 0
 
                 # Usuários recentes
                 recent_users_query = """
