@@ -2452,11 +2452,11 @@ def setup_mural_routes(app):
                 })
             logger.info(f"🔍 Total de punições processadas: {len(punicoes_data)}")
             
-                return render_template('perfil_usuario_punido.html', 
-                                       usuario=usuario_data, 
-                                       punicoes=punicoes_data,
-                                       total_punicoes=total_punicoes,
-                                       timedelta=timedelta)
+            return render_template('perfil_usuario_punido.html', 
+                                   usuario=usuario_data, 
+                                   punicoes=punicoes_data,
+                                   total_punicoes=total_punicoes,
+                                   timedelta=timedelta)
             
         except Exception as e:
             logger.error(f"Erro ao carregar perfil do usuário {user_id}: {e}")
