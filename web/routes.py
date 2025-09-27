@@ -1660,8 +1660,12 @@ def setup_routes(app):
                             if not user:
                                 # Se não encontrou no cache, tenta buscar via API
                                 try:
+                                    # Usa o contexto correto do bot
                                     user = await bot.fetch_user(guardian['id_discord'])
                                     logger.info(f"Usuário encontrado via API: {user.name}")
+                                except discord.NotFound:
+                                    logger.warning(f"Usuário {guardian['id_discord']} não encontrado na API do Discord")
+                                    user = None
                                 except Exception as e:
                                     logger.warning(f"Erro ao buscar usuário via API: {e}")
                                     user = None
@@ -1703,8 +1707,12 @@ def setup_routes(app):
                             if not user:
                                 # Se não encontrou no cache, tenta buscar via API
                                 try:
+                                    # Usa o contexto correto do bot
                                     user = await bot.fetch_user(moderator['id_discord'])
                                     logger.info(f"Usuário encontrado via API: {user.name}")
+                                except discord.NotFound:
+                                    logger.warning(f"Usuário {moderator['id_discord']} não encontrado na API do Discord")
+                                    user = None
                                 except Exception as e:
                                     logger.warning(f"Erro ao buscar usuário via API: {e}")
                                     user = None
@@ -1746,8 +1754,12 @@ def setup_routes(app):
                             if not user:
                                 # Se não encontrou no cache, tenta buscar via API
                                 try:
+                                    # Usa o contexto correto do bot
                                     user = await bot.fetch_user(admin['id_discord'])
                                     logger.info(f"Usuário encontrado via API: {user.name}")
+                                except discord.NotFound:
+                                    logger.warning(f"Usuário {admin['id_discord']} não encontrado na API do Discord")
+                                    user = None
                                 except Exception as e:
                                     logger.warning(f"Erro ao buscar usuário via API: {e}")
                                     user = None
