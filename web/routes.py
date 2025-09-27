@@ -1480,149 +1480,7 @@ def setup_routes(app):
         """
     
     logger.info("✅ Rota /admin registrada com sucesso no final!")
-    logger.info("✅ Configuração de rotas concluída com sucesso!")
-
-
-# Cache simples para dados de usuários do Discord (evita muitas requisições)
-_discord_user_cache = {}
-_cache_timeout = 300  # 5 minutos
-
-def get_discord_user_info(user_id: int) -> dict:
-    """Busca informações do usuário no Discord via API com cache"""
-    try:
-        import requests
-        import time
-        
-        # Verificar cache
-        cache_key = str(user_id)
-        current_time = time.time()
-        
-        if cache_key in _discord_user_cache:
-            cached_data, cached_time = _discord_user_cache[cache_key]
-            if current_time - cached_time < _cache_timeout:
-                return cached_data
-        
-        bot_token = os.getenv('DISCORD_TOKEN')
-        
-        if not bot_token:
-            logger.warning("DISCORD_TOKEN não configurado para buscar usuários")
-            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
-            _discord_user_cache[cache_key] = (result, current_time)
-            return result
-        
-        headers = {'Authorization': f'Bot {bot_token}'}
-        response = requests.get(f'https://discord.com/api/v10/users/{user_id}', headers=headers)
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            result = {
-                'discord_username': user_data.get('username'),
-                'discord_avatar': user_data.get('avatar'),
-                'discord_discriminator': user_data.get('discriminator'),
-                'discord_display_name': user_data.get('global_name') or user_data.get('username')
-            }
-            # Armazenar no cache
-            _discord_user_cache[cache_key] = (result, current_time)
-            logger.info(f"Dados do usuário {user_id} obtidos do Discord: {result['discord_username']}")
-            return result
-        else:
-            logger.warning(f"Erro ao buscar usuário {user_id}: {response.status_code}")
-            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
-            _discord_user_cache[cache_key] = (result, current_time)
-            return result
-            
-    except Exception as e:
-        logger.error(f"Erro ao buscar informações do usuário {user_id}: {e}")
-        result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
-        _discord_user_cache[cache_key] = (result, current_time)
-        return result
-
-def get_server_stats(server_id: int) -> dict:
-    """Busca estatísticas de um servidor"""
-    try:
-        # Estatísticas gerais
-        general_query = """
-            SELECT 
-                COUNT(*) as total_denuncias,
-                COUNT(CASE WHEN status = 'Finalizada' THEN 1 END) as denuncias_finalizadas,
-                COUNT(CASE WHEN status = 'Pendente' THEN 1 END) as denuncias_pendentes,
-                COUNT(CASE WHEN status = 'Em Análise' THEN 1 END) as denuncias_analise,
-                COUNT(CASE WHEN e_premium = true THEN 1 END) as denuncias_premium
-            FROM denuncias 
-            WHERE id_servidor = $1
-        """
-        general_stats = db_manager.execute_query_sync(general_query, server_id)
-        
-        # Resultados das denúncias
-        results_query = """
-            SELECT 
-                COUNT(CASE WHEN resultado_final = 'OK!' THEN 1 END) as improcedentes,
-                COUNT(CASE WHEN resultado_final = 'Intimidou' THEN 1 END) as intimidoes,
-                COUNT(CASE WHEN resultado_final = 'Grave' THEN 1 END) as graves
-            FROM denuncias 
-            WHERE id_servidor = $1 AND status = 'Finalizada'
-        """
-        results_stats = db_manager.execute_query_sync(results_query, server_id)
-        
-        # Denúncias por período (últimos 7 dias)
-        period_query = """
-            SELECT DATE(data_criacao) as data, COUNT(*) as quantidade
-            FROM denuncias 
-            WHERE id_servidor = $1 
-            AND data_criacao >= NOW() - INTERVAL '7 days'
-            GROUP BY DATE(data_criacao)
-            ORDER BY data
-        """
-        period_stats = db_manager.execute_query_sync(period_query, server_id)
-        
-        # Usuários mais denunciados (com informações do usuário)
-        top_denunciados_query = """
-            SELECT 
-                d.id_denunciado,
-                u.username,
-                u.display_name,
-                COUNT(*) as denuncias_count,
-                CASE 
-                    WHEN u.categoria = 'Banido' THEN 'BANIDO'
-                    WHEN u.categoria = 'Intimidou' THEN 'INTIMIDOU'
-                    WHEN u.categoria = 'Grave' THEN 'GRAVE'
-                    ELSE 'ATIVO'
-                END as status_usuario
-            FROM denuncias d
-            LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
-            WHERE d.id_servidor = $1 
-            AND d.data_criacao >= NOW() - INTERVAL '30 days'
-            GROUP BY d.id_denunciado, u.username, u.display_name, u.categoria
-            ORDER BY denuncias_count DESC
-            LIMIT 10
-        """
-        top_denunciados_raw = db_manager.execute_query_sync(top_denunciados_query, server_id)
-        
-        # Enriquecer com dados do Discord
-        top_denunciados = []
-        if top_denunciados_raw:
-            for user in top_denunciados_raw:
-                discord_user = get_discord_user_info(user['id_denunciado'])
-                user_data = dict(user)
-                user_data.update(discord_user)
-                top_denunciados.append(user_data)
-        
-        return {
-            'general': general_stats[0] if general_stats else {},
-            'results': results_stats[0] if results_stats else {},
-            'period': period_stats,
-            'top_denunciados': top_denunciados
-        }
-        
-    except Exception as e:
-        logger.error(f"Erro ao buscar estatísticas do servidor: {e}")
-        return {
-            'general': {},
-            'results': {},
-            'period': [],
-            'top_denunciados': []
-        }
-
+    
     # ==================== ROTAS DO SISTEMA ADMIN ====================
     
     @app.route('/admin/system')
@@ -1834,4 +1692,148 @@ def get_server_stats(server_id: int) -> dict:
             logger.error(f"Erro ao executar comando: {e}")
             flash("Erro ao executar comando.", "error")
             return redirect(url_for('admin_system'))
+    
+    logger.info("✅ Rotas do sistema admin registradas com sucesso!")
+    logger.info("✅ Configuração de rotas concluída com sucesso!")
+
+
+# Cache simples para dados de usuários do Discord (evita muitas requisições)
+_discord_user_cache = {}
+_cache_timeout = 300  # 5 minutos
+
+def get_discord_user_info(user_id: int) -> dict:
+    """Busca informações do usuário no Discord via API com cache"""
+    try:
+        import requests
+        import time
+        
+        # Verificar cache
+        cache_key = str(user_id)
+        current_time = time.time()
+        
+        if cache_key in _discord_user_cache:
+            cached_data, cached_time = _discord_user_cache[cache_key]
+            if current_time - cached_time < _cache_timeout:
+                return cached_data
+        
+        bot_token = os.getenv('DISCORD_TOKEN')
+        
+        if not bot_token:
+            logger.warning("DISCORD_TOKEN não configurado para buscar usuários")
+            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+            _discord_user_cache[cache_key] = (result, current_time)
+            return result
+        
+        headers = {'Authorization': f'Bot {bot_token}'}
+        response = requests.get(f'https://discord.com/api/v10/users/{user_id}', headers=headers)
+        
+        if response.status_code == 200:
+            user_data = response.json()
+            result = {
+                'discord_username': user_data.get('username'),
+                'discord_avatar': user_data.get('avatar'),
+                'discord_discriminator': user_data.get('discriminator'),
+                'discord_display_name': user_data.get('global_name') or user_data.get('username')
+            }
+            # Armazenar no cache
+            _discord_user_cache[cache_key] = (result, current_time)
+            logger.info(f"Dados do usuário {user_id} obtidos do Discord: {result['discord_username']}")
+            return result
+        else:
+            logger.warning(f"Erro ao buscar usuário {user_id}: {response.status_code}")
+            result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+            _discord_user_cache[cache_key] = (result, current_time)
+            return result
+            
+    except Exception as e:
+        logger.error(f"Erro ao buscar informações do usuário {user_id}: {e}")
+        result = {'discord_username': None, 'discord_avatar': None, 'discord_discriminator': None, 'discord_display_name': None}
+        _discord_user_cache[cache_key] = (result, current_time)
+        return result
+
+def get_server_stats(server_id: int) -> dict:
+    """Busca estatísticas de um servidor"""
+    try:
+        # Estatísticas gerais
+        general_query = """
+            SELECT 
+                COUNT(*) as total_denuncias,
+                COUNT(CASE WHEN status = 'Finalizada' THEN 1 END) as denuncias_finalizadas,
+                COUNT(CASE WHEN status = 'Pendente' THEN 1 END) as denuncias_pendentes,
+                COUNT(CASE WHEN status = 'Em Análise' THEN 1 END) as denuncias_analise,
+                COUNT(CASE WHEN e_premium = true THEN 1 END) as denuncias_premium
+            FROM denuncias 
+            WHERE id_servidor = $1
+        """
+        general_stats = db_manager.execute_query_sync(general_query, server_id)
+        
+        # Resultados das denúncias
+        results_query = """
+            SELECT 
+                COUNT(CASE WHEN resultado_final = 'OK!' THEN 1 END) as improcedentes,
+                COUNT(CASE WHEN resultado_final = 'Intimidou' THEN 1 END) as intimidoes,
+                COUNT(CASE WHEN resultado_final = 'Grave' THEN 1 END) as graves
+            FROM denuncias 
+            WHERE id_servidor = $1 AND status = 'Finalizada'
+        """
+        results_stats = db_manager.execute_query_sync(results_query, server_id)
+        
+        # Denúncias por período (últimos 7 dias)
+        period_query = """
+            SELECT DATE(data_criacao) as data, COUNT(*) as quantidade
+            FROM denuncias 
+            WHERE id_servidor = $1 
+            AND data_criacao >= NOW() - INTERVAL '7 days'
+            GROUP BY DATE(data_criacao)
+            ORDER BY data
+        """
+        period_stats = db_manager.execute_query_sync(period_query, server_id)
+        
+        # Usuários mais denunciados (com informações do usuário)
+        top_denunciados_query = """
+            SELECT 
+                d.id_denunciado,
+                u.username,
+                u.display_name,
+                COUNT(*) as denuncias_count,
+                CASE 
+                    WHEN u.categoria = 'Banido' THEN 'BANIDO'
+                    WHEN u.categoria = 'Intimidou' THEN 'INTIMIDOU'
+                    WHEN u.categoria = 'Grave' THEN 'GRAVE'
+                    ELSE 'ATIVO'
+                END as status_usuario
+            FROM denuncias d
+            LEFT JOIN usuarios u ON d.id_denunciado = u.id_discord
+            WHERE d.id_servidor = $1 
+            AND d.data_criacao >= NOW() - INTERVAL '30 days'
+            GROUP BY d.id_denunciado, u.username, u.display_name, u.categoria
+            ORDER BY denuncias_count DESC
+            LIMIT 10
+        """
+        top_denunciados_raw = db_manager.execute_query_sync(top_denunciados_query, server_id)
+        
+        # Enriquecer com dados do Discord
+        top_denunciados = []
+        if top_denunciados_raw:
+            for user in top_denunciados_raw:
+                discord_user = get_discord_user_info(user['id_denunciado'])
+                user_data = dict(user)
+                user_data.update(discord_user)
+                top_denunciados.append(user_data)
+        
+        return {
+            'general': general_stats[0] if general_stats else {},
+            'results': results_stats[0] if results_stats else {},
+            'period': period_stats,
+            'top_denunciados': top_denunciados
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar estatísticas do servidor: {e}")
+        return {
+            'general': {},
+            'results': {},
+            'period': [],
+            'top_denunciados': []
+        }
 
