@@ -132,6 +132,65 @@ def setup_routes(app):
         except Exception as e:
             logger.error(f"Erro ao enviar DM para {user_type} {user_id}: {e}")
             return False
+    
+    def send_log_to_channel(server_id: int, log_type: str, title: str, description: str, color: int = 0x00ff00, fields: list = None):
+        """Envia log para o canal configurado do servidor premium"""
+        try:
+            logger.info(f"📝 Enviando log para servidor {server_id}: {log_type}")
+            
+            # Busca configurações do servidor
+            config_query = """
+                SELECT canal_log FROM configuracoes_servidor 
+                WHERE id_servidor = $1 AND canal_log IS NOT NULL
+            """
+            config = db_manager.execute_one_sync(config_query, server_id)
+            
+            if not config or not config['canal_log']:
+                logger.info(f"📝 Servidor {server_id} não tem canal de log configurado")
+                return False
+            
+            canal_log_id = config['canal_log']
+            logger.info(f"📝 Canal de log configurado: {canal_log_id}")
+            
+            # Usa requests para enviar log via API do Discord
+            import requests
+            import os
+            
+            bot_token = os.getenv('DISCORD_TOKEN')
+            if not bot_token:
+                logger.error("DISCORD_TOKEN não configurado")
+                return False
+            
+            headers = {'Authorization': f'Bot {bot_token}', 'Content-Type': 'application/json'}
+            
+            # Cria embed do log
+            embed_data = {
+                'title': title,
+                'description': description,
+                'color': color,
+                'timestamp': datetime.utcnow().isoformat(),
+                'footer': {'text': f'Sistema Guardião BETA - {log_type}'}
+            }
+            
+            if fields:
+                embed_data['fields'] = fields
+            
+            # Envia mensagem para o canal de log
+            message_data = {'embeds': [embed_data]}
+            
+            response = requests.post(f'https://discord.com/api/v10/channels/{canal_log_id}/messages',
+                                   headers=headers, json=message_data)
+            
+            if response.status_code == 200:
+                logger.info(f"✅ Log enviado para canal {canal_log_id} do servidor {server_id}")
+                return True
+            else:
+                logger.error(f"❌ Erro ao enviar log: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Erro ao enviar log para servidor {server_id}: {e}")
+            return False
     logger.info("🚀 Iniciando configuração de rotas...")
     
     @app.route('/')
@@ -1642,13 +1701,117 @@ def setup_routes(app):
             user_id = request.form.get('user_id')
             punishment_type = request.form.get('punishment_type')
             reason = request.form.get('reason')
+            server_id = request.form.get('server_id')
+            duration = request.form.get('duration', 'Permanente')
             
             if not all([user_id, punishment_type, reason]):
                 flash("Todos os campos são obrigatórios.", "error")
                 return redirect(url_for('admin_system'))
             
-            # Aqui você implementaria a lógica de punição
-            # Por exemplo, enviar comando para o bot Discord
+            # Busca informações do usuário
+            user_query = "SELECT username, display_name, categoria FROM usuarios WHERE id_discord = $1"
+            user_info = db_manager.execute_one_sync(user_query, user_id)
+            
+            username = user_info['username'] if user_info else f"ID: {user_id}"
+            display_name = user_info['display_name'] if user_info and user_info['display_name'] else username
+            
+            # Aplica a punição no banco de dados
+            if punishment_type == 'ban':
+                # Atualiza categoria para banido
+                update_query = """
+                    UPDATE usuarios 
+                    SET categoria = 'Banido', pontos = 0, experiencia = 0, em_servico = false
+                    WHERE id_discord = $1
+                """
+                db_manager.execute_command_sync(update_query, user_id)
+                
+                # Registra no log de punições
+                log_query = """
+                    INSERT INTO logs_punicoes (id_usuario, tipo_punicao, motivo, duracao, data_punicao, aplicado_por)
+                    VALUES ($1, 'Ban', $2, $3, NOW(), $4)
+                """
+                admin_id = session['user']['id']
+                db_manager.execute_command_sync(log_query, user_id, reason, duration, admin_id)
+                
+                # Envia log para o servidor (se configurado)
+                if server_id:
+                    try:
+                        send_log_to_channel(
+                            server_id=int(server_id),
+                            log_type="PUNIÇÃO",
+                            title="🔨 Usuário Banido",
+                            description=f"**Usuário:** {display_name} (`{user_id}`)\n**Motivo:** {reason}\n**Duração:** {duration}",
+                            color=0xff0000,  # Vermelho
+                            fields=[
+                                {"name": "Tipo", "value": "Banimento", "inline": True},
+                                {"name": "Aplicado por", "value": f"<@{admin_id}>", "inline": True},
+                                {"name": "Data", "value": datetime.utcnow().strftime("%d/%m/%Y %H:%M"), "inline": True}
+                            ]
+                        )
+                    except Exception as log_error:
+                        logger.error(f"Erro ao enviar log de punição: {log_error}")
+                
+            elif punishment_type == 'kick':
+                # Registra no log de punições
+                log_query = """
+                    INSERT INTO logs_punicoes (id_usuario, tipo_punicao, motivo, duracao, data_punicao, aplicado_por)
+                    VALUES ($1, 'Kick', $2, $3, NOW(), $4)
+                """
+                admin_id = session['user']['id']
+                db_manager.execute_command_sync(log_query, user_id, reason, duration, admin_id)
+                
+                # Envia log para o servidor (se configurado)
+                if server_id:
+                    try:
+                        send_log_to_channel(
+                            server_id=int(server_id),
+                            log_type="PUNIÇÃO",
+                            title="👢 Usuário Expulso",
+                            description=f"**Usuário:** {display_name} (`{user_id}`)\n**Motivo:** {reason}",
+                            color=0xffa500,  # Laranja
+                            fields=[
+                                {"name": "Tipo", "value": "Expulsão", "inline": True},
+                                {"name": "Aplicado por", "value": f"<@{admin_id}>", "inline": True},
+                                {"name": "Data", "value": datetime.utcnow().strftime("%d/%m/%Y %H:%M"), "inline": True}
+                            ]
+                        )
+                    except Exception as log_error:
+                        logger.error(f"Erro ao enviar log de punição: {log_error}")
+                
+            elif punishment_type == 'warn':
+                # Adiciona pontos de advertência
+                warn_query = """
+                    UPDATE usuarios 
+                    SET pontos = pontos + 1
+                    WHERE id_discord = $1
+                """
+                db_manager.execute_command_sync(warn_query, user_id)
+                
+                # Registra no log de punições
+                log_query = """
+                    INSERT INTO logs_punicoes (id_usuario, tipo_punicao, motivo, duracao, data_punicao, aplicado_por)
+                    VALUES ($1, 'Warn', $2, $3, NOW(), $4)
+                """
+                admin_id = session['user']['id']
+                db_manager.execute_command_sync(log_query, user_id, reason, duration, admin_id)
+                
+                # Envia log para o servidor (se configurado)
+                if server_id:
+                    try:
+                        send_log_to_channel(
+                            server_id=int(server_id),
+                            log_type="PUNIÇÃO",
+                            title="⚠️ Usuário Advertido",
+                            description=f"**Usuário:** {display_name} (`{user_id}`)\n**Motivo:** {reason}",
+                            color=0xffff00,  # Amarelo
+                            fields=[
+                                {"name": "Tipo", "value": "Advertência", "inline": True},
+                                {"name": "Aplicado por", "value": f"<@{admin_id}>", "inline": True},
+                                {"name": "Data", "value": datetime.utcnow().strftime("%d/%m/%Y %H:%M"), "inline": True}
+                            ]
+                        )
+                    except Exception as log_error:
+                        logger.error(f"Erro ao enviar log de punição: {log_error}")
             
             flash(f"Punição {punishment_type} aplicada ao usuário {user_id}.", "success")
             return redirect(url_for('admin_system'))

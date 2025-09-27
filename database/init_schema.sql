@@ -85,6 +85,24 @@ CREATE TABLE IF NOT EXISTS mensagens_guardioes (
     status VARCHAR(20) DEFAULT 'Enviada' NOT NULL
 );
 
+-- Tabela de logs de punições
+CREATE TABLE IF NOT EXISTS logs_punicoes (
+    id SERIAL PRIMARY KEY,
+    id_usuario BIGINT NOT NULL,
+    tipo_punicao VARCHAR(50) NOT NULL, -- 'Ban', 'Kick', 'Warn', 'Mute', etc.
+    motivo TEXT NOT NULL,
+    duracao VARCHAR(100) DEFAULT 'Permanente',
+    data_punicao TIMESTAMP DEFAULT NOW(),
+    aplicado_por BIGINT NOT NULL, -- ID do admin que aplicou
+    id_servidor BIGINT, -- Servidor onde foi aplicada (opcional)
+    ativa BOOLEAN DEFAULT TRUE, -- Se a punição ainda está ativa
+    data_remocao TIMESTAMP, -- Quando foi removida (se aplicável)
+    removido_por BIGINT, -- Quem removeu a punição
+    motivo_remocao TEXT, -- Motivo da remoção
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_usuarios_categoria ON usuarios(categoria);
 CREATE INDEX IF NOT EXISTS idx_usuarios_em_servico ON usuarios(em_servico);
@@ -99,6 +117,11 @@ CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_denuncia ON mensagens_guardio
 CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_guardiao ON mensagens_guardioes(id_guardiao);
 CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_timeout ON mensagens_guardioes(timeout_expira);
 CREATE INDEX IF NOT EXISTS idx_mensagens_guardioes_status ON mensagens_guardioes(status);
+CREATE INDEX IF NOT EXISTS idx_logs_punicoes_usuario ON logs_punicoes(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_logs_punicoes_tipo ON logs_punicoes(tipo_punicao);
+CREATE INDEX IF NOT EXISTS idx_logs_punicoes_data ON logs_punicoes(data_punicao);
+CREATE INDEX IF NOT EXISTS idx_logs_punicoes_ativa ON logs_punicoes(ativa);
+CREATE INDEX IF NOT EXISTS idx_logs_punicoes_servidor ON logs_punicoes(id_servidor);
 
 -- Comentários nas tabelas
 COMMENT ON TABLE usuarios IS 'Tabela de usuários do sistema Guardião BETA';
