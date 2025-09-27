@@ -147,6 +147,7 @@ def setup_routes(app):
             
             # NOVO: Usa o loop do bot para executar de forma segura
             import asyncio
+            import concurrent.futures
             
             # Função interna para buscar usuário de forma segura
             async def safe_fetch_user():
@@ -166,9 +167,14 @@ def setup_routes(app):
                     logger.warning(f"Erro ao buscar {user_type} {user_id}: {e}")
                     return None
             
-            # Executa a busca usando o loop do bot
+            # Executa a busca usando o loop do bot de forma segura
             try:
-                user = await asyncio.run_coroutine_threadsafe(safe_fetch_user(), bot.loop).result()
+                # Cria um Future para executar no loop do bot
+                future = asyncio.run_coroutine_threadsafe(safe_fetch_user(), bot.loop)
+                user = future.result(timeout=10)  # Timeout de 10 segundos
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"Timeout ao buscar {user_type} {user_id}")
+                return False
             except Exception as e:
                 logger.warning(f"Erro ao executar busca no loop do bot: {e}")
                 return False
@@ -196,10 +202,15 @@ def setup_routes(app):
                     logger.error(f"Erro ao enviar DM para {user.name}: {e}")
                     return False
             
-            # Executa o envio usando o loop do bot
+            # Executa o envio usando o loop do bot de forma segura
             try:
-                result = await asyncio.run_coroutine_threadsafe(safe_send_dm(), bot.loop).result()
+                # Cria um Future para executar no loop do bot
+                future = asyncio.run_coroutine_threadsafe(safe_send_dm(), bot.loop)
+                result = future.result(timeout=10)  # Timeout de 10 segundos
                 return result
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"Timeout ao enviar DM para {user_type} {user_id}")
+                return False
             except Exception as e:
                 logger.error(f"Erro ao executar envio no loop do bot: {e}")
                 return False
